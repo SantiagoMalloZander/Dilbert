@@ -18,7 +18,7 @@ Respondé SOLO con el JSON, sin texto adicional:
   "product_interest": "string | null",
   "estimated_amount": "number | null",
   "currency": "ARS | USD | null",
-  "sentiment": "positivo | neutral | negativo",
+  "sentiment": "positive | neutral | negative",
   "next_steps": "string | null",
   "suggested_status": "new | contacted | negotiating | closed_won | closed_lost",
   "summary": "string",
