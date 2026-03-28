@@ -6,9 +6,9 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-const CRM_OPTIONS = [
+const CRM_OPTIONS: { name: string; icon: string; href?: string }[] = [
   { name: "Salesforce", icon: "☁️" },
-  { name: "HubSpot", icon: "🟠" },
+  { name: "HubSpot", icon: "🟠", href: "/crm/hubspot" },
   { name: "Pipedrive", icon: "🟢" },
   { name: "Zoho CRM", icon: "🔵" },
   { name: "Odoo CRM", icon: "🟣" },
@@ -126,9 +126,13 @@ export function Sidebar() {
 
         {crmOpen && (
           <div className="ml-3 flex flex-col gap-0.5 border-l pl-3">
-            {CRM_OPTIONS.map((crm) => (
-              <DisabledCRMOption key={crm.name} {...crm} />
-            ))}
+            {CRM_OPTIONS.map((crm) =>
+              crm.href ? (
+                <NavLink key={crm.name} href={crm.href} icon={crm.icon} label={crm.name} />
+              ) : (
+                <DisabledCRMOption key={crm.name} name={crm.name} icon={crm.icon} />
+              )
+            )}
             <div className="my-1 border-t" />
             <NavLink href="/" icon="🤖" label="Dilbert CRM" exact />
           </div>
