@@ -3,7 +3,7 @@ import Image from "next/image";
 const CHANNELS = [
   {
     name: "Telegram",
-    logo: "/Canales/telegram.jpeg",
+    logo: "/Canales/Telegram.png",
     description: "Bot activo en grupos de Telegram entre vendedores y clientes.",
     active: true,
     detail: "Lee mensajes, extrae datos con GPT-4o y actualiza el CRM en tiempo real.",

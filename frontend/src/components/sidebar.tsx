@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   BarChart3,
   Bot,
   ChevronDown,
   ChevronRight,
+  Code2,
   Database,
   LayoutList,
   Radio,
@@ -17,42 +18,15 @@ import {
 
 const CRM_OPTIONS: {
   name: string;
-  logo?: string;
-  initials?: string;
+  logo: string;
   href?: string;
 }[] = [
   { name: "Salesforce", logo: "/CRMs/Salesforce.png" },
   { name: "HubSpot", logo: "/CRMs/Hudstop.png", href: "/crm/hubspot" },
-  { name: "Pipedrive", initials: "PD" },
   { name: "Zoho CRM", logo: "/CRMs/ZohoCRM.png" },
-  { name: "Odoo CRM", logo: "/CRMs/odoo.png" },
-  { name: "Freshsales", logo: "/CRMs/freshsales.png" },
 ];
 
-const CHANNELS: { name: string; logo: string; active: boolean }[] = [
-  { name: "Telegram", logo: "/Canales/telegram.jpeg", active: true },
-  { name: "WhatsApp", logo: "/Canales/wpp.png", active: false },
-  { name: "Instagram", logo: "/Canales/ig.webp", active: false },
-  { name: "Messenger", logo: "/Canales/massager.png", active: false },
-  { name: "Gmail", logo: "/Canales/gmail.webp", active: false },
-];
-
-function CRMIcon({ logo, initials, name }: { logo?: string; initials?: string; name: string }) {
-  if (logo) {
-    return (
-      <div className="h-4 w-4 shrink-0 rounded overflow-hidden bg-white/10 flex items-center justify-center">
-        <Image src={logo} alt={name} width={16} height={16} className="object-contain" />
-      </div>
-    );
-  }
-  return (
-    <div className="h-4 w-4 shrink-0 rounded bg-[#F5F0E8]/10 flex items-center justify-center">
-      <span className="text-[7px] font-mono font-bold text-[#F5F0E8]/50">{initials}</span>
-    </div>
-  );
-}
-
-function ChannelIcon({ logo, name }: { logo: string; name: string }) {
+function CRMIcon({ logo, name }: { logo: string; name: string }) {
   return (
     <div className="h-4 w-4 shrink-0 rounded overflow-hidden bg-white/10 flex items-center justify-center">
       <Image src={logo} alt={name} width={16} height={16} className="object-contain" />
@@ -89,7 +63,7 @@ function NavLink({
   );
 }
 
-function CRMNavLink({ href, logo, initials, name }: { href: string; logo?: string; initials?: string; name: string }) {
+function CRMNavLink({ href, logo, name }: { href: string; logo: string; name: string }) {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
 
@@ -102,7 +76,7 @@ function CRMNavLink({ href, logo, initials, name }: { href: string; logo?: strin
           : "text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8]"
       }`}
     >
-      <CRMIcon logo={logo} initials={initials} name={name} />
+      <CRMIcon logo={logo} name={name} />
       {name}
     </Link>
   );
@@ -116,7 +90,7 @@ function SectionLabel({ label }: { label: string }) {
   );
 }
 
-function DisabledCRMOption({ name, logo, initials }: { name: string; logo?: string; initials?: string }) {
+function DisabledCRMOption({ name, logo }: { name: string; logo: string }) {
   const [clicked, setClicked] = useState(false);
 
   return (
@@ -125,7 +99,7 @@ function DisabledCRMOption({ name, logo, initials }: { name: string; logo?: stri
       className="flex w-full items-center justify-between rounded px-3 py-2 text-sm text-[#F5F0E8]/38 hover:bg-white/5 hover:text-[#F5F0E8]/55 transition-colors"
     >
       <span className="flex items-center gap-2.5">
-        <CRMIcon logo={logo} initials={initials} name={name} />
+        <CRMIcon logo={logo} name={name} />
         {name}
       </span>
       {clicked ? (
@@ -141,7 +115,7 @@ function DisabledCRMOption({ name, logo, initials }: { name: string; logo?: stri
 
 export function Sidebar() {
   const [crmOpen, setCrmOpen] = useState(true);
-  const [channelsOpen, setChannelsOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col bg-[#1A1A1A] px-3 py-5 border-r border-[#F5F0E8]/8">
@@ -186,20 +160,9 @@ export function Sidebar() {
           <div className="ml-3 flex flex-col gap-0.5 border-l border-[#F5F0E8]/10 pl-3">
             {CRM_OPTIONS.map((crm) =>
               crm.href ? (
-                <CRMNavLink
-                  key={crm.name}
-                  href={crm.href}
-                  logo={crm.logo}
-                  initials={crm.initials}
-                  name={crm.name}
-                />
+                <CRMNavLink key={crm.name} href={crm.href} logo={crm.logo} name={crm.name} />
               ) : (
-                <DisabledCRMOption
-                  key={crm.name}
-                  name={crm.name}
-                  logo={crm.logo}
-                  initials={crm.initials}
-                />
+                <DisabledCRMOption key={crm.name} name={crm.name} logo={crm.logo} />
               )
             )}
             <div className="my-1 border-t border-[#F5F0E8]/8" />
@@ -210,56 +173,20 @@ export function Sidebar() {
         {/* Configuración */}
         <SectionLabel label="Configuración" />
         <button
-          onClick={() => setChannelsOpen(!channelsOpen)}
+          onClick={() => router.push("/configuracion")}
           className="flex w-full items-center justify-between rounded px-3 py-2 text-sm text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8] transition-colors"
         >
           <span className="flex items-center gap-2.5">
             <Radio size={14} className="opacity-70 shrink-0" />
             Canales del bot
           </span>
-          {channelsOpen ? (
-            <ChevronDown className="h-3 w-3 shrink-0 opacity-35" />
-          ) : (
-            <ChevronRight className="h-3 w-3 shrink-0 opacity-35" />
-          )}
+          <ChevronRight className="h-3 w-3 shrink-0 opacity-35" />
         </button>
-
-        {channelsOpen && (
-          <div className="ml-3 flex flex-col gap-0.5 border-l border-[#F5F0E8]/10 pl-3">
-            {CHANNELS.map((ch) => (
-              <div
-                key={ch.name}
-                className="flex items-center justify-between rounded px-3 py-2 text-sm"
-              >
-                <span className="flex items-center gap-2.5 text-[#F5F0E8]/45">
-                  <ChannelIcon logo={ch.logo} name={ch.name} />
-                  {ch.name}
-                </span>
-                {ch.active ? (
-                  <span className="flex items-center gap-1 text-[10px] text-[#1A7A6E] font-medium">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#1A7A6E] animate-pulse" />
-                    Activo
-                  </span>
-                ) : (
-                  <span className="text-[9px] font-mono text-[#F5F0E8]/22 uppercase tracking-wider">
-                    Pronto
-                  </span>
-                )}
-              </div>
-            ))}
-            <Link
-              href="/configuracion"
-              className="mt-1 flex items-center gap-2 rounded px-3 py-2 text-xs text-[#F5F0E8]/35 hover:bg-white/5 hover:text-[#F5F0E8]/60 transition-colors"
-            >
-              Ver configuración →
-            </Link>
-          </div>
-        )}
       </nav>
 
       {/* Footer */}
-      <div className="mt-auto pt-4 border-t border-[#F5F0E8]/8">
-        <div className="px-3 space-y-0.5">
+      <div className="mt-auto pt-4 border-t border-[#F5F0E8]/8 space-y-1">
+        <div className="px-3 mb-3 space-y-0.5">
           <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#F5F0E8]/25">
             Demo Company
           </p>
@@ -267,6 +194,15 @@ export function Sidebar() {
             2 vendedores activos
           </p>
         </div>
+
+        {/* Dev */}
+        <Link
+          href="/dev"
+          className="flex items-center gap-2.5 rounded px-3 py-2 text-sm text-[#F5F0E8]/30 hover:bg-white/5 hover:text-[#F5F0E8]/55 transition-colors border border-[#F5F0E8]/8 hover:border-[#F5F0E8]/15"
+        >
+          <Code2 size={13} className="shrink-0" />
+          <span className="font-mono text-[10px] uppercase tracking-[0.15em]">Dev</span>
+        </Link>
       </div>
     </aside>
   );
