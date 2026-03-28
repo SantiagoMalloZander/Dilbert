@@ -1,252 +1,133 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+
+import { BuyerAnalysisGrid } from "@/components/buyer-analysis-grid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { AnalyticsReport } from "@/lib/types";
 
-type AnalyticsData = {
-  current: {
-    total_leads: number;
-    active_leads: number;
-    total_revenue: number;
-    active_pipeline: number;
-    win_rate: number;
-    avg_deal_size: number;
-    avg_days_to_close: number;
-  };
-  funnel: Record<string, number>;
-  sentiment: Record<string, number>;
-  product_revenue: Record<string, number>;
-  seller_stats: Record<string, { leads: number; won: number; revenue: number }>;
-  predictions: {
-    "30d": { estimated_new_leads: number; estimated_revenue: number; estimated_pipeline: number };
-    "90d": { estimated_new_leads: number; estimated_revenue: number; estimated_pipeline: number };
-  };
-};
+type AnalyticsApiResponse =
+  | AnalyticsReport
+  | {
+      error: string;
+    };
 
-const funnelLabels: Record<string, string> = {
-  new: "Nuevo",
-  contacted: "Contactado",
-  negotiating: "Negociando",
-  closed_won: "Ganado",
-  closed_lost: "Perdido",
-};
-
-const funnelColors: Record<string, string> = {
-  new: "bg-blue-500",
-  contacted: "bg-yellow-500",
-  negotiating: "bg-orange-500",
-  closed_won: "bg-green-500",
-  closed_lost: "bg-red-500",
-};
-
-const sentimentColors: Record<string, string> = {
-  positive: "bg-green-500",
-  neutral: "bg-yellow-500",
-  negative: "bg-red-500",
-};
-
-const sentimentLabels: Record<string, string> = {
-  positive: "Positivo",
-  neutral: "Neutral",
-  negative: "Negativo",
-};
+function hasError(response: AnalyticsApiResponse): response is { error: string } {
+  return "error" in response;
+}
 
 export function AnalyticsPanel() {
-  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [data, setData] = useState<AnalyticsReport | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/analytics")
-      .then((r) => r.json())
-      .then((d) => {
-        setData(d);
-        setLoading(false);
+      .then(async (response) => {
+        const payload = (await response.json()) as AnalyticsApiResponse;
+
+        if (!response.ok || hasError(payload)) {
+          throw new Error(
+            hasError(payload) ? payload.error : "Error cargando analytics"
+          );
+        }
+
+        setData(payload);
+        setError(null);
       })
-      .catch(() => setLoading(false));
+      .catch((requestError: unknown) => {
+        const message =
+          requestError instanceof Error
+            ? requestError.message
+            : "Error cargando analytics";
+        setError(message);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Cargando analytics...
+        Cargando analytics por comprador...
       </div>
     );
   }
 
-  if (!data) {
+  if (error || !data) {
     return (
-      <div className="text-muted-foreground py-12 text-center">
-        Error cargando analytics
+      <div className="rounded-2xl border border-dashed px-6 py-12 text-center text-sm text-muted-foreground">
+        {error || "No se pudo cargar el analisis"}
       </div>
     );
   }
-
-  const maxFunnel = Math.max(...Object.values(data.funnel), 1);
-  const maxSentiment = Math.max(...Object.values(data.sentiment), 1);
 
   return (
     <div className="space-y-6">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Win Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{data.current.win_rate}%</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Revenue Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${data.current.total_revenue.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Deal Promedio</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${data.current.avg_deal_size.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Dias para Cerrar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{data.current.avg_days_to_close}d</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Funnel */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Funnel de Conversion</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(data.funnel).map(([stage, count]) => (
-              <div key={stage} className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span>{funnelLabels[stage] || stage}</span>
-                  <span className="font-medium">{count}</span>
-                </div>
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${funnelColors[stage] || "bg-gray-500"}`}
-                    style={{ width: `${(count / maxFunnel) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Sentiment */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Distribucion de Sentimiento</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(data.sentiment).map(([sent, count]) => (
-              <div key={sent} className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span>{sentimentLabels[sent] || sent}</span>
-                  <span className="font-medium">{count}</span>
-                </div>
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${sentimentColors[sent] || "bg-gray-500"}`}
-                    style={{ width: `${(count / maxSentiment) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Revenue by Product */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Revenue por Producto</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Object.entries(data.product_revenue)
-                .sort(([, a], [, b]) => b - a)
-                .map(([product, revenue]) => {
-                  const maxRev = Math.max(...Object.values(data.product_revenue), 1);
-                  return (
-                    <div key={product} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>{product}</span>
-                        <span className="font-medium">${revenue.toLocaleString()}</span>
-                      </div>
-                      <div className="h-3 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all"
-                          style={{ width: `${(revenue / maxRev) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+      <div className="grid gap-6 xl:grid-cols-[1.7fr_0.9fr]">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h3 className="text-xl font-semibold">Analisis por comprador</h3>
+              <p className="text-sm text-muted-foreground">
+                Cada comprador tiene su propia lectura de recompra, historial y proxima ventana esperada.
+              </p>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Predictions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Predicciones</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-muted-foreground">Proximos 30 dias</h4>
-                <div>
-                  <div className="text-xs text-muted-foreground">Nuevos leads</div>
-                  <div className="text-xl font-bold">{data.predictions["30d"].estimated_new_leads}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground">Revenue estimado</div>
-                  <div className="text-xl font-bold text-green-600">
-                    ${data.predictions["30d"].estimated_revenue.toLocaleString()}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground">Pipeline estimado</div>
-                  <div className="text-xl font-bold">
-                    ${data.predictions["30d"].estimated_pipeline.toLocaleString()}
-                  </div>
-                </div>
+            <Link
+              href="/analytics"
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-border px-4 text-sm font-medium hover:bg-muted"
+            >
+              Abrir modulo completo
+            </Link>
+          </div>
+
+          <BuyerAnalysisGrid clients={data.clients} limit={6} />
+        </div>
+
+        <div className="space-y-4">
+          <Card className="border-border/70 bg-card/80">
+            <CardHeader>
+              <CardTitle>Panorama rapido</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Compradores analizados</span>
+                <span className="font-medium">{data.summary.total_clients}</span>
               </div>
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-muted-foreground">Proximos 90 dias</h4>
-                <div>
-                  <div className="text-xs text-muted-foreground">Nuevos leads</div>
-                  <div className="text-xl font-bold">{data.predictions["90d"].estimated_new_leads}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground">Revenue estimado</div>
-                  <div className="text-xl font-bold text-green-600">
-                    ${data.predictions["90d"].estimated_revenue.toLocaleString()}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground">Pipeline estimado</div>
-                  <div className="text-xl font-bold">
-                    ${data.predictions["90d"].estimated_pipeline.toLocaleString()}
-                  </div>
-                </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Prediccion 30 dias</span>
+                <span className="font-medium">
+                  ${data.summary.predicted_30d_revenue.toLocaleString()}
+                </span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Prediccion 90 dias</span>
+                <span className="font-medium">
+                  ${data.summary.predicted_90d_revenue.toLocaleString()}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 bg-card/80">
+            <CardHeader>
+              <CardTitle>Que mira el analisis</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <p>
+                La senal cualitativa resume cuan probable es que el cliente vuelva a comprar.
+              </p>
+              <p>
+                Para cada comprador se considera recencia, frecuencia, producto dominante,
+                compras previas y estado comercial.
+              </p>
+              <p>
+                Si queres profundizar, cada tarjeta abre el analisis completo de esa persona.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

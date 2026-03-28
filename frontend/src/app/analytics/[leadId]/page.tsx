@@ -59,7 +59,7 @@ export default async function AnalyticsClientDetailPage({
                 href="/analytics"
                 className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
               >
-                ← Volver al analisis
+                {"<- Volver al analisis"}
               </Link>
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-3">
@@ -70,7 +70,7 @@ export default async function AnalyticsClientDetailPage({
                   <Badge variant="outline">{client.segment_label}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {client.client_company || "Sin empresa"} ·{" "}
+                  {client.client_company || "Sin empresa"} -{" "}
                   {client.seller_names.join(", ") || "Sin vendedor asignado"}
                 </p>
               </div>
@@ -78,14 +78,16 @@ export default async function AnalyticsClientDetailPage({
 
             <Card className="min-w-72 border-border/70 bg-background/80">
               <CardHeader>
-                <CardTitle>Indicador de compra</CardTitle>
+                <CardTitle>Probabilidad de recompra</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-muted-foreground">
                 <p className="text-base font-medium text-foreground">
                   {client.purchase_signal.label}
                 </p>
                 <p>{client.purchase_signal.description}</p>
-                <p>Proxima ventana esperada: {client.predicted_next_purchase_days} dias</p>
+                <p>
+                  Proxima ventana esperada: {client.predicted_next_purchase_days} dias
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -112,12 +114,13 @@ export default async function AnalyticsClientDetailPage({
 
           <Card className="border-border/70 bg-card/80">
             <CardHeader>
-              <CardTitle>Compras previas cerradas</CardTitle>
+              <CardTitle>Compras previas</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-semibold">{client.closed_won_count}</div>
               <p className="mt-2 text-sm text-muted-foreground">
-                Total historico estimado: {formatMoney(client.closed_won_amount, client.dominant_currency)}
+                Total historico estimado:{" "}
+                {formatMoney(client.closed_won_amount, client.dominant_currency)}
               </p>
             </CardContent>
           </Card>
@@ -158,7 +161,7 @@ export default async function AnalyticsClientDetailPage({
                           ) : null}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Producto: {lead.product_interest || "-"} · Vendedor: {lead.seller_name || "-"}
+                          Producto: {lead.product_interest || "-"} - Vendedor: {lead.seller_name || "-"}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Ultima actividad: {formatDate(lead.last_interaction)}
@@ -240,7 +243,7 @@ export default async function AnalyticsClientDetailPage({
 
             <Card className="border-border/70 bg-card/80">
               <CardHeader>
-                <CardTitle>Compras previas</CardTitle>
+                <CardTitle>Compras previas cerradas</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {previousPurchases.length === 0 ? (
@@ -257,7 +260,8 @@ export default async function AnalyticsClientDetailPage({
                         {formatMoney(purchase.estimated_amount, purchase.currency)}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {purchase.product_interest || "Producto no identificado"} · {formatDate(purchase.last_interaction)}
+                        {purchase.product_interest || "Producto no identificado"} -{" "}
+                        {formatDate(purchase.last_interaction)}
                       </p>
                     </div>
                   ))

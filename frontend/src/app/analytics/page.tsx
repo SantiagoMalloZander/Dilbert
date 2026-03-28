@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-import { AnalyticsSummaryCards } from "@/components/analytics-summary-cards";
-import { ClientIntelligenceTable } from "@/components/client-intelligence-table";
+import { BuyerAnalysisGrid } from "@/components/buyer-analysis-grid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildAnalyticsReport } from "@/lib/analytics";
 import { getAnalyticsContext } from "@/lib/queries";
@@ -39,57 +38,59 @@ export default async function AnalyticsPage() {
           </div>
         </section>
 
-        <AnalyticsSummaryCards summary={report.summary} />
-
         <section className="grid gap-6 xl:grid-cols-[1.7fr_0.9fr]">
           <div className="space-y-4">
             <div>
-              <h3 className="text-xl font-semibold">Clientes priorizados</h3>
+              <h3 className="text-xl font-semibold">Analisis por comprador</h3>
               <p className="text-sm text-muted-foreground">
-                El indicador de compra ahora se muestra en lenguaje cualitativo.
+                Cada comprador tiene un analisis propio sobre recompra, cadencia y comportamiento esperado.
               </p>
             </div>
-            <ClientIntelligenceTable clients={report.clients} />
+            <BuyerAnalysisGrid clients={report.clients} />
           </div>
 
           <div className="space-y-4">
             <Card className="border-border/70 bg-card/80">
               <CardHeader>
-                <CardTitle>Productos mas recurrentes</CardTitle>
+                <CardTitle>Resumen del portfolio</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {report.summary.top_products.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Todavia no hay datos suficientes para inferir afinidad por producto.
-                  </p>
-                ) : (
-                  report.summary.top_products.map((item) => (
-                    <div key={item.product} className="flex items-center justify-between text-sm">
-                      <span>{item.product}</span>
-                      <span className="font-medium text-muted-foreground">
-                        {item.clients} clientes
-                      </span>
-                    </div>
-                  ))
-                )}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Compradores analizados</span>
+                  <span className="font-medium">{report.summary.total_clients}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Prediccion 30 dias</span>
+                  <span className="font-medium">
+                    ${report.summary.predicted_30d_revenue.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Prediccion 90 dias</span>
+                  <span className="font-medium">
+                    ${report.summary.predicted_90d_revenue.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Interacciones leidas</span>
+                  <span className="font-medium">{report.summary.total_interactions}</span>
+                </div>
               </CardContent>
             </Card>
 
             <Card className="border-border/70 bg-card/80">
               <CardHeader>
-                <CardTitle>Como leer este tablero</CardTitle>
+                <CardTitle>Datos interesantes por persona</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  El calculo combina recencia, frecuencia de interaccion,
-                  sentimiento, etapa comercial y montos estimados.
+                  El foco principal es la probabilidad cualitativa de recompra y el tiempo esperado hasta la proxima compra.
                 </p>
                 <p>
-                  La senal cualitativa reemplaza el porcentaje crudo para que el manager
-                  entienda prioridad sin leer un score tecnico.
+                  Tambien se muestran compras previas, producto dominante, ticket estimado y drivers comerciales.
                 </p>
                 <p>
-                  Cada cliente abre una vista personal con historial comercial e interacciones previas.
+                  Cada comprador abre una vista personal con historial, interacciones y detalle completo del analisis.
                 </p>
               </CardContent>
             </Card>
