@@ -11,7 +11,7 @@ const CRM_OPTIONS = [
   { name: "HubSpot", icon: "🟠" },
   { name: "Pipedrive", icon: "🟢" },
   { name: "Zoho CRM", icon: "🔵" },
-  { name: "Monday CRM", icon: "🔴" },
+  { name: "Odoo CRM", icon: "🟣" },
   { name: "Freshsales", icon: "🌿" },
 ];
 
