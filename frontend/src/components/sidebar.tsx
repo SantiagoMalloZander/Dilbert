@@ -103,7 +103,7 @@ export function Sidebar() {
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
         {/* Ventas */}
         <SectionLabel label="Ventas" />
-        <NavLink href="/" icon="📋" label="Pipeline" exact />
+        <NavLink href="/dashboard" icon="📋" label="Pipeline" exact />
         <NavLink href="/metricas" icon="📊" label="Métricas" />
         <NavLink href="/analytics" icon="🧠" label="Inteligencia IA" />
 
@@ -134,7 +134,7 @@ export function Sidebar() {
               )
             )}
             <div className="my-1 border-t" />
-            <NavLink href="/" icon="🤖" label="Dilbert CRM" exact />
+            <NavLink href="/dashboard" icon="🤖" label="Dilbert CRM" exact />
           </div>
         )}
 
