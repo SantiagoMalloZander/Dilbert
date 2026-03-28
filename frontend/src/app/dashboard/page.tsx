@@ -5,6 +5,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { Lead } from "@/lib/types";
 import { LeadsTable } from "@/components/leads-table";
 import { MetricsCards } from "@/components/metrics-cards";
+import { AddLeadDialog } from "@/components/add-lead-dialog";
 
 const DEMO_COMPANY_ID = "11111111-1111-1111-1111-111111111111";
 
@@ -57,16 +58,19 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col h-full">
       {/* Page header */}
-      <div className="px-6 py-5 border-b bg-card/60">
-        <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          Vista operativa
-        </p>
-        <h1 className="font-heading text-4xl tracking-wide mt-1 leading-none">
-          PIPELINE
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1.5">
-          Leads en tiempo real. Se actualiza automáticamente cuando el bot procesa conversaciones.
-        </p>
+      <div className="px-6 py-5 border-b bg-card/60 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            Vista operativa
+          </p>
+          <h1 className="font-heading text-4xl tracking-wide mt-1 leading-none">
+            PIPELINE
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            Leads en tiempo real. Se actualiza automáticamente cuando el bot procesa conversaciones.
+          </p>
+        </div>
+        <AddLeadDialog />
       </div>
 
       {/* Content */}
