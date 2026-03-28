@@ -22,7 +22,7 @@ export default function HubSpotPage() {
         <div className="flex items-center gap-3 mt-1">
           <div className="h-9 w-9 rounded-lg overflow-hidden bg-muted flex items-center justify-center shrink-0">
             <Image
-              src="/CRMs/Hudspot.png"
+              src="/CRMs/Hudstop.png"
               alt="HubSpot"
               width={36}
               height={36}

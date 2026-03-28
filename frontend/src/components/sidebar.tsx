@@ -21,11 +21,11 @@ const CRM_OPTIONS: {
   initials?: string;
   href?: string;
 }[] = [
-  { name: "Salesforce", logo: "/CRMs/salesforce.jpeg" },
-  { name: "HubSpot", logo: "/CRMs/Hudspot.png", href: "/crm/hubspot" },
+  { name: "Salesforce", logo: "/CRMs/Salesforce.png" },
+  { name: "HubSpot", logo: "/CRMs/Hudstop.png", href: "/crm/hubspot" },
   { name: "Pipedrive", initials: "PD" },
   { name: "Zoho CRM", logo: "/CRMs/ZohoCRM.png" },
-  { name: "Odoo CRM", logo: "/CRMs/Odoo.jpeg" },
+  { name: "Odoo CRM", logo: "/CRMs/odoo.png" },
   { name: "Freshsales", logo: "/CRMs/freshsales.png" },
 ];
 
