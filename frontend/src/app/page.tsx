@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 import { Lead } from "@/lib/types";
 import { LeadsTable } from "@/components/leads-table";
 import { MetricsCards } from "@/components/metrics-cards";
+import { AnalyticsPanel } from "@/components/analytics-panel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DEMO_COMPANY_ID = "11111111-1111-1111-1111-111111111111";
 
@@ -26,7 +28,6 @@ export default function Dashboard() {
 
     fetchLeads();
 
-    // Realtime subscription
     const channel = supabase
       .channel("leads-realtime")
       .on(
@@ -38,7 +39,6 @@ export default function Dashboard() {
           filter: `company_id=eq.${DEMO_COMPANY_ID}`,
         },
         async () => {
-          // Refetch all leads on any change
           const { data } = await supabase
             .from("leads")
             .select("*, sellers(name)")
@@ -56,8 +56,19 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 space-y-6">
-      <MetricsCards leads={leads} />
-      <LeadsTable leads={leads} loading={loading} />
+      <Tabs defaultValue="leads">
+        <TabsList>
+          <TabsTrigger value="leads">Leads</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        </TabsList>
+        <TabsContent value="leads" className="space-y-6 mt-4">
+          <MetricsCards leads={leads} />
+          <LeadsTable leads={leads} loading={loading} />
+        </TabsContent>
+        <TabsContent value="analytics" className="mt-4">
+          <AnalyticsPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
