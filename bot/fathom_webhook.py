@@ -185,6 +185,35 @@ async def _process_fathom_recording(
 # HTTP handler
 # ---------------------------------------------------------------------------
 
+async def _handle_fathom_webhook_test(request: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Test endpoint — skips HMAC validation. Solo para hackathon, no deployar en prod.
+    Acepta el mismo payload que /webhook/fathom.
+    """
+    logger.warning("fathom/test: processing request WITHOUT signature validation")
+
+    try:
+        data = await request.json()
+    except json.JSONDecodeError as exc:
+        return aiohttp.web.Response(status=400, text=f"Invalid JSON: {exc}")
+
+    recording_id, formatted_transcript, fathom_metadata = _parse_fathom_payload(data)
+    source_key = f"fathom:{recording_id}"
+    logger.info("fathom/test: received recording_id=%s", recording_id)
+
+    try:
+        existing = await asyncio.to_thread(db.get_interaction_by_source_message_key, source_key)
+    except Exception as exc:
+        logger.error("fathom/test: dedup check failed: %s", exc)
+        existing = None
+
+    if existing:
+        return aiohttp.web.Response(status=200, text=f"Already processed: {existing.get('id')}")
+
+    asyncio.create_task(_process_fathom_recording(recording_id, source_key, formatted_transcript, fathom_metadata))
+    return aiohttp.web.Response(status=200, text="Accepted")
+
+
 async def _handle_fathom_webhook(request: aiohttp.web.Request) -> aiohttp.web.Response:
     # Read raw body first — must happen before JSON parsing for HMAC validation
     body = await request.read()
@@ -239,6 +268,7 @@ async def _handle_fathom_webhook(request: aiohttp.web.Request) -> aiohttp.web.Re
 async def create_server(port: int) -> tuple[aiohttp.web.AppRunner, aiohttp.web.TCPSite]:
     app = aiohttp.web.Application()
     app.router.add_post("/webhook/fathom", _handle_fathom_webhook)
+    app.router.add_post("/webhook/fathom/test", _handle_fathom_webhook_test)
     runner = aiohttp.web.AppRunner(app)
     await runner.setup()
     site = aiohttp.web.TCPSite(runner, "0.0.0.0", port)
