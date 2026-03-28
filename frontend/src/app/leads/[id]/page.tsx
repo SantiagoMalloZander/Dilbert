@@ -191,7 +191,7 @@ export default function LeadDetail() {
                         Ver detalles de la reunión
                       </summary>
                       <div className="mt-2 p-3 bg-muted rounded-md space-y-1">
-                        {interaction.extracted_data.recording_url && (
+                        {(interaction.extracted_data.recording_url as string | undefined) && (
                           <div>
                             <span className="text-muted-foreground">Grabación: </span>
                             <a
@@ -204,7 +204,7 @@ export default function LeadDetail() {
                             </a>
                           </div>
                         )}
-                        {interaction.extracted_data.duration && (
+                        {(interaction.extracted_data.duration as number | undefined) && (
                           <div>
                             <span className="text-muted-foreground">Duración: </span>
                             {Math.round((interaction.extracted_data.duration as number) / 60)} min

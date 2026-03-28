@@ -12,6 +12,7 @@ import {
   Code2,
   Database,
   LayoutList,
+  LogOut,
   Radio,
   Sparkles,
 } from "lucide-react";
@@ -113,9 +114,21 @@ function DisabledCRMOption({ name, logo }: { name: string; logo: string }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({
+  companyName,
+  role,
+}: {
+  companyName: string;
+  role: string;
+}) {
   const [crmOpen, setCrmOpen] = useState(true);
   const router = useRouter();
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col bg-[#1A1A1A] px-3 py-5 border-r border-[#F5F0E8]/8">
@@ -126,7 +139,7 @@ export function Sidebar() {
         </div>
         <div className="flex items-center gap-2 mt-1.5">
           <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#F5F0E8]/28">
-            hackITBA 2026
+            {companyName || "hackITBA 2026"}
           </span>
           <span className="h-1.5 w-1.5 rounded-full bg-[#1A7A6E] animate-pulse shrink-0" />
         </div>
@@ -186,16 +199,22 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="mt-auto pt-4 border-t border-[#F5F0E8]/8 space-y-1">
-        <div className="px-3 mb-3 space-y-0.5">
+        <div className="px-3 mb-2 space-y-0.5">
           <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#F5F0E8]/25">
-            Demo Company
-          </p>
-          <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#F5F0E8]/18">
-            2 vendedores activos
+            {companyName || "Demo Company"}
           </p>
         </div>
 
-        {/* Dev */}
+        {role === "admin" && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-2.5 rounded px-3 py-2 text-sm text-[#F5D53F]/60 hover:bg-white/5 hover:text-[#F5D53F] transition-colors"
+          >
+            <Code2 size={13} className="shrink-0" />
+            <span className="font-mono text-[10px] uppercase tracking-[0.15em]">Admin</span>
+          </Link>
+        )}
+
         <Link
           href="/dev"
           className="flex items-center gap-2.5 rounded px-3 py-2 text-sm text-[#F5F0E8]/30 hover:bg-white/5 hover:text-[#F5F0E8]/55 transition-colors border border-[#F5F0E8]/8 hover:border-[#F5F0E8]/15"
@@ -203,6 +222,14 @@ export function Sidebar() {
           <Code2 size={13} className="shrink-0" />
           <span className="font-mono text-[10px] uppercase tracking-[0.15em]">Dev</span>
         </Link>
+
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-2.5 rounded px-3 py-2 text-sm text-[#F5F0E8]/25 hover:bg-white/5 hover:text-[#F5F0E8]/50 transition-colors"
+        >
+          <LogOut size={13} className="shrink-0" />
+          <span className="font-mono text-[10px] uppercase tracking-[0.15em]">Cerrar sesión</span>
+        </button>
       </div>
     </aside>
   );
