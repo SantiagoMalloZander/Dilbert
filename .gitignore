@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.env
+.env.local
+bot/.env
+*.pyc
+__pycache__/
+.venv/
+test-results/
+playwright-report/
