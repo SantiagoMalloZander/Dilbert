@@ -1,14 +1,21 @@
 import asyncio
 import logging
 from typing import Optional
-from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, filters, ContextTypes
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import (
+    ApplicationBuilder,
+    CallbackQueryHandler,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
 
 import buffer as buf
-import extractor
 import db
 import intake
 import proactive
+import review_queue
 import transcription
 from config import (
     TELEGRAM_BOT_TOKEN,
@@ -26,6 +33,8 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
+
+GROUP_REVIEW_PREVIEW_CHARS = 700
 
 # telegram_user_id (int) → seller row from Supabase
 # Loaded once at startup; empty dict means "no DB configured".
@@ -65,6 +74,150 @@ def _cache_seller(seller: Optional[dict]) -> None:
 
 def _is_private_chat(chat) -> bool:
     return bool(chat and chat.type == "private")
+
+
+def _review_keyboard(review_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [[
+            InlineKeyboardButton("Analizar", callback_data=f"review:analyze:{review_id}"),
+            InlineKeyboardButton("Descartar", callback_data=f"review:discard:{review_id}"),
+        ]]
+    )
+
+
+def _trim_transcript_preview(transcript: str, limit: int = GROUP_REVIEW_PREVIEW_CHARS) -> str:
+    if len(transcript) <= limit:
+        return transcript
+    return transcript[: limit - 3].rstrip() + "..."
+
+
+def _build_review_message(review: review_queue.PendingGroupReview) -> str:
+    created_at = review.created_at.strftime("%H:%M")
+    return (
+        f"📥 Conversación pendiente {review.review_id}\n"
+        f"💬 Chat: {review.source_chat_title}\n"
+        f"🕒 Detectada: {created_at}\n\n"
+        f"{_trim_transcript_preview(review.transcript)}\n\n"
+        f"Podés analizarla con el botón o con /analizar {review.review_id}."
+    )
+
+
+async def _notify_pending_review(
+    review: review_queue.PendingGroupReview,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> None:
+    for seller_telegram_id in review.allowed_seller_telegram_ids:
+        try:
+            await context.bot.send_message(
+                chat_id=seller_telegram_id,
+                text=_build_review_message(review),
+                reply_markup=_review_keyboard(review.review_id),
+            )
+        except Exception as exc:
+            logger.warning(
+                "could not notify seller=%s about pending review=%s: %s",
+                seller_telegram_id,
+                review.review_id,
+                exc,
+            )
+
+
+async def _enqueue_group_review(
+    chat_id: int,
+    context: ContextTypes.DEFAULT_TYPE,
+    seller_telegram_id: Optional[int],
+) -> None:
+    chat_buffer = buf.get_or_create(chat_id)
+    messages = buf.flush(chat_id)
+    if not messages:
+        return
+
+    seller_ids = [message.sender_id for message in messages if message.is_seller]
+    if seller_telegram_id and seller_telegram_id not in seller_ids:
+        seller_ids.append(seller_telegram_id)
+
+    if not seller_ids:
+        logger.info("dropping buffered chat=%s because no seller was identified", chat_id)
+        return
+
+    transcript = buf.format_for_llm(messages)
+    last_message = messages[-1]
+    review = review_queue.enqueue_review(
+        allowed_seller_telegram_ids=seller_ids,
+        source_chat_id=chat_id,
+        source_chat_title=chat_buffer.chat_title,
+        transcript=transcript,
+        last_message_id=last_message.message_id,
+        last_sender_id=last_message.sender_id,
+    )
+    logger.info(
+        "queued group review=%s chat=%s sellers=%s",
+        review.review_id,
+        chat_id,
+        review.allowed_seller_telegram_ids,
+    )
+    await _notify_pending_review(review, context)
+
+
+async def _run_pending_review(
+    review: review_queue.PendingGroupReview,
+    *,
+    private_chat_id: int,
+    control_message_id: int,
+    seller_user_id: int,
+    seller_name: str,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> bool:
+    await context.bot.send_message(
+        chat_id=private_chat_id,
+        text=f"🔍 Analizando {review.review_id} de {review.source_chat_title}...",
+    )
+
+    source_context = intake.PrivateMessageContext(
+        chat_id=private_chat_id,
+        message_id=control_message_id,
+        user_id=seller_user_id,
+        sender_name=seller_name,
+        seller_telegram_id=seller_user_id,
+        source_type="group_chat",
+        source_message_key=review.source_message_key,
+        source_chat_id=review.source_chat_id,
+        source_message_id=review.last_message_id,
+        source_user_id=review.last_sender_id,
+    )
+
+    try:
+        outcome = await intake.process_private_transcript(review.transcript, source_context)
+    except Exception as exc:
+        log_stage(
+            logger,
+            "crm_write",
+            level="error",
+            chat_id=private_chat_id,
+            message_id=control_message_id,
+            user_id=seller_user_id,
+            seller_telegram_id=seller_user_id,
+            source_type="group_chat",
+            source_message_key=review.source_message_key,
+            error=str(exc),
+        )
+        await context.bot.send_message(
+            chat_id=private_chat_id,
+            text="❌ Ocurrió un error inesperado mientras procesaba la conversación. No se guardó nada en el CRM.",
+        )
+        return False
+
+    await _send_outcome_messages(
+        private_chat_id,
+        context,
+        outcome.messages,
+        message_id=control_message_id,
+        user_id=seller_user_id,
+        seller_telegram_id=seller_user_id,
+        source_type="group_chat",
+    )
+    review_queue.pop_review(review.review_id)
+    return True
 
 
 async def _extract_private_message_text(
@@ -291,13 +444,16 @@ async def _handle_private_message(update: Update, context: ContextTypes.DEFAULT_
             text="🔄 Gracias, re-analizando con tu aclaración...",
         )
         source_context = intake.PrivateMessageContext(
-            chat_id=pending.source_chat_id or chat.id,
-            message_id=pending.source_message_id or msg.message_id,
-            user_id=pending.source_user_id or user.id,
+            chat_id=chat.id,
+            message_id=msg.message_id,
+            user_id=user.id,
             sender_name=user.full_name,
             seller_telegram_id=pending.seller_telegram_id or seller_telegram_id,
             source_type=pending.source_type or source_type,
             source_message_key=canonical_source_key,
+            source_chat_id=pending.source_chat_id,
+            source_message_id=pending.source_message_id,
+            source_user_id=pending.source_user_id,
         )
     else:
         transcript = intake.build_direct_transcript(
@@ -351,78 +507,12 @@ async def _handle_private_message(update: Update, context: ContextTypes.DEFAULT_
     )
 
 
-async def _trigger_analysis(
-    chat_id: int,
-    context: ContextTypes.DEFAULT_TYPE,
-    seller_telegram_id: Optional[int] = None,
-    transcript: Optional[str] = None,
-) -> None:
-    """Called when buffer is ready to be analyzed (timeout or count reached)."""
-    if transcript is None:
-        messages = buf.flush(chat_id)
-        if not messages:
-            return
-        transcript = buf.format_for_llm(messages)
-    logger.info("ANÁLISIS TRIGGERED chat=%s\n%s", chat_id, transcript)
-
-    await context.bot.send_message(chat_id=chat_id, text="🔍 Analizando conversación...")
-
-    try:
-        result = await extractor.extract(transcript)
-    except Exception as e:
-        logger.error("extractor failed: %s", e)
-        await context.bot.send_message(chat_id=chat_id, text=f"❌ Error al analizar: {e}")
-        return
-
-    # Write to Supabase if configured
-    lead = None
-    if SUPABASE_URL and seller_telegram_id:
-        try:
-            lead = db.upsert_lead_and_interaction(seller_telegram_id, transcript, result)
-        except Exception as e:
-            logger.error("db write failed: %s", e)
-
-    # Build confirmation message
-    amount_str = f"{result.estimated_amount:,} {result.currency}" if result.estimated_amount else "monto no detectado"
-    client_str = f"{result.client_name or '?'}" + (f" de {result.client_company}" if result.client_company else "")
-    db_status = "💾 Guardado en CRM" if lead else ("⚠️ Vendedor no registrado en CRM" if SUPABASE_URL else "")
-
-    await context.bot.send_message(
-        chat_id=chat_id,
-        text=(
-            f"✅ Extracción completada\n"
-            f"👤 Cliente: {client_str}\n"
-            f"💰 Monto: {amount_str}\n"
-            f"📦 Producto: {result.product_interest or 'no detectado'}\n"
-            f"😶 Sentimiento: {result.sentiment}\n"
-            f"📋 Status: {result.suggested_status}\n"
-            f"📝 Resumen: {result.summary}"
-            + (f"\n{db_status}" if db_status else "")
-        ),
-    )
-
-    if result.ambiguities:
-        proactive.set_pending(
-            chat_id=chat_id,
-            previous_transcript=transcript,
-            seller_telegram_id=seller_telegram_id,
-            questions=result.ambiguities,
-        )
-        for ambiguity in result.ambiguities:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=f"🤖 Detecté información nueva pero tengo una duda: {ambiguity}. ¿Podés confirmar?",
-            )
-    else:
-        proactive.clear_pending(chat_id)
-
-
 async def _schedule_timeout(chat_id: int, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Wait BUFFER_TIMEOUT_SECONDS then trigger analysis if still no new messages."""
     await asyncio.sleep(BUFFER_TIMEOUT_SECONDS)
-    logger.info("timeout reached chat=%s — triggering analysis", chat_id)
+    logger.info("timeout reached chat=%s — queueing private review", chat_id)
     chat_buffer = buf.get_or_create(chat_id)
-    await _trigger_analysis(chat_id, context, seller_telegram_id=chat_buffer.seller_telegram_id)
+    await _enqueue_group_review(chat_id, context, seller_telegram_id=chat_buffer.seller_telegram_id)
 
 
 async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -442,26 +532,13 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
     is_seller = _is_seller(user.id)
 
-    # If the bot asked a clarification and this is the seller's reply, resolve it
-    if is_seller and proactive.has_pending(chat.id):
-        enriched = proactive.build_enriched_transcript(chat.id, msg.text)
-        pending = proactive.get_pending(chat.id)
-        proactive.clear_pending(chat.id)
-        logger.info("clarification received chat=%s — re-analyzing with context", chat.id)
-        await context.bot.send_message(chat.id, "🔄 Gracias, re-analizando con tu aclaración...")
-        await _trigger_analysis(
-            chat.id,
-            context,
-            seller_telegram_id=pending.seller_telegram_id,
-            transcript=enriched,
-        )
-        return
-
     chat_buffer = buf.add_message(
         chat_id=chat.id,
+        chat_title=chat.title,
         text=msg.text,
         sender_name=user.full_name,
         sender_id=user.id,
+        message_id=msg.message_id,
         is_seller=is_seller,
     )
 
@@ -481,29 +558,131 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     if buf.should_trigger_by_count(chat.id):
         if chat_buffer.timeout_task and not chat_buffer.timeout_task.done():
             chat_buffer.timeout_task.cancel()
-        await _trigger_analysis(chat.id, context, seller_telegram_id=chat_buffer.seller_telegram_id)
+        await _enqueue_group_review(chat.id, context, seller_telegram_id=chat_buffer.seller_telegram_id)
 
 
 async def cmd_analizar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.effective_chat.id
-    if buf.message_count(chat_id) == 0:
-        await update.message.reply_text("No hay mensajes acumulados para analizar.")
+    chat = update.effective_chat
+    user = update.effective_user
+    msg = update.effective_message
+
+    if not chat or not user or not msg:
         return
-    chat_buffer = buf.get_or_create(chat_id)
-    # Prefer the seller already identified in the buffer; fall back to whoever ran the command
-    # (if it's a seller) so that /analizar from the seller still works correctly.
-    seller_id = chat_buffer.seller_telegram_id
-    if seller_id is None and update.effective_user and _is_seller(update.effective_user.id):
-        seller_id = update.effective_user.id
-    await _trigger_analysis(chat_id, context, seller_telegram_id=seller_id)
+
+    if not _is_private_chat(chat):
+        await update.message.reply_text("Usá /analizar por privado. Si querés ver la cola, mandame /pendientes.")
+        return
+
+    review_id = context.args[0].upper() if context.args else None
+    review = (
+        review_queue.get_review(review_id)
+        if review_id
+        else review_queue.peek_next_review(user.id)
+    )
+
+    if not review or user.id not in review.allowed_seller_telegram_ids:
+        await update.message.reply_text("No tengo conversaciones pendientes para analizar.")
+        return
+
+    await _run_pending_review(
+        review,
+        private_chat_id=chat.id,
+        control_message_id=msg.message_id,
+        seller_user_id=user.id,
+        seller_name=user.full_name or user.username or f"Telegram User {user.id}",
+        context=context,
+    )
+
+
+async def cmd_pendientes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat = update.effective_chat
+    user = update.effective_user
+
+    if not chat or not user:
+        return
+
+    if not _is_private_chat(chat):
+        await update.message.reply_text("Escribime por privado y te muestro las conversaciones pendientes.")
+        return
+
+    reviews = review_queue.list_reviews_for_seller(user.id)
+    if not reviews:
+        await update.message.reply_text("No tengo conversaciones pendientes para revisar.")
+        return
+
+    await update.message.reply_text(
+        f"Tengo {len(reviews)} conversación{'es' if len(reviews) != 1 else ''} pendiente{'s' if len(reviews) != 1 else ''}."
+    )
+    for review in reviews:
+        await context.bot.send_message(
+            chat_id=chat.id,
+            text=_build_review_message(review),
+            reply_markup=_review_keyboard(review.review_id),
+        )
+
+
+async def on_review_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    user = update.effective_user
+    chat = update.effective_chat
+
+    if not query or not user or not chat or not _is_private_chat(chat):
+        return
+
+    await query.answer()
+
+    try:
+        _, action, review_id = (query.data or "").split(":", 2)
+    except ValueError:
+        return
+
+    review = review_queue.get_review(review_id)
+    if not review or user.id not in review.allowed_seller_telegram_ids:
+        await context.bot.send_message(
+            chat_id=chat.id,
+            text="Esa conversación ya no está disponible.",
+        )
+        return
+
+    if query.message:
+        try:
+            await query.edit_message_reply_markup(reply_markup=None)
+        except Exception:
+            logger.debug("could not clear review keyboard for %s", review_id)
+
+    if action == "discard":
+        review_queue.pop_review(review_id)
+        await context.bot.send_message(
+            chat_id=chat.id,
+            text=f"🗑️ Descarté {review.review_id} de {review.source_chat_title}.",
+        )
+        return
+
+    if action != "analyze":
+        return
+
+    control_message_id = query.message.message_id if query.message else 0
+    await _run_pending_review(
+        review,
+        private_chat_id=chat.id,
+        control_message_id=control_message_id,
+        seller_user_id=user.id,
+        seller_name=user.full_name or user.username or f"Telegram User {user.id}",
+        context=context,
+    )
 
 
 async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.effective_chat.id
+    chat = update.effective_chat
     user = update.effective_user
-    count = buf.message_count(chat_id)
+
+    if not chat or not user:
+        return
+
+    count = buf.message_count(chat.id)
+    pending_reviews = len(review_queue.list_reviews_for_seller(user.id)) if _is_private_chat(chat) else 0
     await update.message.reply_text(
-        f"🤖 Bot activo\n📨 Mensajes en buffer: {count}\n⏱ Timeout: {BUFFER_TIMEOUT_SECONDS}s\n🪪 Tu Telegram ID: {user.id}"
+        f"🤖 Bot activo\n📨 Mensajes en buffer: {count}\n🗂 Revisiones pendientes: {pending_reviews}\n⏱ Timeout: {BUFFER_TIMEOUT_SECONDS}s\n🪪 Tu Telegram ID: {user.id}"
     )
 
 
@@ -540,11 +719,11 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     _cache_seller(seller)
     if created:
         await update.message.reply_text(
-            "✅ Te registré automáticamente como vendedor. Ya podés mandarme texto o audio y lo cargo al CRM."
+            "✅ Te registré automáticamente como vendedor. Ya podés mandarme texto o audio, y también te voy a avisar por acá cuando haya conversaciones listas para revisar."
         )
     else:
         await update.message.reply_text(
-            "✅ Ya estabas registrado. Mandame texto o audio por este chat y lo cargo al CRM."
+            "✅ Ya estabas registrado. Mandame texto o audio por este chat y usá /pendientes para ver conversaciones grupales listas para revisar."
         )
 
 
@@ -556,6 +735,7 @@ async def post_init(app) -> None:
 async def post_shutdown(app) -> None:
     """Cancel any pending timeout tasks on clean shutdown."""
     buf.cancel_all_timeouts()
+    review_queue.clear_all()
 
 
 def main() -> None:
@@ -570,8 +750,10 @@ def main() -> None:
     app.add_handler(
         MessageHandler((filters.TEXT | filters.VOICE | filters.AUDIO) & ~filters.COMMAND, on_message)
     )
+    app.add_handler(CallbackQueryHandler(on_review_callback, pattern=r"^review:"))
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("analizar", cmd_analizar))
+    app.add_handler(CommandHandler("pendientes", cmd_pendientes))
     app.add_handler(CommandHandler("status", cmd_status))
 
     logger.info("Bot iniciado. Esperando mensajes...")

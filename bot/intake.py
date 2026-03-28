@@ -22,13 +22,16 @@ class PrivateMessageContext:
     seller_telegram_id: int
     source_type: str
     source_message_key: str
+    source_chat_id: Optional[int] = None
+    source_message_id: Optional[int] = None
+    source_user_id: Optional[int] = None
 
     def as_source_metadata(self) -> InteractionSourceMetadata:
         return InteractionSourceMetadata(
             source_type=self.source_type,
-            source_chat_id=self.chat_id,
-            source_message_id=self.message_id,
-            source_user_id=self.user_id,
+            source_chat_id=self.source_chat_id if self.source_chat_id is not None else self.chat_id,
+            source_message_id=self.source_message_id if self.source_message_id is not None else self.message_id,
+            source_user_id=self.source_user_id if self.source_user_id is not None else self.user_id,
             source_message_key=self.source_message_key,
         )
 
@@ -210,15 +213,16 @@ async def process_private_transcript(
     )
 
     if not validation.can_write:
+        source_metadata = context.as_source_metadata()
         proactive.set_pending(
             chat_id=context.chat_id,
             previous_transcript=transcript,
             seller_telegram_id=context.seller_telegram_id,
             questions=validation.questions,
             source_type=context.source_type,
-            source_chat_id=context.chat_id,
-            source_message_id=context.message_id,
-            source_user_id=context.user_id,
+            source_chat_id=source_metadata.source_chat_id,
+            source_message_id=source_metadata.source_message_id,
+            source_user_id=source_metadata.source_user_id,
             source_message_key=context.source_message_key,
         )
         messages = [_build_validation_message(result, validation)]

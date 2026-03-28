@@ -49,6 +49,59 @@ class IntakeTests(unittest.IsolatedAsyncioTestCase):
             source_message_key="10:20",
         )
 
+    def test_source_metadata_can_point_to_original_group_chat(self) -> None:
+        context = intake.PrivateMessageContext(
+            chat_id=900,
+            message_id=901,
+            user_id=30,
+            sender_name="Demo Seller",
+            seller_telegram_id=30,
+            source_type="group_chat",
+            source_message_key="group-review:R0001",
+            source_chat_id=-123456,
+            source_message_id=777,
+            source_user_id=55,
+        )
+
+        metadata = context.as_source_metadata()
+
+        self.assertEqual("group_chat", metadata.source_type)
+        self.assertEqual(-123456, metadata.source_chat_id)
+        self.assertEqual(777, metadata.source_message_id)
+        self.assertEqual(55, metadata.source_user_id)
+        self.assertEqual("group-review:R0001", metadata.source_message_key)
+
+    async def test_group_review_clarification_keeps_original_source_metadata(self) -> None:
+        result = self.make_result(client_name=None)
+        context = intake.PrivateMessageContext(
+            chat_id=900,
+            message_id=901,
+            user_id=30,
+            sender_name="Demo Seller",
+            seller_telegram_id=30,
+            source_type="group_chat",
+            source_message_key="group-review:R0001",
+            source_chat_id=-123456,
+            source_message_id=777,
+            source_user_id=55,
+        )
+
+        with patch.object(intake.db, "get_interaction_by_source_message_key", return_value=None), patch.object(
+            intake.extractor, "extract", AsyncMock(return_value=result)
+        ), patch.object(
+            intake.db, "get_seller_by_telegram_id", return_value={"id": "seller-db-id"}
+        ), patch.object(
+            intake.proactive, "set_pending", Mock()
+        ) as set_pending_mock:
+            outcome = await intake.process_private_transcript("texto normalizado", context)
+
+        self.assertTrue(outcome.needs_clarification)
+        _, kwargs = set_pending_mock.call_args
+        self.assertEqual(900, kwargs["chat_id"])
+        self.assertEqual(-123456, kwargs["source_chat_id"])
+        self.assertEqual(777, kwargs["source_message_id"])
+        self.assertEqual(55, kwargs["source_user_id"])
+
     async def test_successful_private_text_flow_reuses_crm_writer(self) -> None:
         result = self.make_result()
         with patch.object(intake.db, "get_interaction_by_source_message_key", return_value=None), patch.object(

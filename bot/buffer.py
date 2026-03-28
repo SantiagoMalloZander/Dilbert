@@ -14,6 +14,7 @@ class BufferedMessage:
     text: str
     sender_name: str
     sender_id: int
+    message_id: int
     is_seller: bool
     timestamp: datetime
 
@@ -21,6 +22,7 @@ class BufferedMessage:
 @dataclass
 class ChatBuffer:
     chat_id: int
+    chat_title: Optional[str] = None
     messages: list[BufferedMessage] = field(default_factory=list)
     timeout_task: Optional[asyncio.Task] = field(default=None, repr=False)
     seller_telegram_id: Optional[int] = field(default=None)
@@ -38,17 +40,21 @@ def get_or_create(chat_id: int) -> ChatBuffer:
 
 def add_message(
     chat_id: int,
+    chat_title: Optional[str],
     text: str,
     sender_name: str,
     sender_id: int,
+    message_id: int,
     is_seller: bool,
 ) -> ChatBuffer:
     buf = get_or_create(chat_id)
+    buf.chat_title = chat_title or buf.chat_title
     buf.messages.append(
         BufferedMessage(
             text=text,
             sender_name=sender_name,
             sender_id=sender_id,
+            message_id=message_id,
             is_seller=is_seller,
             timestamp=datetime.now(timezone.utc),
         )
