@@ -9,6 +9,7 @@ import { Lead, Interaction } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SourceBadge } from "@/components/source-badge";
 
 const statusLabels: Record<string, string> = {
   new: "Nuevo",
@@ -174,12 +175,50 @@ export default function LeadDetail() {
               <Card key={interaction.id}>
                 <CardContent className="pt-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(interaction.created_at)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(interaction.created_at)}
+                      </span>
+                      <SourceBadge sourceType={interaction.source_type} />
+                    </div>
                   </div>
                   {interaction.summary && (
                     <p className="text-sm">{interaction.summary}</p>
+                  )}
+                  {interaction.source_type === "fathom_meet" && interaction.extracted_data && (
+                    <details className="text-xs mt-1">
+                      <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                        Ver detalles de la reunión
+                      </summary>
+                      <div className="mt-2 p-3 bg-muted rounded-md space-y-1">
+                        {interaction.extracted_data.recording_url && (
+                          <div>
+                            <span className="text-muted-foreground">Grabación: </span>
+                            <a
+                              href={interaction.extracted_data.recording_url as string}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              Ver en Fathom
+                            </a>
+                          </div>
+                        )}
+                        {interaction.extracted_data.duration && (
+                          <div>
+                            <span className="text-muted-foreground">Duración: </span>
+                            {Math.round((interaction.extracted_data.duration as number) / 60)} min
+                          </div>
+                        )}
+                        {Array.isArray(interaction.extracted_data.participants) &&
+                          interaction.extracted_data.participants.length > 0 && (
+                            <div>
+                              <span className="text-muted-foreground">Participantes: </span>
+                              {(interaction.extracted_data.participants as string[]).join(", ")}
+                            </div>
+                          )}
+                      </div>
+                    </details>
                   )}
                   {interaction.extracted_data && (
                     <details className="text-xs">
