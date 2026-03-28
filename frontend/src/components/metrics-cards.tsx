@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Lead } from "@/lib/types";
 
 export function MetricsCards({ leads }: { leads: Lead[] }) {
@@ -16,56 +15,51 @@ export function MetricsCards({ leads }: { leads: Lead[] }) {
   const sentimentRate =
     totalLeads > 0 ? Math.round((positiveCount / totalLeads) * 100) : 0;
 
+  const stats = [
+    {
+      label: "Total Leads",
+      value: String(totalLeads),
+      sub: "en pipeline",
+      color: "text-foreground",
+    },
+    {
+      label: "Negociando",
+      value: String(negotiating),
+      sub: "activos ahora",
+      color: "text-[#D4420A]",
+    },
+    {
+      label: "Cerrados / Ganados",
+      value: String(closedWon),
+      sub: "deals cerrados",
+      color: "text-[#1A7A6E]",
+    },
+    {
+      label: "Pipeline Total",
+      value: `$${totalPipeline.toLocaleString()}`,
+      sub: `${sentimentRate}% sentimiento positivo`,
+      color: "text-foreground",
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Total Leads
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold">{totalLeads}</div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            En Negociacion
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold">{negotiating}</div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Cerrados (Ganados)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold text-green-600">{closedWon}</div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Pipeline Total
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold">
-            ${totalPipeline.toLocaleString()}
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            {sentimentRate}% sentimiento positivo
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {stats.map((stat) => (
+        <div
+          key={stat.label}
+          className="bg-card border rounded-lg p-4 flex flex-col gap-2.5"
+        >
+          <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            {stat.label}
           </p>
-        </CardContent>
-      </Card>
+          <div
+            className={`font-heading text-5xl leading-none tracking-wide ${stat.color}`}
+          >
+            {stat.value}
+          </div>
+          <p className="text-xs text-muted-foreground">{stat.sub}</p>
+        </div>
+      ))}
     </div>
   );
 }

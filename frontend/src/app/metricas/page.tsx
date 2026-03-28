@@ -2,17 +2,19 @@ import { AnalyticsPanel } from "@/components/analytics-panel";
 
 export default function MetricasPage() {
   return (
-    <div className="p-6 space-y-6">
-      <div className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+    <div className="flex flex-col h-full">
+      <div className="px-6 py-5 border-b bg-card/60">
+        <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           Métricas del pipeline
         </p>
-        <h2 className="text-3xl font-semibold tracking-tight">Métricas</h2>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="font-heading text-4xl tracking-wide mt-1 leading-none">MÉTRICAS</h1>
+        <p className="text-sm text-muted-foreground mt-1.5">
           Funnel de conversión, distribución de sentimiento y revenue por producto.
         </p>
       </div>
-      <AnalyticsPanel />
+      <div className="p-6">
+        <AnalyticsPanel />
+      </div>
     </div>
   );
 }

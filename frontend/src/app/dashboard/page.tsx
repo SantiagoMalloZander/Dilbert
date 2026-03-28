@@ -55,18 +55,25 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+    <div className="flex flex-col h-full">
+      {/* Page header */}
+      <div className="px-6 py-5 border-b bg-card/60">
+        <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           Vista operativa
         </p>
-        <h2 className="text-3xl font-semibold tracking-tight">Pipeline</h2>
-        <p className="text-sm text-muted-foreground">
-          Leads activos en tiempo real. Se actualiza automáticamente cuando el bot procesa conversaciones.
+        <h1 className="font-heading text-4xl tracking-wide mt-1 leading-none">
+          PIPELINE
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1.5">
+          Leads en tiempo real. Se actualiza automáticamente cuando el bot procesa conversaciones.
         </p>
       </div>
-      <MetricsCards leads={leads} />
-      <LeadsTable leads={leads} loading={loading} />
+
+      {/* Content */}
+      <div className="p-6 space-y-5">
+        <MetricsCards leads={leads} />
+        <LeadsTable leads={leads} loading={loading} />
+      </div>
     </div>
   );
 }

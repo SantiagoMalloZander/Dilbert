@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 const CRM_OPTIONS: { name: string; icon: string; href?: string }[] = [
   { name: "Salesforce", icon: "☁️" },
@@ -30,7 +29,7 @@ function NavLink({
   exact = false,
 }: {
   href: string;
-  icon: React.ReactNode;
+  icon: string;
   label: string;
   exact?: boolean;
 }) {
@@ -40,13 +39,13 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+      className={`flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-all ${
         isActive
-          ? "bg-primary text-primary-foreground font-medium"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          ? "bg-[#D4420A] text-[#F5F0E8] font-medium"
+          : "text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8]"
       }`}
     >
-      <span className="text-base leading-none">{icon}</span>
+      <span className="text-sm leading-none">{icon}</span>
       {label}
     </Link>
   );
@@ -54,7 +53,7 @@ function NavLink({
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <p className="mb-1 mt-4 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+    <p className="mb-1 mt-5 px-3 text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-[#F5F0E8]/28">
       {label}
     </p>
   );
@@ -66,18 +65,18 @@ function DisabledCRMOption({ name, icon }: { name: string; icon: string }) {
   return (
     <button
       onClick={() => setClicked(true)}
-      className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm text-muted-foreground/60 hover:bg-muted transition-colors"
+      className="flex w-full items-center justify-between rounded px-3 py-2 text-sm text-[#F5F0E8]/38 hover:bg-white/5 hover:text-[#F5F0E8]/55 transition-colors"
     >
       <span className="flex items-center gap-2.5">
-        <span className="text-base leading-none">{icon}</span>
+        <span className="text-sm leading-none">{icon}</span>
         {name}
       </span>
       {clicked ? (
-        <span className="text-xs text-muted-foreground">No disponible</span>
+        <span className="text-[9px] font-mono text-[#F5F0E8]/25">No disponible</span>
       ) : (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal opacity-60">
+        <span className="text-[9px] font-mono border border-[#F5F0E8]/18 rounded px-1.5 py-0.5 text-[#F5F0E8]/28 uppercase tracking-wider">
           Conectar
-        </Badge>
+        </span>
       )}
     </button>
   );
@@ -88,16 +87,18 @@ export function Sidebar() {
   const [channelsOpen, setChannelsOpen] = useState(false);
 
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col border-r bg-card px-3 py-4">
+    <aside className="flex h-full w-56 shrink-0 flex-col bg-[#1A1A1A] px-3 py-5 border-r border-[#F5F0E8]/8">
       {/* Brand */}
-      <div className="mb-4 px-3">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold tracking-tight">Dilbert</span>
-          <Badge variant="secondary" className="text-[10px] px-1.5 h-4 font-normal">
-            CRM
-          </Badge>
+      <div className="mb-6 px-3">
+        <div className="font-heading text-[22px] tracking-wider text-[#D4420A] leading-none">
+          DILBERT.
         </div>
-        <p className="text-[10px] text-muted-foreground mt-0.5">hackITBA 2026</p>
+        <div className="flex items-center gap-2 mt-1.5">
+          <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#F5F0E8]/28">
+            hackITBA 2026
+          </span>
+          <span className="h-1.5 w-1.5 rounded-full bg-[#1A7A6E] animate-pulse shrink-0" />
+        </div>
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
@@ -111,21 +112,21 @@ export function Sidebar() {
         <SectionLabel label="CRM" />
         <button
           onClick={() => setCrmOpen(!crmOpen)}
-          className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="flex w-full items-center justify-between rounded px-3 py-2 text-sm text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8] transition-colors"
         >
           <span className="flex items-center gap-2.5">
-            <span className="text-base leading-none">🗄️</span>
+            <span className="text-sm leading-none">🗄️</span>
             Conectar CRM
           </span>
           {crmOpen ? (
-            <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+            <ChevronDown className="h-3 w-3 shrink-0 opacity-35" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+            <ChevronRight className="h-3 w-3 shrink-0 opacity-35" />
           )}
         </button>
 
         {crmOpen && (
-          <div className="ml-3 flex flex-col gap-0.5 border-l pl-3">
+          <div className="ml-3 flex flex-col gap-0.5 border-l border-[#F5F0E8]/10 pl-3">
             {CRM_OPTIONS.map((crm) =>
               crm.href ? (
                 <NavLink key={crm.name} href={crm.href} icon={crm.icon} label={crm.name} />
@@ -133,7 +134,7 @@ export function Sidebar() {
                 <DisabledCRMOption key={crm.name} name={crm.name} icon={crm.icon} />
               )
             )}
-            <div className="my-1 border-t" />
+            <div className="my-1 border-t border-[#F5F0E8]/8" />
             <NavLink href="/dashboard" icon="🤖" label="Dilbert CRM" exact />
           </div>
         )}
@@ -142,43 +143,45 @@ export function Sidebar() {
         <SectionLabel label="Configuración" />
         <button
           onClick={() => setChannelsOpen(!channelsOpen)}
-          className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="flex w-full items-center justify-between rounded px-3 py-2 text-sm text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8] transition-colors"
         >
           <span className="flex items-center gap-2.5">
-            <span className="text-base leading-none">📡</span>
+            <span className="text-sm leading-none">📡</span>
             Canales del bot
           </span>
           {channelsOpen ? (
-            <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+            <ChevronDown className="h-3 w-3 shrink-0 opacity-35" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+            <ChevronRight className="h-3 w-3 shrink-0 opacity-35" />
           )}
         </button>
 
         {channelsOpen && (
-          <div className="ml-3 flex flex-col gap-0.5 border-l pl-3">
+          <div className="ml-3 flex flex-col gap-0.5 border-l border-[#F5F0E8]/10 pl-3">
             {CHANNELS.map((ch) => (
               <div
                 key={ch.name}
-                className="flex items-center justify-between rounded-lg px-3 py-2 text-sm"
+                className="flex items-center justify-between rounded px-3 py-2 text-sm"
               >
-                <span className="flex items-center gap-2.5 text-muted-foreground">
-                  <span className="text-base leading-none">{ch.icon}</span>
+                <span className="flex items-center gap-2.5 text-[#F5F0E8]/45">
+                  <span className="text-sm leading-none">{ch.icon}</span>
                   {ch.name}
                 </span>
                 {ch.active ? (
-                  <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <span className="flex items-center gap-1 text-[10px] text-[#1A7A6E] font-medium">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#1A7A6E] animate-pulse" />
                     Activo
                   </span>
                 ) : (
-                  <span className="text-[10px] text-muted-foreground/50">Pronto</span>
+                  <span className="text-[9px] font-mono text-[#F5F0E8]/22 uppercase tracking-wider">
+                    Pronto
+                  </span>
                 )}
               </div>
             ))}
             <Link
               href="/configuracion"
-              className="mt-1 flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              className="mt-1 flex items-center gap-2 rounded px-3 py-2 text-xs text-[#F5F0E8]/35 hover:bg-white/5 hover:text-[#F5F0E8]/60 transition-colors"
             >
               Ver configuración →
             </Link>
@@ -187,10 +190,14 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="mt-auto pt-4 border-t">
-        <div className="px-3 text-[10px] text-muted-foreground/50">
-          <p>Demo Company</p>
-          <p className="mt-0.5">2 vendedores activos</p>
+      <div className="mt-auto pt-4 border-t border-[#F5F0E8]/8">
+        <div className="px-3 space-y-0.5">
+          <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#F5F0E8]/25">
+            Demo Company
+          </p>
+          <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#F5F0E8]/18">
+            2 vendedores activos
+          </p>
         </div>
       </div>
     </aside>
