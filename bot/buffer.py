@@ -23,6 +23,7 @@ class ChatBuffer:
     chat_id: int
     messages: list[BufferedMessage] = field(default_factory=list)
     timeout_task: Optional[asyncio.Task] = field(default=None, repr=False)
+    seller_telegram_id: Optional[int] = field(default=None)
 
 
 # Global buffer: chat_id → ChatBuffer

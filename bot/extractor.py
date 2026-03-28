@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 _client: Optional[AsyncOpenAI] = None
 
 
-def _get_client() -> AsyncOpenAI:
+def get_openai_client() -> AsyncOpenAI:
     global _client
 
     if _client is None:
@@ -25,6 +25,10 @@ def _get_client() -> AsyncOpenAI:
         _client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
     return _client
+
+
+def _get_client() -> AsyncOpenAI:
+    return get_openai_client()
 
 
 @dataclass

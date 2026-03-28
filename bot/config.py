@@ -20,6 +20,14 @@ TELEGRAM_BOT_TOKEN: str = _require_env("TELEGRAM_BOT_TOKEN")
 OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
 SUPABASE_URL: Optional[str] = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY: Optional[str] = os.getenv("SUPABASE_SERVICE_KEY")
+DEFAULT_SELLER_COMPANY_ID: str = os.getenv(
+    "DEFAULT_SELLER_COMPANY_ID",
+    "11111111-1111-1111-1111-111111111111",
+)
+DEFAULT_SELLER_COMPANY_NAME: str = os.getenv(
+    "DEFAULT_SELLER_COMPANY_NAME",
+    "Demo Company",
+)
 
 # Buffer trigger thresholds
 BUFFER_TIMEOUT_SECONDS: int = 180       # 3 min inactivity → trigger analysis
