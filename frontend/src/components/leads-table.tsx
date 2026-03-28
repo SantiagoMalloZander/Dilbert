@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2, PackageOpen } from "lucide-react";
 import Link from "next/link";
 import {
   Table,
@@ -10,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Lead } from "@/lib/types";
+import { formatDate } from "@/lib/utils";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   new: { label: "Nuevo", className: "bg-[#EDE8DF] text-[#6B6B6B] border-[rgba(42,26,10,0.15)]" },
@@ -25,19 +27,12 @@ const sentimentConfig: Record<string, { label: string; className: string }> = {
   negative: { label: "Negativo", className: "text-[#C0392B] bg-red-50 border-red-200" },
 };
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export function LeadsTable({ leads, loading }: { leads: Lead[]; loading: boolean }) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16 text-muted-foreground">
+      <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
         <span className="text-[10px] font-mono uppercase tracking-[0.2em]">Cargando leads...</span>
       </div>
     );
@@ -45,7 +40,8 @@ export function LeadsTable({ leads, loading }: { leads: Lead[]; loading: boolean
 
   if (leads.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-2">
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <PackageOpen className="h-8 w-8 text-muted-foreground/40" />
         <p className="font-heading text-2xl tracking-wide text-muted-foreground">SIN LEADS</p>
         <p className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
           Los leads aparecen cuando el bot procesa conversaciones

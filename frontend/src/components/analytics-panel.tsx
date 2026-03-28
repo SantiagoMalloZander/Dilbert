@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -48,15 +49,17 @@ export function AnalyticsPanel() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Cargando analytics por comprador...
+      <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="text-[10px] font-mono uppercase tracking-[0.2em]">Cargando analytics...</span>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="rounded-2xl border border-dashed px-6 py-12 text-center text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-dashed px-6 py-12 flex flex-col items-center gap-2 text-center text-sm text-muted-foreground">
+        <AlertCircle className="h-7 w-7 text-muted-foreground/40" />
         {error || "No se pudo cargar el analisis"}
       </div>
     );

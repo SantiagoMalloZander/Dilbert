@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { Inbox, Loader2 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { Lead, Interaction } from "@/lib/types";
+import { formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -70,8 +72,9 @@ export default function LeadDetail() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Cargando...
+      <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="text-[10px] font-mono uppercase tracking-[0.2em]">Cargando lead...</span>
       </div>
     );
   }
@@ -161,9 +164,10 @@ export default function LeadDetail() {
           Interacciones ({interactions.length})
         </h3>
         {interactions.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
+          <div className="rounded-2xl border border-dashed px-6 py-12 flex flex-col items-center gap-2 text-center text-sm text-muted-foreground">
+            <Inbox className="h-7 w-7 text-muted-foreground/40" />
             No hay interacciones registradas
-          </p>
+          </div>
         ) : (
           <div className="space-y-4">
             {interactions.map((interaction) => (
@@ -171,7 +175,7 @@ export default function LeadDetail() {
                 <CardContent className="pt-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
-                      {new Date(interaction.created_at).toLocaleString("es-AR")}
+                      {formatDate(interaction.created_at)}
                     </span>
                   </div>
                   {interaction.summary && (

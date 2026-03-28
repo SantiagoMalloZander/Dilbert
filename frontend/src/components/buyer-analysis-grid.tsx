@@ -1,3 +1,4 @@
+import { PackageOpen } from "lucide-react";
 import Link from "next/link";
 
 import { PurchaseSignalBadge } from "@/components/purchase-signal-badge";
@@ -35,7 +36,8 @@ export function BuyerAnalysisGrid({
 
   if (visibleClients.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed px-6 py-12 text-center text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-dashed px-6 py-12 flex flex-col items-center gap-2 text-center text-sm text-muted-foreground">
+        <PackageOpen className="h-7 w-7 text-muted-foreground/40" />
         Todavia no hay suficientes compradores para construir un analisis individual.
       </div>
     );

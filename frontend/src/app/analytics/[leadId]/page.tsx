@@ -10,6 +10,7 @@ import {
   getStatusLabel,
 } from "@/lib/analytics";
 import { getAnalyticsContext } from "@/lib/queries";
+import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -23,13 +24,6 @@ function formatMoney(amount: number | null, currency: string | null) {
   }).format(amount)}`;
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("es-AR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}
 
 export default async function AnalyticsClientDetailPage({
   params,
