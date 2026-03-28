@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { Lead } from "@/lib/types";
 import { LeadsTable } from "@/components/leads-table";
@@ -9,23 +10,36 @@ import { AddLeadDialog } from "@/components/add-lead-dialog";
 
 const DEMO_COMPANY_ID = "11111111-1111-1111-1111-111111111111";
 
+type RealtimeStatus = "connecting" | "connected" | "disconnected";
+
 export default function Dashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>("connecting");
 
-  useEffect(() => {
+  const fetchLeads = useCallback(async () => {
     const supabase = getSupabaseBrowserClient();
-
-    async function fetchLeads() {
-      const { data, error } = await supabase
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: fetchError } = await supabase
         .from("leads")
         .select("*, sellers(name)")
         .eq("company_id", DEMO_COMPANY_ID)
         .order("last_interaction", { ascending: false });
 
-      if (!error && data) setLeads(data);
+      if (fetchError) throw new Error(fetchError.message);
+      setLeads(data ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al cargar los leads");
+    } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
 
     fetchLeads();
 
@@ -48,12 +62,16 @@ export default function Dashboard() {
           if (data) setLeads(data);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") setRealtimeStatus("connected");
+        else if (status === "CLOSED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT")
+          setRealtimeStatus("disconnected");
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchLeads]);
 
   return (
     <div className="flex flex-col h-full">
@@ -76,7 +94,47 @@ export default function Dashboard() {
       {/* Content */}
       <div className="p-6 space-y-5">
         <MetricsCards leads={leads} />
-        <LeadsTable leads={leads} loading={loading} />
+
+        {/* Leads panel header with realtime indicator */}
+        <div className="flex items-center justify-between">
+          <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            Leads activos
+          </p>
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`inline-block h-2 w-2 rounded-full ${
+                realtimeStatus === "connected"
+                  ? "bg-[#1A7A6E]"
+                  : realtimeStatus === "connecting"
+                  ? "bg-[#F5D53F] animate-pulse"
+                  : "bg-red-500"
+              }`}
+            />
+            <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
+              {realtimeStatus === "connected"
+                ? "En vivo"
+                : realtimeStatus === "connecting"
+                ? "Conectando"
+                : "Desconectado"}
+            </span>
+          </div>
+        </div>
+
+        {error ? (
+          <div className="rounded-2xl border border-dashed px-6 py-12 flex flex-col items-center gap-3 text-center">
+            <AlertCircle className="h-8 w-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">{error}</p>
+            <button
+              onClick={fetchLeads}
+              className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] px-3 py-1.5 rounded-md border border-border hover:bg-muted transition-colors"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Reintentar
+            </button>
+          </div>
+        ) : (
+          <LeadsTable leads={leads} loading={loading} />
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import signal
 from typing import Optional
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
@@ -13,6 +14,7 @@ from telegram.ext import (
 
 import buffer as buf
 import db
+import fathom_webhook
 import intake
 import proactive
 import review_queue
@@ -22,6 +24,7 @@ from config import (
     BUFFER_TIMEOUT_SECONDS,
     SUPABASE_URL,
     SUPABASE_SERVICE_KEY,
+    PORT,
 )
 from observability import log_stage
 
@@ -738,6 +741,38 @@ async def post_shutdown(app) -> None:
     review_queue.clear_all()
 
 
+async def _run(app) -> None:
+    """
+    Runs the Telegram bot and Fathom webhook HTTP server on the same asyncio event loop.
+    Uses the PTB v21 lower-level async API instead of the blocking run_polling().
+    """
+    stop_event = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(sig, stop_event.set)
+
+    webhook_runner = None
+    async with app:  # triggers post_init on enter, post_shutdown on exit
+        await app.start()
+        await app.updater.start_polling(drop_pending_updates=True)
+        logger.info("Bot iniciado. Esperando mensajes...")
+
+        try:
+            webhook_runner, _site = await fathom_webhook.create_server(PORT)
+        except Exception as exc:
+            logger.error("Failed to start Fathom webhook server on port %d: %s", PORT, exc)
+            # Telegram bot continues working even if webhook server fails to start
+
+        await stop_event.wait()
+        logger.info("Shutdown signal received — stopping...")
+
+        await app.updater.stop()
+        await app.stop()
+
+    if webhook_runner:
+        await webhook_runner.cleanup()
+
+
 def main() -> None:
     app = (
         ApplicationBuilder()
@@ -756,8 +791,7 @@ def main() -> None:
     app.add_handler(CommandHandler("pendientes", cmd_pendientes))
     app.add_handler(CommandHandler("status", cmd_status))
 
-    logger.info("Bot iniciado. Esperando mensajes...")
-    app.run_polling(drop_pending_updates=True)
+    asyncio.run(_run(app))
 
 
 if __name__ == "__main__":

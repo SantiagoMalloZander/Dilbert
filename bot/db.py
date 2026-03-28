@@ -260,3 +260,28 @@ def upsert_lead_and_interaction(
 
     create_interaction(lead["id"], seller_id, transcript, result, source_metadata=source_metadata)
     return lead
+
+
+def upsert_lead_and_interaction_for_fathom(
+    seller_id: str,
+    company_id: str,
+    transcript: str,
+    result: ExtractionResult,
+    source_metadata: Optional[InteractionSourceMetadata] = None,
+) -> dict:
+    """
+    Como upsert_lead_and_interaction pero recibe seller_id/company_id directamente.
+    Usado por Fathom webhook (no hay telegram_user_id disponible).
+    """
+    if result.client_name:
+        existing = find_lead(seller_id, result.client_name, result.client_company)
+    else:
+        existing = None
+
+    if existing:
+        lead = update_lead(existing["id"], result)
+    else:
+        lead = create_lead(seller_id, company_id, result)
+
+    create_interaction(lead["id"], seller_id, transcript, result, source_metadata=source_metadata)
+    return lead
