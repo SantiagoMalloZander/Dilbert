@@ -32,3 +32,7 @@ DEFAULT_SELLER_COMPANY_NAME: str = os.getenv(
 # Buffer trigger thresholds
 BUFFER_TIMEOUT_SECONDS: int = 30        # 30s inactivity → queue private review
 BUFFER_MAX_MESSAGES: int = 20           # 20 messages → trigger analysis
+
+# Fathom webhook integration
+FATHOM_WEBHOOK_SECRET: Optional[str] = os.getenv("FATHOM_WEBHOOK_SECRET")
+PORT: int = int(os.getenv("PORT", "8080"))
