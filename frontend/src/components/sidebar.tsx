@@ -1,26 +1,64 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import {
+  BarChart3,
+  Bot,
+  ChevronDown,
+  ChevronRight,
+  Database,
+  LayoutList,
+  Radio,
+  Sparkles,
+} from "lucide-react";
 
-const CRM_OPTIONS: { name: string; icon: string; href?: string }[] = [
-  { name: "Salesforce", icon: "☁️" },
-  { name: "HubSpot", icon: "🟠", href: "/crm/hubspot" },
-  { name: "Pipedrive", icon: "🟢" },
-  { name: "Zoho CRM", icon: "🔵" },
-  { name: "Odoo CRM", icon: "🟣" },
-  { name: "Freshsales", icon: "🌿" },
+const CRM_OPTIONS: {
+  name: string;
+  logo?: string;
+  initials?: string;
+  href?: string;
+}[] = [
+  { name: "Salesforce", logo: "/CRMs/salesforce.jpeg" },
+  { name: "HubSpot", logo: "/CRMs/Hudspot.png", href: "/crm/hubspot" },
+  { name: "Pipedrive", initials: "PD" },
+  { name: "Zoho CRM", logo: "/CRMs/ZohoCRM.png" },
+  { name: "Odoo CRM", logo: "/CRMs/Odoo.jpeg" },
+  { name: "Freshsales", logo: "/CRMs/freshsales.png" },
 ];
 
-const CHANNELS = [
-  { name: "Telegram", icon: "✈️", active: true },
-  { name: "WhatsApp", icon: "💬", active: false },
-  { name: "Instagram", icon: "📸", active: false },
-  { name: "Messenger", icon: "💙", active: false },
-  { name: "Slack", icon: "⚡", active: false },
+const CHANNELS: { name: string; logo: string; active: boolean }[] = [
+  { name: "Telegram", logo: "/Canales/telegram.jpeg", active: true },
+  { name: "WhatsApp", logo: "/Canales/wpp.png", active: false },
+  { name: "Instagram", logo: "/Canales/ig.webp", active: false },
+  { name: "Messenger", logo: "/Canales/massager.png", active: false },
+  { name: "Gmail", logo: "/Canales/gmail.webp", active: false },
 ];
+
+function CRMIcon({ logo, initials, name }: { logo?: string; initials?: string; name: string }) {
+  if (logo) {
+    return (
+      <div className="h-4 w-4 shrink-0 rounded overflow-hidden bg-white/10 flex items-center justify-center">
+        <Image src={logo} alt={name} width={16} height={16} className="object-contain" />
+      </div>
+    );
+  }
+  return (
+    <div className="h-4 w-4 shrink-0 rounded bg-[#F5F0E8]/10 flex items-center justify-center">
+      <span className="text-[7px] font-mono font-bold text-[#F5F0E8]/50">{initials}</span>
+    </div>
+  );
+}
+
+function ChannelIcon({ logo, name }: { logo: string; name: string }) {
+  return (
+    <div className="h-4 w-4 shrink-0 rounded overflow-hidden bg-white/10 flex items-center justify-center">
+      <Image src={logo} alt={name} width={16} height={16} className="object-contain" />
+    </div>
+  );
+}
 
 function NavLink({
   href,
@@ -29,7 +67,7 @@ function NavLink({
   exact = false,
 }: {
   href: string;
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   exact?: boolean;
 }) {
@@ -45,8 +83,27 @@ function NavLink({
           : "text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8]"
       }`}
     >
-      <span className="text-sm leading-none">{icon}</span>
+      <span className="shrink-0 opacity-80">{icon}</span>
       {label}
+    </Link>
+  );
+}
+
+function CRMNavLink({ href, logo, initials, name }: { href: string; logo?: string; initials?: string; name: string }) {
+  const pathname = usePathname();
+  const isActive = pathname.startsWith(href);
+
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-all ${
+        isActive
+          ? "bg-[#D4420A] text-[#F5F0E8] font-medium"
+          : "text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8]"
+      }`}
+    >
+      <CRMIcon logo={logo} initials={initials} name={name} />
+      {name}
     </Link>
   );
 }
@@ -59,7 +116,7 @@ function SectionLabel({ label }: { label: string }) {
   );
 }
 
-function DisabledCRMOption({ name, icon }: { name: string; icon: string }) {
+function DisabledCRMOption({ name, logo, initials }: { name: string; logo?: string; initials?: string }) {
   const [clicked, setClicked] = useState(false);
 
   return (
@@ -68,7 +125,7 @@ function DisabledCRMOption({ name, icon }: { name: string; icon: string }) {
       className="flex w-full items-center justify-between rounded px-3 py-2 text-sm text-[#F5F0E8]/38 hover:bg-white/5 hover:text-[#F5F0E8]/55 transition-colors"
     >
       <span className="flex items-center gap-2.5">
-        <span className="text-sm leading-none">{icon}</span>
+        <CRMIcon logo={logo} initials={initials} name={name} />
         {name}
       </span>
       {clicked ? (
@@ -104,9 +161,9 @@ export function Sidebar() {
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
         {/* Ventas */}
         <SectionLabel label="Ventas" />
-        <NavLink href="/dashboard" icon="📋" label="Pipeline" exact />
-        <NavLink href="/metricas" icon="📊" label="Métricas" />
-        <NavLink href="/analytics" icon="🧠" label="Inteligencia IA" />
+        <NavLink href="/dashboard" icon={<LayoutList size={14} />} label="Pipeline" exact />
+        <NavLink href="/metricas" icon={<BarChart3 size={14} />} label="Métricas" />
+        <NavLink href="/analytics" icon={<Sparkles size={14} />} label="Inteligencia IA" />
 
         {/* CRM */}
         <SectionLabel label="CRM" />
@@ -115,7 +172,7 @@ export function Sidebar() {
           className="flex w-full items-center justify-between rounded px-3 py-2 text-sm text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8] transition-colors"
         >
           <span className="flex items-center gap-2.5">
-            <span className="text-sm leading-none">🗄️</span>
+            <Database size={14} className="opacity-70 shrink-0" />
             Conectar CRM
           </span>
           {crmOpen ? (
@@ -129,13 +186,24 @@ export function Sidebar() {
           <div className="ml-3 flex flex-col gap-0.5 border-l border-[#F5F0E8]/10 pl-3">
             {CRM_OPTIONS.map((crm) =>
               crm.href ? (
-                <NavLink key={crm.name} href={crm.href} icon={crm.icon} label={crm.name} />
+                <CRMNavLink
+                  key={crm.name}
+                  href={crm.href}
+                  logo={crm.logo}
+                  initials={crm.initials}
+                  name={crm.name}
+                />
               ) : (
-                <DisabledCRMOption key={crm.name} name={crm.name} icon={crm.icon} />
+                <DisabledCRMOption
+                  key={crm.name}
+                  name={crm.name}
+                  logo={crm.logo}
+                  initials={crm.initials}
+                />
               )
             )}
             <div className="my-1 border-t border-[#F5F0E8]/8" />
-            <NavLink href="/dashboard" icon="🤖" label="Dilbert CRM" exact />
+            <NavLink href="/dashboard" icon={<Bot size={14} />} label="Dilbert CRM" exact />
           </div>
         )}
 
@@ -146,7 +214,7 @@ export function Sidebar() {
           className="flex w-full items-center justify-between rounded px-3 py-2 text-sm text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8] transition-colors"
         >
           <span className="flex items-center gap-2.5">
-            <span className="text-sm leading-none">📡</span>
+            <Radio size={14} className="opacity-70 shrink-0" />
             Canales del bot
           </span>
           {channelsOpen ? (
@@ -164,7 +232,7 @@ export function Sidebar() {
                 className="flex items-center justify-between rounded px-3 py-2 text-sm"
               >
                 <span className="flex items-center gap-2.5 text-[#F5F0E8]/45">
-                  <span className="text-sm leading-none">{ch.icon}</span>
+                  <ChannelIcon logo={ch.logo} name={ch.name} />
                   {ch.name}
                 </span>
                 {ch.active ? (

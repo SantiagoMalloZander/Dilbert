@@ -1,45 +1,46 @@
+import Image from "next/image";
+
 const CHANNELS = [
   {
     name: "Telegram",
-    icon: "✈️",
+    logo: "/Canales/telegram.jpeg",
     description: "Bot activo en grupos de Telegram entre vendedores y clientes.",
     active: true,
     detail: "Lee mensajes, extrae datos con GPT-4o y actualiza el CRM en tiempo real.",
   },
   {
     name: "WhatsApp Business",
-    icon: "💬",
+    logo: "/Canales/wpp.png",
     description: "Integración con la API oficial de WhatsApp Business.",
     active: false,
     detail: "Requiere cuenta Meta Business verificada y aprobación de API.",
   },
   {
     name: "Instagram DM",
-    icon: "📸",
+    logo: "/Canales/ig.webp",
     description: "Mensajes directos de Instagram para seguimiento de leads.",
     active: false,
     detail: "Disponible via Meta Messenger Platform.",
   },
   {
     name: "Messenger",
-    icon: "💙",
+    logo: "/Canales/massager.png",
     description: "Facebook Messenger para atención y seguimiento de clientes.",
     active: false,
     detail: "Integración pendiente con Meta Graph API.",
   },
   {
-    name: "Slack",
-    icon: "⚡",
-    description: "Canales internos de Slack para comunicación B2B.",
+    name: "Gmail",
+    logo: "/Canales/gmail.webp",
+    description: "Seguimiento de conversaciones comerciales por email.",
     active: false,
-    detail: "Para equipos de ventas enterprise con clientes en Slack Connect.",
+    detail: "Extracción de leads desde hilos de Gmail con etiquetas definidas.",
   },
 ];
 
 export default function ConfiguracionPage() {
   return (
     <div className="flex flex-col h-full">
-      {/* Page header */}
       <div className="px-6 py-5 border-b bg-card/60">
         <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           Configuración
@@ -50,7 +51,6 @@ export default function ConfiguracionPage() {
         </p>
       </div>
 
-      {/* Content */}
       <div className="p-6 space-y-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {CHANNELS.map((channel) => (
@@ -61,11 +61,17 @@ export default function ConfiguracionPage() {
               }`}
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xl">{channel.icon}</span>
-                  <div>
-                    <p className="text-sm font-medium leading-tight">{channel.name}</p>
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg overflow-hidden bg-muted flex items-center justify-center shrink-0">
+                    <Image
+                      src={channel.logo}
+                      alt={channel.name}
+                      width={32}
+                      height={32}
+                      className="object-contain"
+                    />
                   </div>
+                  <p className="text-sm font-medium leading-tight">{channel.name}</p>
                 </div>
                 {channel.active ? (
                   <span className="flex items-center gap-1 text-[10px] font-mono text-[#1A7A6E] uppercase tracking-wide shrink-0">
