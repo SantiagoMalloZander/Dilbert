@@ -529,9 +529,31 @@
     padding: 100px 40px; max-width: 1120px; margin: 0 auto;
   }
   .pricing-intro { max-width: 640px; margin-bottom: 40px; }
+  .pricing-toggle {
+    display: flex; gap: 0; margin-bottom: 32px;
+    background: rgba(42,26,10,0.08); border-radius: 999px; padding: 4px;
+    width: fit-content;
+  }
+  .pricing-toggle button {
+    padding: 10px 28px; border: none; border-radius: 999px;
+    font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 14px;
+    cursor: pointer; background: transparent; color: var(--muted);
+    transition: all 0.2s;
+  }
+  .pricing-toggle button.active {
+    background: var(--dark); color: var(--cream);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .pricing-save-badge {
+    display: inline-block; margin-left: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: .04em;
+    background: var(--teal); color: var(--cream);
+    padding: 2px 8px; border-radius: 999px;
+    vertical-align: middle;
+  }
   .pricing-interactive-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex; justify-content: center;
     gap: 20px;
   }
   .ip-card {
@@ -539,16 +561,19 @@
     border-radius: 20px;
     background: white;
     box-shadow: 6px 6px 0 rgba(42,26,10,0.18);
-    padding: 26px;
+    padding: 32px;
     display: flex;
     flex-direction: column;
     gap: 18px;
+    max-width: 420px;
+    width: 100%;
   }
   .ip-card.featured {
     background: var(--orange);
     color: var(--cream);
     box-shadow: 8px 8px 0 var(--orange-dark);
   }
+
   .ip-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
   .ip-badge {
     font-family: 'JetBrains Mono', monospace;
@@ -731,6 +756,115 @@
     .orbit-ring-1 { width: 170px; height: 170px; }
     .orbit-ring-2 { width: 270px; height: 270px; }
   }
+
+  /* ─── 12 GROWTH CHANNELS ─── */
+  .g12-section {
+    padding: 120px 40px;
+    background: var(--dark);
+    position: relative;
+    overflow: hidden;
+  }
+  .g12-intro {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 64px;
+  }
+  .g12-intro .section-tag { color: var(--orange); }
+  .g12-intro .section-title { color: var(--cream); }
+  .g12-sub {
+    color: rgba(245,240,232,0.45);
+    font-size: 15px;
+    margin-top: 14px;
+    line-height: 1.65;
+  }
+  .g12-track-wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .g12-track {
+    position: relative;
+  }
+  .g12-ball {
+    position: absolute;
+    width: 18px; height: 18px;
+    background: var(--orange);
+    border-radius: 50%;
+    box-shadow: 0 0 18px rgba(212,66,10,0.9), 0 0 40px rgba(212,66,10,0.45);
+    z-index: 10;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: left 0.38s var(--ease-out), top 0.38s var(--ease-out);
+    opacity: 0;
+  }
+  .g12-ball.active { opacity: 1; }
+  .g12-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    position: relative;
+  }
+  .g12-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(245,240,232,0.09);
+    border-radius: 14px;
+    padding: 22px 18px;
+    transition: opacity 0.5s var(--ease-out), background 0.5s, border-color 0.5s, box-shadow 0.5s;
+    opacity: 0.28;
+    position: relative;
+    overflow: hidden;
+  }
+  .g12-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 40%, rgba(212,66,10,0.08) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .g12-card.lit {
+    opacity: 1;
+    border-color: rgba(212,66,10,0.45);
+    box-shadow: 0 0 28px rgba(212,66,10,0.14);
+  }
+  .g12-card.lit::before { opacity: 1; }
+  .g12-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(245,240,232,0.22);
+    letter-spacing: 0.15em;
+    display: block;
+    margin-bottom: 10px;
+    transition: color 0.4s;
+  }
+  .g12-card.lit .g12-num { color: var(--orange); }
+  .g12-icon {
+    font-size: 20px;
+    margin-bottom: 10px;
+    line-height: 1;
+    display: block;
+  }
+  .g12-card h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--cream);
+    margin-bottom: 6px;
+    letter-spacing: 0.01em;
+  }
+  .g12-card p {
+    font-size: 11.5px;
+    color: rgba(245,240,232,0.35);
+    line-height: 1.55;
+    transition: color 0.4s;
+  }
+  .g12-card.lit p { color: rgba(245,240,232,0.65); }
+
+  @media (max-width: 900px) {
+    .g12-section { padding: 80px 20px; }
+    .g12-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  }
+  @media (max-width: 600px) {
+    .g12-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .g12-ball { width: 13px; height: 13px; }
+  }
 </style>
 </head>
 <body>
@@ -753,7 +887,8 @@
   <ul class="nav-links">
     <li><a href="#flows">Cómo Funciona</a></li>
     <li><a href="#stack">Funciones</a></li>
-    <li><a href="#pricing">Contratar Dilbert</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#pricing">Pricing</a></li>
   </ul>
   <a href="/login" class="btn-pill">LANZAR BOT →</a>
 </nav>
@@ -982,38 +1117,104 @@
   </div>
 </section>
 
-<!-- ROADMAP PRINCIPAL -->
-<section class="stack-section" id="stack">
-  <div class="stack-dots"></div>
-  <div class="stack-content reveal">
-    <div class="stack-header">
-      <p class="stack-tag">ROADMAP COMERCIAL DILBERT</p>
-      <h2 class="stack-title">DE MVP A <span class="accent">MÁQUINA</span><br>DE CRECIMIENTO</h2>
-      <p class="stack-sub">Timeline compacto: evidencia pública, distribución y expansión de canal. Sin roadmap inflado y con fechas hasta fin de 2026.</p>
-    </div>
 
-    <div class="roadmap-axis">
-      <div class="roadmap-grid">
-        <article class="rm-item done">
-          <p class="rm-date">Q2 2026</p>
-          <h3 class="rm-title">Telegram MVP</h3>
-          <p>Captura pasiva de chats, extracción de datos y tablero comercial en vivo.</p>
-        </article>
-        <article class="rm-item active">
-          <p class="rm-date">Q3 2026</p>
-          <h3 class="rm-title">Prueba Pública</h3>
-          <p>Videos demo semanales, posts founder-led y primeros casos compartidos.</p>
-        </article>
-        <article class="rm-item">
-          <p class="rm-date">Q4 2026</p>
-          <h3 class="rm-title">WhatsApp + CRM</h3>
-          <p>Integraciones prioritarias y canal partner para distribución en LatAm.</p>
-        </article>
-        <article class="rm-item">
-          <p class="rm-date">Dic 2026</p>
-          <h3 class="rm-title">Multi-canal</h3>
-          <p>Alertas, priorización y coaching comercial sobre señal conversacional.</p>
-        </article>
+<!-- 12 GROWTH CHANNELS -->
+<section class="g12-section" id="growth">
+  <div class="g12-intro reveal">
+    <p class="section-tag">MOTOR DE CRECIMIENTO</p>
+    <h2 class="section-title">12 canales para<br>conseguir <span class="accent">más clientes</span>.</h2>
+    <p class="g12-sub">El mismo playbook que usó Lovable para llegar a $50M ARR. Lo corremos en paralelo.</p>
+  </div>
+
+  <div class="g12-track-wrap">
+    <div class="g12-track" id="g12track">
+      <div class="g12-ball" id="g12ball"></div>
+      <div class="g12-grid" id="g12grid">
+
+        <div class="g12-card" data-idx="0">
+          <span class="g12-num">01</span>
+          <div class="g12-icon">⌥</div>
+          <h4>Git Público</h4>
+          <p>Código abierto como entrada al mercado. Todos pueden ver, forkear y contribuir.</p>
+        </div>
+
+        <div class="g12-card" data-idx="1">
+          <span class="g12-num">02</span>
+          <div class="g12-icon">🚀</div>
+          <h4>Product Hunt</h4>
+          <p>Lanzamos varias veces. Cada feature nueva es un nuevo acto.</p>
+        </div>
+
+        <div class="g12-card" data-idx="2">
+          <span class="g12-num">03</span>
+          <div class="g12-icon">𝕏</div>
+          <h4>X / Twitter</h4>
+          <p>Hacer quilombo todos los días. Distribución diaria founder-led con números reales.</p>
+        </div>
+
+        <div class="g12-card" data-idx="3">
+          <span class="g12-num">04</span>
+          <div class="g12-icon">in</div>
+          <h4>LinkedIn</h4>
+          <p>La capa de confianza. Contenido B2B que convierte atención en clientes.</p>
+        </div>
+
+        <div class="g12-card" data-idx="4">
+          <span class="g12-num">05</span>
+          <div class="g12-icon">◈</div>
+          <h4>SEO</h4>
+          <p>El camino de las palabras clave. Cada milestone se convierte en Google juice.</p>
+        </div>
+
+        <div class="g12-card" data-idx="5">
+          <span class="g12-num">06</span>
+          <div class="g12-icon">⚡</div>
+          <h4>Agencias Partner</h4>
+          <p>Les damos cashflow todos los días. Revenue share para agencias que nos venden.</p>
+        </div>
+
+        <div class="g12-card" data-idx="6">
+          <span class="g12-num">07</span>
+          <div class="g12-icon">💬</div>
+          <h4>Discord</h4>
+          <p>Comunidad que retroalimenta el producto. Feedback semanal, bugs en tiempo real.</p>
+        </div>
+
+        <div class="g12-card" data-idx="7">
+          <span class="g12-num">08</span>
+          <div class="g12-icon">▶</div>
+          <h4>YouTube</h4>
+          <p>Más confianza en tu imagen. High-value content, demos crudas que generan tracción.</p>
+        </div>
+
+        <div class="g12-card" data-idx="8">
+          <span class="g12-num">09</span>
+          <div class="g12-icon">◎</div>
+          <h4>Paid Ads</h4>
+          <p>Escalamos lo que ya funciona. Google + YouTube sobre keywords validados orgánicamente.</p>
+        </div>
+
+        <div class="g12-card" data-idx="9">
+          <span class="g12-num">10</span>
+          <div class="g12-icon">r/</div>
+          <h4>Reddit</h4>
+          <p>Word-of-mouth ganado. Casos reales en comunidades, sin spam, con screenshots.</p>
+        </div>
+
+        <div class="g12-card" data-idx="10">
+          <span class="g12-num">11</span>
+          <div class="g12-icon">🎙</div>
+          <h4>Podcasts</h4>
+          <p>Awareness long-form. Aparecemos en los shows donde están nuestros compradores.</p>
+        </div>
+
+        <div class="g12-card" data-idx="11">
+          <span class="g12-num">12</span>
+          <div class="g12-icon">📍</div>
+          <h4>IRL Events</h4>
+          <p>Prueba fuera de internet. Pitches en vivo que se convierten en clips de redes.</p>
+        </div>
+
       </div>
     </div>
   </div>
@@ -1164,52 +1365,38 @@
     </p>
   </div>
 
+  <div class="pricing-toggle reveal" id="billing-toggle">
+    <button class="active" data-billing="monthly">Mensual</button>
+    <button data-billing="annual">Anual <span class="pricing-save-badge">-6%</span></button>
+  </div>
+
   <div class="pricing-interactive-grid reveal">
     <article class="ip-card" data-price-card data-price-unit="29" data-unit="vendedor" data-currency="$">
       <div class="ip-top">
         <h3 class="ip-plan">Básico</h3>
       </div>
-      <p class="ip-desc">Para equipos chicos que arrancan con automatización comercial.</p>
-      <div class="ip-total"><span data-total-prefix>$</span><span data-total>87.00</span><span>/mes</span></div>
+      <p class="ip-desc">Todo lo que tu equipo necesita para automatizar la captura comercial desde chats.</p>
+      <div class="ip-total"><span data-total-prefix>$</span><span data-total>87.00</span><span id="billing-period">/mes</span></div>
       <div class="ip-slider-wrap">
         <div class="ip-slider-meta">
           <span><span data-units>3</span> vendedores</span>
-          <span>$29/vendedor</span>
+          <span id="unit-price">$29/vendedor</span>
         </div>
         <input class="ip-range" type="range" min="1" max="12" value="3" data-price-slider />
       </div>
       <ul class="ip-features">
         <li><span class="ip-dot">✓</span> Captura pasiva desde chats</li>
         <li><span class="ip-dot">✓</span> Extracción IA ilimitada</li>
-        <li><span class="ip-dot">✓</span> Dashboard comercial base</li>
-      </ul>
-      <a href="/login" class="ip-cta">Empezar Básico</a>
-    </article>
-
-    <article class="ip-card featured" data-price-card data-price-unit="79" data-unit="vendedor" data-currency="$">
-      <div class="ip-top">
-        <h3 class="ip-plan">Pro</h3>
-        <span class="ip-badge">Popular</span>
-      </div>
-      <p class="ip-desc">Para escalar WhatsApp + CRM + operación LatAm con más velocidad.</p>
-      <div class="ip-total"><span data-total-prefix>$</span><span data-total>790.00</span><span>/mes</span></div>
-      <div class="ip-slider-wrap">
-        <div class="ip-slider-meta">
-          <span><span data-units>10</span> vendedores</span>
-          <span>$79/vendedor</span>
-        </div>
-        <input class="ip-range" type="range" min="5" max="40" value="10" data-price-slider />
-      </div>
-      <ul class="ip-features">
-        <li><span class="ip-dot">✓</span> Integraciones CRM prioritarias</li>
+        <li><span class="ip-dot">✓</span> Dashboard comercial completo</li>
+        <li><span class="ip-dot">✓</span> Integraciones CRM (HubSpot, Salesforce)</li>
         <li><span class="ip-dot">✓</span> Alertas y priorización comercial</li>
-        <li><span class="ip-dot">✓</span> Soporte prioritario y coaching</li>
+        <li><span class="ip-dot">✓</span> Soporte prioritario</li>
       </ul>
-      <a href="/login" class="ip-cta">Pasar a Pro</a>
+      <a href="/login" class="ip-cta">Empezar gratis 14 días</a>
     </article>
   </div>
 
-  <p class="pricing-footnote">UN SOLO BLOQUE DE PRICING · FACTURACIÓN POR VENDEDOR</p>
+  <p class="pricing-footnote">FACTURACIÓN POR VENDEDOR · 14 DÍAS GRATIS · SIN TARJETA</p>
 </section>
 
 <!-- FINAL CTA -->
@@ -1371,23 +1558,106 @@ reveals.forEach(el => revealObserver.observe(el));
   update();
 })();
 
-// ── Pricing interactivo
-document.querySelectorAll('[data-price-card]').forEach((card) => {
+// ── Pricing interactivo con toggle mensual/anual
+(function() {
+  const MONTHLY_PRICE = 29;
+  const ANNUAL_DISCOUNT = 0.06;
+  const card = document.querySelector('[data-price-card]');
+  if (!card) return;
   const slider = card.querySelector('[data-price-slider]');
   const totalEl = card.querySelector('[data-total]');
   const unitsEl = card.querySelector('[data-units]');
-  const unitPrice = Number(card.getAttribute('data-price-unit') || 0);
+  const periodEl = document.getElementById('billing-period');
+  const unitPriceEl = document.getElementById('unit-price');
+  const toggle = document.getElementById('billing-toggle');
+  let isAnnual = false;
 
-  const update = () => {
+  function updatePrice() {
     const units = Number(slider.value);
-    const total = (units * unitPrice).toFixed(2);
-    if (totalEl) totalEl.textContent = total;
+    const basePrice = MONTHLY_PRICE;
+    let price, unitLabel, periodLabel;
+    if (isAnnual) {
+      const annualMonthly = basePrice * (1 - ANNUAL_DISCOUNT);
+      price = (units * annualMonthly * 12).toFixed(2);
+      unitLabel = '$' + annualMonthly.toFixed(0) + '/vendedor';
+      periodLabel = '/año';
+    } else {
+      price = (units * basePrice).toFixed(2);
+      unitLabel = '$' + basePrice + '/vendedor';
+      periodLabel = '/mes';
+    }
+    if (totalEl) totalEl.textContent = price;
     if (unitsEl) unitsEl.textContent = String(units);
-  };
+    if (unitPriceEl) unitPriceEl.textContent = unitLabel;
+    if (periodEl) periodEl.textContent = periodLabel;
+  }
 
-  slider.addEventListener('input', update);
+  slider.addEventListener('input', updatePrice);
+
+  if (toggle) {
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        isAnnual = btn.getAttribute('data-billing') === 'annual';
+        updatePrice();
+      });
+    });
+  }
+
+  updatePrice();
+})();
+
+// ── 12 Growth Channels — ball + card lighting
+(function() {
+  const section = document.getElementById('growth');
+  const ball    = document.getElementById('g12ball');
+  const track   = document.getElementById('g12track');
+  const grid    = document.getElementById('g12grid');
+  if (!section || !ball || !grid || !track) return;
+
+  const cards = [...grid.querySelectorAll('.g12-card')];
+  let currentIdx = -1;
+
+  function getCardCenter(card) {
+    const tr = track.getBoundingClientRect();
+    const cr = card.getBoundingClientRect();
+    return {
+      x: cr.left - tr.left + cr.width  / 2,
+      y: cr.top  - tr.top  + cr.height / 2,
+    };
+  }
+
+  function setBall(card) {
+    const c = getCardCenter(card);
+    ball.style.left = c.x + 'px';
+    ball.style.top  = c.y + 'px';
+    ball.classList.add('active');
+  }
+
+  function update() {
+    const rect = section.getBoundingClientRect();
+    const vh   = window.innerHeight;
+    // Start when section top crosses 80% of viewport, finish when bottom crosses 20%
+    const start = rect.top  - vh * 0.8;
+    const end   = rect.bottom - vh * 0.2;
+    const range = end - start;
+    if (range <= 0) return;
+
+    const progress = Math.max(0, Math.min(1, -start / range));
+    const idx = Math.min(Math.floor(progress * 12), 11);
+
+    if (idx !== currentIdx) {
+      currentIdx = idx;
+      cards.forEach((c, i) => c.classList.toggle('lit', i <= idx));
+      setBall(cards[idx]);
+    }
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', () => { currentIdx = -1; update(); });
   update();
-});
+})();
 
 </script>
 </body>

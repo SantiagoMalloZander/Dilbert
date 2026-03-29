@@ -6,7 +6,7 @@ const SECRET = new TextEncoder().encode(
   process.env.AUTH_SECRET || "dilbert-hackitba-secret-2026"
 );
 
-const PUBLIC = ["/login", "/api/auth", "/landing.html", "/_next", "/favicon", "/CRMs", "/Canales"];
+const PUBLIC = ["/login", "/api/auth", "/landing.html", "/_next", "/favicon", "/CRMs", "/Canales", "/dilbert-crm-logo.svg"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -26,6 +26,11 @@ export async function proxy(request: NextRequest) {
     } catch {
       // invalid token
     }
+  }
+
+  // Root → landing (no auth needed)
+  if (pathname === "/") {
+    return NextResponse.next();
   }
 
   // Not authenticated → login

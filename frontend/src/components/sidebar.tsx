@@ -52,7 +52,7 @@ function NavLink({
     <Link
       href={href}
       onClick={onClick}
-      className={`flex items-center gap-2.5 rounded px-3 py-2.5 text-sm transition-all ${
+      className={`flex items-center gap-3 rounded-lg px-4 py-3 text-base md:text-sm md:gap-2.5 md:px-3 md:py-2.5 transition-all ${
         isActive
           ? "bg-[#D4420A] text-[#F5F0E8] font-medium"
           : "text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8]"
@@ -247,21 +247,15 @@ export function Sidebar({ companyName, role }: { companyName: string; role: stri
         <Menu size={20} />
       </button>
 
-      {/* Mobile overlay */}
+      {/* Mobile fullscreen overlay */}
       {mobileOpen && (
-        <>
-          <div
-            className="md:hidden fixed inset-0 z-40 bg-black/60"
-            onClick={() => setMobileOpen(false)}
+        <aside className="md:hidden fixed inset-0 z-50">
+          <SidebarContent
+            companyName={companyName}
+            role={role}
+            onClose={() => setMobileOpen(false)}
           />
-          <aside className="md:hidden fixed inset-y-0 left-0 z-50 w-72 shadow-2xl">
-            <SidebarContent
-              companyName={companyName}
-              role={role}
-              onClose={() => setMobileOpen(false)}
-            />
-          </aside>
-        </>
+        </aside>
       )}
     </>
   );

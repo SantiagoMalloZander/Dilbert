@@ -99,7 +99,7 @@ export function AddLeadDialog() {
         Agregar lead
       </DialogTrigger>
 
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             CRM Manual
@@ -110,7 +110,7 @@ export function AddLeadDialog() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <FieldLabel>Nombre *</FieldLabel>
               <Input
@@ -129,7 +129,7 @@ export function AddLeadDialog() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <FieldLabel>Producto / Servicio</FieldLabel>
               <Input
@@ -154,7 +154,7 @@ export function AddLeadDialog() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <FieldLabel>Monto estimado</FieldLabel>
               <Input
@@ -178,7 +178,7 @@ export function AddLeadDialog() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <FieldLabel>Sentimiento</FieldLabel>
               <select

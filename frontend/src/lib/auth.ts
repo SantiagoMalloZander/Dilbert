@@ -36,9 +36,14 @@ export function validateCredentials(
   username: string,
   password: string
 ): SessionUser | null {
-  const user = USERS[username];
-  if (!user || user.password !== password) return null;
-  return { username, companyName: user.companyName, role: user.role };
+  // Case-insensitive username lookup
+  const key = Object.keys(USERS).find(
+    (k) => k.toLowerCase() === username.toLowerCase()
+  );
+  if (!key) return null;
+  const user = USERS[key];
+  if (user.password !== password) return null;
+  return { username: key, companyName: user.companyName, role: user.role };
 }
 
 export async function createSessionToken(user: SessionUser): Promise<string> {
