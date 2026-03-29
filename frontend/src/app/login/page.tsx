@@ -88,7 +88,7 @@ export default function LoginPage() {
               <input
                 type="text"
                 autoComplete="username"
-                placeholder="demo"
+                placeholder="Jurado@hackitba.edu"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -111,7 +111,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 autoComplete="current-password"
-                placeholder="••••••"
+                placeholder="compi"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
