@@ -3,6 +3,7 @@ import { Anton, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import { Sidebar } from "@/components/sidebar";
+import { RealtimeProvider } from "@/components/realtime-provider";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -46,6 +47,7 @@ export default async function RootLayout({
     >
       <body className="flex h-full bg-background text-foreground">
         {showSidebar && <Sidebar companyName={companyName} role={role} />}
+        <RealtimeProvider />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </body>
     </html>
