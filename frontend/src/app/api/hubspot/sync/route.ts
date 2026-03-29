@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getSession, USERS } from "@/lib/auth";
 
-const HS_TOKEN = process.env.HUBSPOT_API_KEY!;
 const HS_BASE = "https://api.hubapi.com";
 
 const supabase = createClient(
@@ -11,7 +11,6 @@ const supabase = createClient(
 
 const DEMO_COMPANY_ID = "11111111-1111-1111-1111-111111111111";
 
-// Dilbert status → HubSpot deal stage
 const STAGE_MAP: Record<string, string> = {
   new: "appointmentscheduled",
   contacted: "qualifiedtobuy",
@@ -20,61 +19,51 @@ const STAGE_MAP: Record<string, string> = {
   closed_lost: "closedlost",
 };
 
-async function hsPost(path: string, body: object) {
-  const res = await fetch(`${HS_BASE}${path}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${HS_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  return res.json();
-}
+function makeHs(token: string) {
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
 
-async function hsSearch(objectType: string, filterProp: string, value: string) {
-  const res = await fetch(`${HS_BASE}/crm/v3/objects/${objectType}/search`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${HS_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      filterGroups: [{ filters: [{ propertyName: filterProp, operator: "EQ", value }] }],
-      limit: 1,
-    }),
-  });
-  const data = await res.json();
-  return data.results?.[0] ?? null;
-}
+  async function hsPost(path: string, body: object) {
+    const res = await fetch(`${HS_BASE}${path}`, { method: "POST", headers, body: JSON.stringify(body) });
+    return res.json();
+  }
+  async function hsPatch(path: string, body: object) {
+    const res = await fetch(`${HS_BASE}${path}`, { method: "PATCH", headers, body: JSON.stringify(body) });
+    return res.json();
+  }
+  async function hsSearch(objectType: string, filterProp: string, value: string) {
+    const res = await fetch(`${HS_BASE}/crm/v3/objects/${objectType}/search`, {
+      method: "POST", headers,
+      body: JSON.stringify({
+        filterGroups: [{ filters: [{ propertyName: filterProp, operator: "EQ", value }] }],
+        limit: 1,
+      }),
+    });
+    const data = await res.json();
+    return data.results?.[0] ?? null;
+  }
+  async function associate(fromType: string, fromId: string, toType: string, toId: string, assocType: string) {
+    await fetch(`${HS_BASE}/crm/v4/objects/${fromType}/${fromId}/associations/${toType}/${toId}`, {
+      method: "PUT", headers,
+      body: JSON.stringify([{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: assocType }]),
+    });
+  }
 
-async function hsPatch(path: string, body: object) {
-  const res = await fetch(`${HS_BASE}${path}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${HS_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  return res.json();
-}
-
-async function associateObjects(fromType: string, fromId: string, toType: string, toId: string, associationType: string) {
-  await fetch(`${HS_BASE}/crm/v4/objects/${fromType}/${fromId}/associations/${toType}/${toId}`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${HS_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify([{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: associationType }]),
-  });
+  return { hsPost, hsPatch, hsSearch, associate };
 }
 
 export async function POST() {
-  if (!HS_TOKEN) {
+  const session = await getSession();
+  const userEntry = session ? USERS[session.username] : null;
+  const token = userEntry?.hubspotKey ?? process.env.HUBSPOT_API_KEY;
+
+  if (!token) {
     return NextResponse.json({ error: "HUBSPOT_API_KEY not configured" }, { status: 500 });
   }
+
+  const hs = makeHs(token);
 
   const { data: leads, error } = await supabase
     .from("leads")
@@ -95,20 +84,18 @@ export async function POST() {
       const firstname = nameParts[0];
       const lastname = nameParts.slice(1).join(" ") || lead.client_company || "";
 
-      // 1. Upsert Contact
-      let contact = await hsSearch("contacts", "email", email);
+      let contact = await hs.hsSearch("contacts", "email", email);
       if (contact) {
-        contact = await hsPatch(`/crm/v3/objects/contacts/${contact.id}`, {
+        contact = await hs.hsPatch(`/crm/v3/objects/contacts/${contact.id}`, {
           properties: { firstname, lastname, company: lead.client_company ?? "" },
         });
       } else {
-        contact = await hsPost("/crm/v3/objects/contacts", {
+        contact = await hs.hsPost("/crm/v3/objects/contacts", {
           properties: { email, firstname, lastname, company: lead.client_company ?? "" },
         });
       }
       const contactId = contact.id;
 
-      // 2. Upsert Deal (search by dilbert lead ID in description)
       const dealName = `${lead.product_interest ?? "Deal"} — ${lead.client_name ?? "Cliente"}`;
       const dealProps = {
         dealname: dealName,
@@ -119,17 +106,16 @@ export async function POST() {
         closedate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       };
 
-      let deal = await hsSearch("deals", "description", lead.id);
+      let deal = await hs.hsSearch("deals", "description", lead.id);
       if (deal) {
-        deal = await hsPatch(`/crm/v3/objects/deals/${deal.id}`, { properties: dealProps });
+        deal = await hs.hsPatch(`/crm/v3/objects/deals/${deal.id}`, { properties: dealProps });
       } else {
-        deal = await hsPost("/crm/v3/objects/deals", { properties: dealProps });
+        deal = await hs.hsPost("/crm/v3/objects/deals", { properties: dealProps });
       }
       const dealId = deal.id;
 
-      // 3. Associate contact → deal (type 3 = contact to deal)
       if (contactId && dealId) {
-        await associateObjects("contacts", contactId, "deals", dealId, "3");
+        await hs.associate("contacts", contactId, "deals", dealId, "3");
       }
 
       results.synced++;

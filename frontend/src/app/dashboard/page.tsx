@@ -14,6 +14,7 @@ type RealtimeStatus = "connecting" | "connected" | "disconnected";
 
 export default function Dashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [leadSourceTypes, setLeadSourceTypes] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>("connecting");
@@ -30,7 +31,27 @@ export default function Dashboard() {
         .order("last_interaction", { ascending: false });
 
       if (fetchError) throw new Error(fetchError.message);
-      setLeads(data ?? []);
+      const leadsData = data ?? [];
+      setLeads(leadsData);
+
+      if (leadsData.length > 0) {
+        const leadIds = leadsData.map((l) => l.id);
+        const { data: interactions } = await supabase
+          .from("interactions")
+          .select("lead_id, source_type, created_at")
+          .in("lead_id", leadIds)
+          .order("created_at", { ascending: false });
+
+        if (interactions) {
+          const map = new Map<string, string>();
+          for (const interaction of interactions) {
+            if (!map.has(interaction.lead_id) && interaction.source_type) {
+              map.set(interaction.lead_id, interaction.source_type);
+            }
+          }
+          setLeadSourceTypes(map);
+        }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar los leads");
     } finally {
@@ -133,7 +154,7 @@ export default function Dashboard() {
             </button>
           </div>
         ) : (
-          <LeadsTable leads={leads} loading={loading} />
+          <LeadsTable leads={leads} loading={loading} leadSourceTypes={leadSourceTypes} />
         )}
       </div>
     </div>

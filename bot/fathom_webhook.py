@@ -10,7 +10,7 @@ import aiohttp.web
 
 import db
 import extractor
-from config import FATHOM_WEBHOOK_SECRET
+from config import FATHOM_WEBHOOK_SECRET, SUPABASE_URL, SUPABASE_SERVICE_KEY
 from db import InteractionSourceMetadata
 
 logger = logging.getLogger(__name__)

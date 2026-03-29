@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, PackageOpen } from "lucide-react";
+import { SourceBadge } from "@/components/source-badge";
 import Link from "next/link";
 import {
   Table,
@@ -28,7 +29,15 @@ const sentimentConfig: Record<string, { label: string; className: string }> = {
 };
 
 
-export function LeadsTable({ leads, loading }: { leads: Lead[]; loading: boolean }) {
+export function LeadsTable({
+  leads,
+  loading,
+  leadSourceTypes = new Map(),
+}: {
+  leads: Lead[];
+  loading: boolean;
+  leadSourceTypes?: Map<string, string>;
+}) {
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
@@ -55,7 +64,7 @@ export function LeadsTable({ leads, loading }: { leads: Lead[]; loading: boolean
       <Table>
         <TableHeader>
           <TableRow className="border-b hover:bg-transparent">
-            {["Cliente", "Empresa", "Vendedor", "Producto", "Monto", "Estado", "Sentimiento", "Última Interacción"].map((h) => (
+            {["Cliente", "Empresa", "Vendedor", "Producto", "Monto", "Estado", "Sentimiento", "Canal", "Última Interacción"].map((h) => (
               <TableHead key={h} className="text-[9px] font-mono font-semibold uppercase tracking-[0.18em] text-muted-foreground py-3">
                 {h}
               </TableHead>
@@ -107,6 +116,9 @@ export function LeadsTable({ leads, loading }: { leads: Lead[]; loading: boolean
                   ) : (
                     "—"
                   )}
+                </TableCell>
+                <TableCell className="py-3">
+                  <SourceBadge sourceType={leadSourceTypes.get(lead.id)} size="sm" />
                 </TableCell>
                 <TableCell className="text-xs font-mono text-muted-foreground py-3">
                   {formatDate(lead.last_interaction)}

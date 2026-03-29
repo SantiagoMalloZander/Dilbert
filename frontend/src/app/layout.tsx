@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Anton, DM_Sans, JetBrains_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import { Sidebar } from "@/components/sidebar";
 
@@ -26,18 +27,25 @@ export const metadata: Metadata = {
   description: "AI-powered sales CRM from Telegram conversations",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || "";
+  const companyName = headersList.get("x-company-name") || "";
+  const role = headersList.get("x-user-role") || "";
+
+  const showSidebar = pathname !== "/login" && pathname !== "/" && pathname !== "";
+
   return (
     <html
       lang="es"
       className={`${dmSans.variable} ${anton.variable} ${jetbrainsMono.variable} h-full`}
     >
       <body className="flex h-full bg-background text-foreground">
-        <Sidebar />
+        {showSidebar && <Sidebar companyName={companyName} role={role} />}
         <main className="flex-1 overflow-y-auto">{children}</main>
       </body>
     </html>

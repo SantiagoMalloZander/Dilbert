@@ -23,6 +23,7 @@ export type Interaction = {
   extracted_data: Record<string, unknown> | null;
   summary: string | null;
   created_at: string;
+  source_type: string | null;
 };
 
 export type Seller = {

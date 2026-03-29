@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { headers } from "next/headers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HubSpotCredentialsForm } from "@/components/hubspot-credentials-form";
 
@@ -10,8 +11,12 @@ const SCOPES = [
   { name: "crm.objects.companies.read", description: "Leer empresas" },
 ];
 
-export default function HubSpotPage() {
-  const isConfigured = !!process.env.HUBSPOT_API_KEY;
+export default async function HubSpotPage() {
+  const headersList = await headers();
+  const role = headersList.get("x-user-role") || "";
+
+  // Jurado account has HubSpot pre-configured
+  const isConfigured = role === "jurado" || !!process.env.HUBSPOT_API_KEY;
 
   return (
     <div className="flex flex-col h-full">
