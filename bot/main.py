@@ -22,6 +22,7 @@ import transcription
 from config import (
     TELEGRAM_BOT_TOKEN,
     BUFFER_TIMEOUT_SECONDS,
+    BUFFER_SHORT_TIMEOUT_SECONDS,
     SUPABASE_URL,
     SUPABASE_SERVICE_KEY,
     PORT,
@@ -510,12 +511,64 @@ async def _handle_private_message(update: Update, context: ContextTypes.DEFAULT_
     )
 
 
-async def _schedule_timeout(chat_id: int, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Wait BUFFER_TIMEOUT_SECONDS then trigger analysis if still no new messages."""
-    await asyncio.sleep(BUFFER_TIMEOUT_SECONDS)
-    logger.info("timeout reached chat=%s — queueing private review", chat_id)
+async def _auto_analyze_conversation(
+    chat_id: int,
+    context: ContextTypes.DEFAULT_TYPE,
+    seller_telegram_id: Optional[int],
+) -> None:
+    """Flush del buffer + análisis completo automático sin intervención del vendedor."""
     chat_buffer = buf.get_or_create(chat_id)
-    await _enqueue_group_review(chat_id, context, seller_telegram_id=chat_buffer.seller_telegram_id)
+    messages = buf.flush(chat_id)
+    if not messages:
+        return
+
+    seller_ids = [m.sender_id for m in messages if m.is_seller]
+    if seller_telegram_id and seller_telegram_id not in seller_ids:
+        seller_ids.append(seller_telegram_id)
+
+    if not seller_ids:
+        logger.info("auto-analyze: no seller in chat=%s, dropping", chat_id)
+        return
+
+    transcript = buf.format_for_llm(messages)
+    last_message = messages[-1]
+
+    review = review_queue.enqueue_review(
+        allowed_seller_telegram_ids=seller_ids,
+        source_chat_id=chat_id,
+        source_chat_title=chat_buffer.chat_title,
+        transcript=transcript,
+        last_message_id=last_message.message_id,
+        last_sender_id=last_message.sender_id,
+    )
+
+    primary_seller_id = seller_ids[0]
+    seller_row = _seller_cache.get(primary_seller_id, {})
+    seller_name = seller_row.get("name", f"Vendedor {primary_seller_id}")
+
+    logger.info(
+        "auto-analyze: running review=%s chat=%s seller=%s",
+        review.review_id, chat_id, primary_seller_id,
+    )
+
+    await _run_pending_review(
+        review,
+        private_chat_id=primary_seller_id,
+        control_message_id=0,
+        seller_user_id=primary_seller_id,
+        seller_name=seller_name,
+        context=context,
+    )
+
+
+async def _schedule_timeout(chat_id: int, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Wait for inactivity timeout then auto-analyze the conversation."""
+    chat_buffer = buf.get_or_create(chat_id)
+    timeout = BUFFER_SHORT_TIMEOUT_SECONDS if chat_buffer.use_short_timeout else BUFFER_TIMEOUT_SECONDS
+    await asyncio.sleep(timeout)
+    logger.info("timeout reached chat=%s short=%s — auto-analyzing", chat_id, chat_buffer.use_short_timeout)
+    chat_buffer = buf.get_or_create(chat_id)
+    await _auto_analyze_conversation(chat_id, context, seller_telegram_id=chat_buffer.seller_telegram_id)
 
 
 async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -549,6 +602,11 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     if is_seller and chat_buffer.seller_telegram_id is None:
         chat_buffer.seller_telegram_id = user.id
         logger.info("seller identified in chat=%s: telegram_id=%s", chat.id, user.id)
+
+    # Detectar frase de cierre → activar timeout corto
+    if msg.text and buf.detect_farewell(msg.text):
+        chat_buffer.use_short_timeout = True
+        logger.info("farewell detected chat=%s — short timeout active", chat.id)
 
     # Reset inactivity timeout
     if chat_buffer.timeout_task and not chat_buffer.timeout_task.done():

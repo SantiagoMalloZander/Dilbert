@@ -30,8 +30,9 @@ DEFAULT_SELLER_COMPANY_NAME: str = os.getenv(
 )
 
 # Buffer trigger thresholds
-BUFFER_TIMEOUT_SECONDS: int = int(os.getenv("BUFFER_TIMEOUT_SECONDS", "8"))   # 8s inactivity → queue private review
-BUFFER_MAX_MESSAGES: int = int(os.getenv("BUFFER_MAX_MESSAGES", "5"))          # 5 messages → trigger analysis
+BUFFER_TIMEOUT_SECONDS: int = int(os.getenv("BUFFER_TIMEOUT_SECONDS", "180"))          # 3 min inactivity → auto-analyze
+BUFFER_SHORT_TIMEOUT_SECONDS: int = int(os.getenv("BUFFER_SHORT_TIMEOUT_SECONDS", "10"))  # 10s after farewell phrase
+BUFFER_MAX_MESSAGES: int = int(os.getenv("BUFFER_MAX_MESSAGES", "5"))                     # 5 messages → trigger analysis
 
 # Fathom webhook integration
 FATHOM_WEBHOOK_SECRET: Optional[str] = os.getenv("FATHOM_WEBHOOK_SECRET")
