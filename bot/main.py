@@ -62,9 +62,9 @@ async def _load_seller_cache() -> None:
 
 def _is_seller(telegram_user_id: int) -> bool:
     """True if this Telegram user is a registered seller.
-    Falls back to True for all humans when the cache is empty (no DB configured)."""
-    if not _seller_cache:
-        return True  # fallback: no DB, allow any human
+    Falls back to True only when Supabase is not configured (local dev without DB)."""
+    if not SUPABASE_URL:
+        return True  # no DB configured → modo dev, todos son sellers
     return telegram_user_id in _seller_cache
 
 
