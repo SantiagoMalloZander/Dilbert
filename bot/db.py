@@ -13,7 +13,6 @@ from config import (
     HUBSPOT_API_KEY,
 )
 from extractor import ExtractionResult
-import hubspot_sync
 
 logger = logging.getLogger(__name__)
 
@@ -287,7 +286,11 @@ def upsert_lead_and_interaction(
 
     create_interaction(lead["id"], seller_id, transcript, result, source_metadata=source_metadata)
     if HUBSPOT_API_KEY:
-        hubspot_sync.sync_lead(lead, HUBSPOT_API_KEY)
+        try:
+            import hubspot_sync
+            hubspot_sync.sync_lead(lead, HUBSPOT_API_KEY)
+        except Exception as hs_exc:
+            logger.warning("hubspot sync skipped: %s", hs_exc)
     return lead
 
 
@@ -314,5 +317,9 @@ def upsert_lead_and_interaction_for_fathom(
 
     create_interaction(lead["id"], seller_id, transcript, result, source_metadata=source_metadata)
     if HUBSPOT_API_KEY:
-        hubspot_sync.sync_lead(lead, HUBSPOT_API_KEY)
+        try:
+            import hubspot_sync
+            hubspot_sync.sync_lead(lead, HUBSPOT_API_KEY)
+        except Exception as hs_exc:
+            logger.warning("hubspot sync skipped: %s", hs_exc)
     return lead
