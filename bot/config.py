@@ -30,7 +30,7 @@ DEFAULT_SELLER_COMPANY_NAME: str = os.getenv(
 )
 
 # Buffer trigger thresholds
-BUFFER_TIMEOUT_SECONDS: int = 30        # 30s inactivity → queue private review
+BUFFER_TIMEOUT_SECONDS: int = 15        # 15s inactivity → trigger analysis
 BUFFER_MAX_MESSAGES: int = 20           # 20 messages → trigger analysis
 
 # Fathom webhook integration
