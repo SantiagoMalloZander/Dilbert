@@ -22,7 +22,6 @@ import transcription
 from config import (
     TELEGRAM_BOT_TOKEN,
     BUFFER_TIMEOUT_SECONDS,
-    BUFFER_SHORT_TIMEOUT_SECONDS,
     SUPABASE_URL,
     SUPABASE_SERVICE_KEY,
     PORT,
@@ -516,9 +515,12 @@ async def _auto_analyze_conversation(
     context: ContextTypes.DEFAULT_TYPE,
     seller_telegram_id: Optional[int],
 ) -> None:
-    """Flush del buffer + análisis completo automático sin intervención del vendedor."""
+    """
+    Analiza el buffer acumulado y actualiza (o crea) el lead e interaction en la DB.
+    NO vacía el buffer — la conversación sigue acumulando para el próximo trigger.
+    """
     chat_buffer = buf.get_or_create(chat_id)
-    messages = buf.flush(chat_id)
+    messages = buf.peek_messages(chat_id)  # peek: no flush
     if not messages:
         return
 
@@ -530,43 +532,63 @@ async def _auto_analyze_conversation(
         logger.info("auto-analyze: no seller in chat=%s, dropping", chat_id)
         return
 
-    transcript = buf.format_for_llm(messages)
-    last_message = messages[-1]
-
-    review = review_queue.enqueue_review(
-        allowed_seller_telegram_ids=seller_ids,
-        source_chat_id=chat_id,
-        source_chat_title=chat_buffer.chat_title,
-        transcript=transcript,
-        last_message_id=last_message.message_id,
-        last_sender_id=last_message.sender_id,
-    )
-
     primary_seller_id = seller_ids[0]
-    seller_row = _seller_cache.get(primary_seller_id, {})
-    seller_name = seller_row.get("name", f"Vendedor {primary_seller_id}")
+    transcript = buf.format_for_llm(messages)
+
+    try:
+        result = await extractor.extract(transcript)
+    except Exception as exc:
+        logger.error("auto-analyze: extraction failed chat=%s: %s", chat_id, exc)
+        return
 
     logger.info(
-        "auto-analyze: running review=%s chat=%s seller=%s",
-        review.review_id, chat_id, primary_seller_id,
+        "auto-analyze: chat=%s client=%s status=%s existing_interaction=%s",
+        chat_id, result.client_name, result.suggested_status, chat_buffer.current_interaction_id,
     )
 
-    await _run_pending_review(
-        review,
-        private_chat_id=primary_seller_id,
-        control_message_id=0,
-        seller_user_id=primary_seller_id,
-        seller_name=seller_name,
-        context=context,
-    )
+    try:
+        if chat_buffer.current_interaction_id and chat_buffer.current_lead_id:
+            # Actualizar registros existentes
+            await asyncio.to_thread(db.update_lead, chat_buffer.current_lead_id, result)
+            await asyncio.to_thread(
+                db.update_interaction, chat_buffer.current_interaction_id, transcript, result
+            )
+        else:
+            # Primera vez: crear lead e interaction
+            seller = await asyncio.to_thread(db.get_seller_by_telegram_id, primary_seller_id)
+            if not seller:
+                logger.warning("auto-analyze: seller not found telegram_id=%s", primary_seller_id)
+                return
+            lead = await asyncio.to_thread(
+                db.upsert_lead, seller["id"], seller["company_id"], result
+            )
+            source_metadata = db.InteractionSourceMetadata(
+                source_type="group_chat",
+                source_chat_id=chat_id,
+                source_message_key=f"auto:{chat_id}:{messages[0].message_id}",
+            )
+            interaction = await asyncio.to_thread(
+                db.create_interaction, lead["id"], seller["id"], transcript, result, source_metadata
+            )
+            chat_buffer.current_lead_id = lead["id"]
+            chat_buffer.current_interaction_id = interaction["id"]
+
+        await context.bot.send_message(
+            chat_id=primary_seller_id,
+            text=(
+                f"✅ CRM actualizado\n"
+                f"👤 {result.client_name or 'cliente'} — {result.suggested_status}\n"
+                f"📝 {result.summary or 'sin resumen'}"
+            ),
+        )
+    except Exception as exc:
+        logger.error("auto-analyze: DB write failed chat=%s: %s", chat_id, exc, exc_info=True)
 
 
 async def _schedule_timeout(chat_id: int, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Wait for inactivity timeout then auto-analyze the conversation."""
-    chat_buffer = buf.get_or_create(chat_id)
-    timeout = BUFFER_SHORT_TIMEOUT_SECONDS if chat_buffer.use_short_timeout else BUFFER_TIMEOUT_SECONDS
-    await asyncio.sleep(timeout)
-    logger.info("timeout reached chat=%s short=%s — auto-analyzing", chat_id, chat_buffer.use_short_timeout)
+    """Wait BUFFER_TIMEOUT_SECONDS of inactivity then auto-analyze."""
+    await asyncio.sleep(BUFFER_TIMEOUT_SECONDS)
+    logger.info("timeout reached chat=%s — auto-analyzing", chat_id)
     chat_buffer = buf.get_or_create(chat_id)
     await _auto_analyze_conversation(chat_id, context, seller_telegram_id=chat_buffer.seller_telegram_id)
 
@@ -602,11 +624,6 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     if is_seller and chat_buffer.seller_telegram_id is None:
         chat_buffer.seller_telegram_id = user.id
         logger.info("seller identified in chat=%s: telegram_id=%s", chat.id, user.id)
-
-    # Detectar frase de cierre → activar timeout corto
-    if msg.text and buf.detect_farewell(msg.text):
-        chat_buffer.use_short_timeout = True
-        logger.info("farewell detected chat=%s — short timeout active", chat.id)
 
     # Reset inactivity timeout
     if chat_buffer.timeout_task and not chat_buffer.timeout_task.done():

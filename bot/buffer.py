@@ -19,21 +19,6 @@ class BufferedMessage:
     timestamp: datetime
 
 
-_FAREWELL_PHRASES = [
-    "hasta luego", "hasta mañana", "hasta pronto", "nos hablamos",
-    "nos vemos", "chau", "bye", "quedamos así", "bueno quedamos",
-    "gracias por tu tiempo", "te mando la propuesta", "te escribo",
-    "hablamos pronto", "un abrazo", "saludos", "te llamo",
-    "perfecto nos hablamos", "dale quedamos", "dale gracias",
-]
-
-
-def detect_farewell(text: str) -> bool:
-    """True si el texto contiene una frase típica de cierre de conversación."""
-    lower = text.lower()
-    return any(phrase in lower for phrase in _FAREWELL_PHRASES)
-
-
 @dataclass
 class ChatBuffer:
     chat_id: int
@@ -41,7 +26,9 @@ class ChatBuffer:
     messages: list[BufferedMessage] = field(default_factory=list)
     timeout_task: Optional[asyncio.Task] = field(default=None, repr=False)
     seller_telegram_id: Optional[int] = field(default=None)
-    use_short_timeout: bool = field(default=False)
+    # Persisted record IDs — se setean en el primer auto-análisis y se reusan
+    current_lead_id: Optional[str] = field(default=None)
+    current_interaction_id: Optional[str] = field(default=None)
 
 
 # Global buffer: chat_id → ChatBuffer
@@ -84,6 +71,12 @@ def add_message(
         text[:60],
     )
     return buf
+
+
+def peek_messages(chat_id: int) -> list[BufferedMessage]:
+    """Return accumulated messages WITHOUT clearing the buffer."""
+    buf = _buffers.get(chat_id)
+    return buf.messages.copy() if buf else []
 
 
 def flush(chat_id: int) -> list[BufferedMessage]:

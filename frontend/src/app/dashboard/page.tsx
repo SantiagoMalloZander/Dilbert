@@ -72,7 +72,6 @@ export default function Dashboard() {
           event: "*",
           schema: "public",
           table: "leads",
-          filter: `company_id=eq.${DEMO_COMPANY_ID}`,
         },
         async () => {
           const { data } = await supabase
