@@ -1,181 +1,139 @@
-# Dilbert CRM
+# DILBERT — Guía de Usuario
 
-> AI agent that lives inside Telegram chats between sellers and clients. Reads conversations in real time, extracts sales data automatically, and feeds a CRM. The manager sees everything on a live dashboard.
-
-**hackITBA 2026 — AI & Automation category**
+> Agente IA que convierte conversaciones de ventas en datos CRM. Funciona en Telegram y sincroniza automáticamente con HubSpot.
 
 ---
 
-## Live demo
+## Acceso al Dashboard
 
-| Service | URL |
-|---------|-----|
-| Dashboard | https://frontend-one-swart-63.vercel.app |
-| Supabase project | `ivimeffceopwzlkoqoyd` |
+**URL:** https://dilverty.netlify.app
 
----
+### Cuenta Jurado (hackITBA 2026)
+| Campo | Valor |
+|-------|-------|
+| Usuario | `Jurado@hackitba.edu` |
+| Contraseña | `compi` |
 
-## Architecture
-
-```
-Telegram chat
-     │
-     ▼
-┌─────────────┐    GPT-4o     ┌──────────────┐
-│  Bot Python │ ────────────► │  Extractor   │
-│  (Railway)  │               │  (JSON mode) │
-└─────────────┘               └──────┬───────┘
-     │                               │
-     │ upsert                        │
-     ▼                               ▼
-┌──────────────────────────────────────────┐
-│           Supabase PostgreSQL            │
-│  companies / sellers / leads /           │
-│  interactions  +  Realtime               │
-└──────────────────────┬───────────────────┘
-                       │ Realtime push
-                       ▼
-              ┌─────────────────┐
-              │  Next.js 16     │
-              │  Dashboard      │
-              │  (Vercel)       │
-              └─────────────────┘
-```
-
-## Stack
-
-| Layer | Tech |
-|-------|------|
-| Bot | Python 3.11 + python-telegram-bot v21 |
-| LLM | OpenAI GPT-4o (JSON mode) |
-| DB | Supabase (PostgreSQL + Realtime) |
-| Frontend | Next.js 16 + Tailwind CSS + Shadcn/UI |
-| Deploy (frontend) | Vercel |
-| Deploy (bot) | Railway |
+### Cuenta Demo (acceso completo)
+| Campo | Valor |
+|-------|-------|
+| Usuario | `demo` |
+| Contraseña | `crew` |
 
 ---
 
-## Run locally — 1 command
+## Cómo conectarse a Telegram y cargar leads
 
-### Prerequisites
+### Paso 1 — Conectar tu cuenta de Telegram al bot
 
-- Docker + Docker Compose
-- A Telegram bot token (`@BotFather`)
-- An OpenAI API key
-- A Supabase project (free tier works)
+1. Entrá al dashboard con la cuenta Jurado
+2. En el menú lateral, hacé click en **"Canales del bot"**
+3. En el card de Telegram, hacé click en **"Abrir QR"**
+4. Escaneá el QR con la cámara de tu celular
+5. Se abre Telegram — tocá **START**
+6. El bot responde confirmando que quedaste registrado
 
-### 1. Clone and configure
-
-```bash
-git clone https://github.com/SantiagoMalloZander/Dilbert.git
-cd Dilbert
-```
-
-Create `bot/.env`:
-
-```env
-TELEGRAM_BOT_TOKEN=your-telegram-token
-OPENAI_API_KEY=your-openai-key
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_KEY=your-service-role-key
-```
-
-Create `frontend/.env.local`:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-### 2. Apply database migrations
-
-```bash
-supabase link --project-ref your-project-ref
-supabase db push
-```
-
-### 3. Start everything
-
-```bash
-docker compose up
-```
-
-- Frontend → http://localhost:3000
-- Bot → polling Telegram
+> También podés entrar directamente: https://t.me/Dilbott_bot y mandar `/start`
 
 ---
 
-## Bot commands
+### Paso 2 — Mandar una conversación de ventas al bot
 
-| Command | Description |
-|---------|-------------|
-| `/analizar` | Force analysis of current message buffer |
-| `/status` | Show bot status and buffer count |
-
-**Auto-trigger:** analysis fires automatically after 3 min of inactivity or 20 messages accumulated.
-
----
-
-## Bot flow
-
-1. Bot is added to a Telegram group (seller + client).
-2. Reads all messages and accumulates them in an in-memory buffer per `chat_id`.
-3. Triggers analysis when: 3+ min of inactivity, 20+ messages, or `/analizar`.
-4. Sends transcript to GPT-4o → receives structured JSON.
-5. If ambiguities detected → asks seller in chat → waits for reply → re-analyzes with context.
-6. Upserts `leads` + inserts `interactions` in Supabase.
-7. Supabase Realtime propagates changes to the manager dashboard instantly.
-
----
-
-## Dashboard features
-
-- **Leads tab** — live table with status, sentiment, seller, amount. Clicks through to lead detail with full interaction history.
-- **Analytics tab** — funnel, sentiment distribution, revenue by product, seller performance, and 30d/90d revenue predictions.
-- **Realtime** — dashboard updates instantly when the bot saves new data (no refresh needed).
-
----
-
-## Database schema
-
-```sql
-companies(id, name, created_at)
-sellers(id, company_id, name, telegram_user_id, created_at)
-leads(id, company_id, seller_id, client_name, client_company,
-      status, estimated_amount, currency, product_interest,
-      sentiment, next_steps, last_interaction, created_at)
-interactions(id, lead_id, seller_id, raw_messages,
-             extracted_data JSONB, summary, created_at)
-```
-
-Status values: `new` `contacted` `negotiating` `closed_won` `closed_lost`
-
----
-
-## Repo structure
+Una vez registrado, mandá al bot el texto de una conversación comercial. Por ejemplo:
 
 ```
-/
-├── bot/                  # Telegram bot (Python)
-│   ├── main.py           # Entry point + handlers
-│   ├── buffer.py         # In-memory message buffer per chat
-│   ├── extractor.py      # GPT-4o extraction
-│   ├── db.py             # Supabase upsert logic
-│   ├── proactive.py      # Clarification question tracking
-│   ├── prompts.py        # LLM prompts
-│   ├── config.py         # Env vars
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/             # Manager dashboard (Next.js)
-│   ├── src/app/          # App Router pages + API routes
-│   ├── src/components/   # UI components
-│   └── src/lib/          # Supabase client + queries + types
-├── supabase/
-│   └── migrations/       # SQL migrations
-├── docker-compose.yml
-└── README.md
+Hablé con Juan García de Acme S.A., le interesa el software de facturación.
+Monto estimado: $5000. Próximo paso: enviar propuesta la semana que viene.
+```
+
+El bot extrae automáticamente:
+- Nombre del cliente y empresa
+- Producto de interés
+- Monto estimado
+- Sentimiento y próximos pasos
+- Estado del deal
+
+---
+
+### Paso 3 — Ver el lead en el dashboard
+
+1. Entrá a https://dilverty.netlify.app
+2. Iniciá sesión con la cuenta Jurado
+3. El lead aparece en el **Pipeline** en tiempo real
+4. Hacé click en cualquier lead para ver el detalle con todas las interacciones
+
+---
+
+### Paso 4 — Ver el lead en HubSpot
+
+Los leads se sincronizan automáticamente a HubSpot después de ser procesados por el bot.
+
+**Acceso a HubSpot:**
+| Campo | Valor |
+|-------|-------|
+| Usuario | `mzanderconsulting@gmail.com` |
+| Contraseña | `Compicompi*(` |
+| URL | https://app.hubspot.com |
+
+Cada lead de Dilbert crea en HubSpot:
+- Un **Contacto** con el nombre y empresa del cliente
+- Un **Deal** con el monto, estado y producto
+- Los dos quedan vinculados automáticamente
+
+---
+
+## Grupo de demo en Telegram
+
+También podés probar el bot en un grupo de ventas real:
+
+**Link al grupo demo:** https://t.me/+QVoAdLIwdLpkNDgx
+
+En el grupo, el bot escucha todas las conversaciones. Cuando detecta suficiente información, procesa la conversación y notifica al vendedor por privado con el resumen extraído.
+
+---
+
+## Qué hay en el dashboard
+
+| Sección | Qué hace |
+|---------|----------|
+| **Pipeline** | Lista todos los leads con estado, monto y fecha |
+| **Métricas** | Revenue total, conversión, deals ganados/perdidos |
+| **Inteligencia IA** | Análisis predictivo: churn, probabilidad de recompra, forecast |
+| **HubSpot** | Estado de la integración y sync manual |
+| **Canales del bot** | QR para conectar vendedores nuevos a Telegram |
+
+---
+
+## Flujo completo de datos
+
+```
+Vendedor habla con cliente por Telegram
+        ↓
+Manda el resumen al bot (@Dilbott_bot)
+        ↓
+GPT-4o extrae: cliente, empresa, monto, producto, sentimiento
+        ↓
+Lead guardado en Supabase → aparece en el dashboard en tiempo real
+        ↓
+Lead sincronizado automáticamente → HubSpot (contacto + deal vinculados)
 ```
 
 ---
 
-*Built in 36 hours at hackITBA 2026.*
+## Preguntas frecuentes
+
+**¿Qué pasa si mando un mensaje sin haberme registrado?**
+El bot te pide que uses `/start` primero para registrarte automáticamente.
+
+**¿Puedo agregar leads manualmente?**
+Sí. En el Pipeline, hacé click en **"Agregar lead"** (botón naranja arriba a la derecha).
+
+**¿Qué hace el botón de sync en HubSpot?**
+Fuerza una sincronización de todos los leads. Los del bot se sincronizan solos sin necesidad de usarlo.
+
+**¿Los datos son reales?**
+Sí. GPT-4o en producción, Supabase en la nube y HubSpot conectado con datos reales.
+
+---
+
+*Dilbert — hackITBA 2026*
