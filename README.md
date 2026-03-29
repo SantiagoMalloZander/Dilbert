@@ -46,6 +46,8 @@ Hablé con Juan García de Acme S.A., le interesa el software de facturación.
 Monto estimado: $5000. Próximo paso: enviar propuesta la semana que viene.
 ```
 
+Tambien se puede crear un grupo de texto que incluye a Dilbert, un comprador y un vendedor. En el mismo se realiza una transaccion y una vez terminada la misma el bot envia por privado el resumen.
+
 El bot extrae automáticamente:
 - Nombre del cliente y empresa
 - Producto de interés
@@ -88,7 +90,7 @@ También podés probar el bot en un grupo de ventas real:
 
 **Link al grupo demo:** https://t.me/+QVoAdLIwdLpkNDgx
 
-En el grupo, el bot escucha todas las conversaciones. Cuando detecta suficiente información, procesa la conversación y notifica al vendedor por privado con el resumen extraído.
+
 
 ---
 
