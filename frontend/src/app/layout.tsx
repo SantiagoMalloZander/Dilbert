@@ -48,7 +48,7 @@ export default async function RootLayout({
       <body className="flex h-full bg-background text-foreground">
         {showSidebar && <Sidebar companyName={companyName} role={role} />}
         <RealtimeProvider />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto pt-12 md:pt-0">{children}</main>
       </body>
     </html>
   );

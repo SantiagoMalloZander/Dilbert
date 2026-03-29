@@ -60,74 +60,119 @@ export function LeadsTable({
   }
 
   return (
-    <div className="rounded-lg border bg-card overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="border-b hover:bg-transparent">
-            {["Cliente", "Empresa", "Vendedor", "Producto", "Monto", "Estado", "Sentimiento", "Canal", "Última Interacción"].map((h) => (
-              <TableHead key={h} className="text-[9px] font-mono font-semibold uppercase tracking-[0.18em] text-muted-foreground py-3">
-                {h}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {leads.map((lead) => {
-            const status = statusConfig[lead.status] || statusConfig.new;
-            const sentiment = lead.sentiment ? sentimentConfig[lead.sentiment] : null;
-
-            return (
-              <TableRow
-                key={lead.id}
-                className="cursor-pointer hover:bg-[#EDE8DF]/40 transition-colors border-b border-border/50"
-              >
-                <TableCell className="py-3">
-                  <Link
-                    href={`/leads/${lead.id}`}
-                    className="font-medium text-sm hover:text-[#D4420A] transition-colors"
-                  >
-                    {lead.client_name || "Sin nombre"}
-                  </Link>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground py-3">
-                  {lead.client_company || "—"}
-                </TableCell>
-                <TableCell className="text-sm py-3">{lead.sellers?.name || "—"}</TableCell>
-                <TableCell className="text-sm py-3">{lead.product_interest || "—"}</TableCell>
-                <TableCell className="text-sm font-medium py-3">
+    <>
+      {/* Mobile card view */}
+      <div className="md:hidden flex flex-col gap-3">
+        {leads.map((lead) => {
+          const status = statusConfig[lead.status] || statusConfig.new;
+          const sentiment = lead.sentiment ? sentimentConfig[lead.sentiment] : null;
+          return (
+            <Link
+              key={lead.id}
+              href={`/leads/${lead.id}`}
+              className="block rounded-lg border bg-card p-4 space-y-3 hover:bg-[#EDE8DF]/40 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-medium text-sm leading-tight">{lead.client_name || "Sin nombre"}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{lead.client_company || "—"}</p>
+                </div>
+                <span className={`text-[10px] font-mono uppercase tracking-wide px-2 py-0.5 rounded border shrink-0 ${status.className}`}>
+                  {status.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {lead.product_interest && (
+                  <span className="text-[10px] font-mono text-muted-foreground bg-muted rounded px-2 py-0.5">
+                    {lead.product_interest}
+                  </span>
+                )}
+                {sentiment && (
+                  <span className={`text-[10px] font-mono uppercase tracking-wide px-2 py-0.5 rounded border ${sentiment.className}`}>
+                    {sentiment.label}
+                  </span>
+                )}
+                <SourceBadge sourceType={leadSourceTypes.get(lead.id)} size="sm" />
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium">
                   {lead.estimated_amount
                     ? `${lead.currency || "$"} ${lead.estimated_amount.toLocaleString()}`
-                    : "—"}
-                </TableCell>
-                <TableCell className="py-3">
-                  <span
-                    className={`text-[10px] font-mono uppercase tracking-wide px-2 py-0.5 rounded border ${status.className}`}
-                  >
-                    {status.label}
-                  </span>
-                </TableCell>
-                <TableCell className="py-3">
-                  {sentiment ? (
-                    <span
-                      className={`text-[10px] font-mono uppercase tracking-wide px-2 py-0.5 rounded border ${sentiment.className}`}
+                    : "Sin estimar"}
+                </span>
+                <span className="font-mono text-muted-foreground">{formatDate(lead.last_interaction)}</span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="hidden md:block rounded-lg border bg-card overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b hover:bg-transparent">
+              {["Cliente", "Empresa", "Vendedor", "Producto", "Monto", "Estado", "Sentimiento", "Canal", "Última Interacción"].map((h) => (
+                <TableHead key={h} className="text-[9px] font-mono font-semibold uppercase tracking-[0.18em] text-muted-foreground py-3">
+                  {h}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {leads.map((lead) => {
+              const status = statusConfig[lead.status] || statusConfig.new;
+              const sentiment = lead.sentiment ? sentimentConfig[lead.sentiment] : null;
+
+              return (
+                <TableRow
+                  key={lead.id}
+                  className="cursor-pointer hover:bg-[#EDE8DF]/40 transition-colors border-b border-border/50"
+                >
+                  <TableCell className="py-3">
+                    <Link
+                      href={`/leads/${lead.id}`}
+                      className="font-medium text-sm hover:text-[#D4420A] transition-colors"
                     >
-                      {sentiment.label}
+                      {lead.client_name || "Sin nombre"}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground py-3">
+                    {lead.client_company || "—"}
+                  </TableCell>
+                  <TableCell className="text-sm py-3">{lead.sellers?.name || "—"}</TableCell>
+                  <TableCell className="text-sm py-3">{lead.product_interest || "—"}</TableCell>
+                  <TableCell className="text-sm font-medium py-3">
+                    {lead.estimated_amount
+                      ? `${lead.currency || "$"} ${lead.estimated_amount.toLocaleString()}`
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <span className={`text-[10px] font-mono uppercase tracking-wide px-2 py-0.5 rounded border ${status.className}`}>
+                      {status.label}
                     </span>
-                  ) : (
-                    "—"
-                  )}
-                </TableCell>
-                <TableCell className="py-3">
-                  <SourceBadge sourceType={leadSourceTypes.get(lead.id)} size="sm" />
-                </TableCell>
-                <TableCell className="text-xs font-mono text-muted-foreground py-3">
-                  {formatDate(lead.last_interaction)}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    {sentiment ? (
+                      <span className={`text-[10px] font-mono uppercase tracking-wide px-2 py-0.5 rounded border ${sentiment.className}`}>
+                        {sentiment.label}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <SourceBadge sourceType={leadSourceTypes.get(lead.id)} size="sm" />
+                  </TableCell>
+                  <TableCell className="text-xs font-mono text-muted-foreground py-3">
+                    {formatDate(lead.last_interaction)}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }

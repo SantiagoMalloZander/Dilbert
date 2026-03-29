@@ -53,7 +53,7 @@ export function MetricsCards({ leads }: { leads: Lead[] }) {
             {stat.label}
           </p>
           <div
-            className={`font-heading text-5xl leading-none tracking-wide ${stat.color}`}
+            className={`font-heading text-4xl md:text-5xl leading-none tracking-wide ${stat.color}`}
           >
             {stat.value}
           </div>

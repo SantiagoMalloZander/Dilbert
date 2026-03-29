@@ -20,7 +20,7 @@ export default async function HubSpotPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-5 border-b bg-card/60">
+      <div className="px-4 md:px-6 py-4 md:py-5 border-b bg-card/60">
         <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           Integración CRM
         </p>
@@ -34,7 +34,7 @@ export default async function HubSpotPage() {
               className="object-contain"
             />
           </div>
-          <h1 className="font-heading text-4xl tracking-wide leading-none">HUBSPOT</h1>
+          <h1 className="font-heading text-3xl md:text-4xl tracking-wide leading-none">HUBSPOT</h1>
           {isConfigured ? (
             <span className="text-[10px] font-mono border border-[#1A7A6E]/40 rounded px-2 py-0.5 text-[#1A7A6E] uppercase tracking-wider bg-[#1A7A6E]/8">
               Conectado
@@ -45,12 +45,12 @@ export default async function HubSpotPage() {
             </span>
           )}
         </div>
-        <p className="text-sm text-muted-foreground mt-1.5">
+        <p className="text-xs md:text-sm text-muted-foreground mt-1.5">
           Sincroniza leads de Dilbert con tus contactos y deals de HubSpot.
         </p>
       </div>
 
-      <div className="p-6 space-y-4 max-w-3xl">
+      <div className="p-4 md:p-6 space-y-4 max-w-3xl">
         <HubSpotCredentialsForm isConfigured={isConfigured} />
 
         <Card>

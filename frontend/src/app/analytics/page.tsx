@@ -12,20 +12,20 @@ export default async function AnalyticsPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Page header */}
-      <div className="px-6 py-5 border-b bg-card/60">
+      <div className="px-4 md:px-6 py-4 md:py-5 border-b bg-card/60">
         <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           Dilbert Analytics
         </p>
-        <h1 className="font-heading text-4xl tracking-wide mt-1 leading-none">
+        <h1 className="font-heading text-3xl md:text-4xl tracking-wide mt-1 leading-none">
           INTELIGENCIA IA
         </h1>
-        <p className="text-sm text-muted-foreground mt-1.5">
+        <p className="text-xs md:text-sm text-muted-foreground mt-1.5">
           Patrones de consumo por cliente — recompra, cadencia y predicciones de revenue.
         </p>
       </div>
 
       {/* Content */}
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <div className="grid gap-6 xl:grid-cols-[1.7fr_0.9fr]">
           <div className="space-y-4">
             <div>

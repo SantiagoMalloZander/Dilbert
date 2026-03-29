@@ -13,15 +13,13 @@ import {
   Database,
   LayoutList,
   LogOut,
+  Menu,
   Radio,
   Sparkles,
+  X,
 } from "lucide-react";
 
-const CRM_OPTIONS: {
-  name: string;
-  logo: string;
-  href?: string;
-}[] = [
+const CRM_OPTIONS: { name: string; logo: string; href?: string }[] = [
   { name: "Salesforce", logo: "/CRMs/Salesforce.png" },
   { name: "HubSpot", logo: "/CRMs/Hudstop.png", href: "/crm/hubspot" },
   { name: "Zoho CRM", logo: "/CRMs/ZohoCRM.png" },
@@ -40,19 +38,21 @@ function NavLink({
   icon,
   label,
   exact = false,
+  onClick,
 }: {
   href: string;
   icon: React.ReactNode;
   label: string;
   exact?: boolean;
+  onClick?: () => void;
 }) {
   const pathname = usePathname();
   const isActive = exact ? pathname === href : pathname.startsWith(href);
-
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-all ${
+      onClick={onClick}
+      className={`flex items-center gap-2.5 rounded px-3 py-2.5 text-sm transition-all ${
         isActive
           ? "bg-[#D4420A] text-[#F5F0E8] font-medium"
           : "text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8]"
@@ -64,14 +64,14 @@ function NavLink({
   );
 }
 
-function CRMNavLink({ href, logo, name }: { href: string; logo: string; name: string }) {
+function CRMNavLink({ href, logo, name, onClick }: { href: string; logo: string; name: string; onClick?: () => void }) {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
-
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-all ${
+      onClick={onClick}
+      className={`flex items-center gap-2.5 rounded px-3 py-2.5 text-sm transition-all ${
         isActive
           ? "bg-[#D4420A] text-[#F5F0E8] font-medium"
           : "text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8]"
@@ -93,11 +93,10 @@ function SectionLabel({ label }: { label: string }) {
 
 function DisabledCRMOption({ name, logo }: { name: string; logo: string }) {
   const [clicked, setClicked] = useState(false);
-
   return (
     <button
       onClick={() => setClicked(true)}
-      className="flex w-full items-center justify-between rounded px-3 py-2 text-sm text-[#F5F0E8]/38 hover:bg-white/5 hover:text-[#F5F0E8]/55 transition-colors"
+      className="flex w-full items-center justify-between rounded px-3 py-2.5 text-sm text-[#F5F0E8]/38 hover:bg-white/5 transition-colors"
     >
       <span className="flex items-center gap-2.5">
         <CRMIcon logo={logo} name={name} />
@@ -114,12 +113,14 @@ function DisabledCRMOption({ name, logo }: { name: string; logo: string }) {
   );
 }
 
-export function Sidebar({
+function SidebarContent({
   companyName,
   role,
+  onClose,
 }: {
   companyName: string;
   role: string;
+  onClose?: () => void;
 }) {
   const [crmOpen, setCrmOpen] = useState(true);
   const router = useRouter();
@@ -131,75 +132,66 @@ export function Sidebar({
   }
 
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col bg-[#1A1A1A] px-3 py-5 border-r border-[#F5F0E8]/8">
+    <div className="flex h-full flex-col bg-[#1A1A1A] px-3 py-5">
       {/* Brand */}
-      <div className="mb-6 px-3">
-        <div className="font-heading text-[22px] tracking-wider text-[#D4420A] leading-none">
-          DILBERT.
+      <div className="mb-6 px-3 flex items-start justify-between">
+        <div>
+          <div className="font-heading text-[22px] tracking-wider text-[#D4420A] leading-none">
+            DILBERT.
+          </div>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#F5F0E8]/28">
+              {companyName || "hackITBA 2026"}
+            </span>
+            <span className="h-1.5 w-1.5 rounded-full bg-[#1A7A6E] animate-pulse shrink-0" />
+          </div>
         </div>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#F5F0E8]/28">
-            {companyName || "hackITBA 2026"}
-          </span>
-          <span className="h-1.5 w-1.5 rounded-full bg-[#1A7A6E] animate-pulse shrink-0" />
-        </div>
+        {onClose && (
+          <button onClick={onClose} className="text-[#F5F0E8]/40 hover:text-[#F5F0E8] p-1 -mt-1 -mr-1">
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
-        {/* Ventas */}
         <SectionLabel label="Ventas" />
-        <NavLink href="/dashboard" icon={<LayoutList size={14} />} label="Pipeline" exact />
-        <NavLink href="/metricas" icon={<BarChart3 size={14} />} label="Métricas" />
-        <NavLink href="/analytics" icon={<Sparkles size={14} />} label="Inteligencia IA" />
+        <NavLink href="/dashboard" icon={<LayoutList size={14} />} label="Pipeline" exact onClick={onClose} />
+        <NavLink href="/metricas" icon={<BarChart3 size={14} />} label="Métricas" onClick={onClose} />
+        <NavLink href="/analytics" icon={<Sparkles size={14} />} label="Inteligencia IA" onClick={onClose} />
 
-        {/* CRM */}
         <SectionLabel label="CRM" />
         <button
           onClick={() => setCrmOpen(!crmOpen)}
-          className="flex w-full items-center justify-between rounded px-3 py-2 text-sm text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8] transition-colors"
+          className="flex w-full items-center justify-between rounded px-3 py-2.5 text-sm text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8] transition-colors"
         >
           <span className="flex items-center gap-2.5">
             <Database size={14} className="opacity-70 shrink-0" />
             Conectar CRM
           </span>
-          {crmOpen ? (
-            <ChevronDown className="h-3 w-3 shrink-0 opacity-35" />
-          ) : (
-            <ChevronRight className="h-3 w-3 shrink-0 opacity-35" />
-          )}
+          {crmOpen ? <ChevronDown className="h-3 w-3 opacity-35" /> : <ChevronRight className="h-3 w-3 opacity-35" />}
         </button>
 
         {crmOpen && (
           <div className="ml-3 flex flex-col gap-0.5 border-l border-[#F5F0E8]/10 pl-3">
             {CRM_OPTIONS.map((crm) =>
               crm.href ? (
-                <CRMNavLink key={crm.name} href={crm.href} logo={crm.logo} name={crm.name} />
+                <CRMNavLink key={crm.name} href={crm.href} logo={crm.logo} name={crm.name} onClick={onClose} />
               ) : (
                 <DisabledCRMOption key={crm.name} name={crm.name} logo={crm.logo} />
               )
             )}
             <div className="my-1 border-t border-[#F5F0E8]/8" />
-            <NavLink href="/dashboard" icon={<Bot size={14} />} label="Dilbert CRM" exact />
+            <NavLink href="/dashboard" icon={<Bot size={14} />} label="Dilbert CRM" exact onClick={onClose} />
           </div>
         )}
 
-        {/* Configuración */}
         <SectionLabel label="Configuración" />
-        <button
-          onClick={() => router.push("/configuracion")}
-          className="flex w-full items-center justify-between rounded px-3 py-2 text-sm text-[#F5F0E8]/55 hover:bg-white/6 hover:text-[#F5F0E8] transition-colors"
-        >
-          <span className="flex items-center gap-2.5">
-            <Radio size={14} className="opacity-70 shrink-0" />
-            Canales del bot
-          </span>
-          <ChevronRight className="h-3 w-3 shrink-0 opacity-35" />
-        </button>
+        <NavLink href="/configuracion" icon={<Radio size={14} />} label="Canales del bot" onClick={onClose} />
       </nav>
 
       {/* Footer */}
       <div className="mt-auto pt-4 border-t border-[#F5F0E8]/8 space-y-1">
-        <div className="px-3 mb-2 space-y-0.5">
+        <div className="px-3 mb-2">
           <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#F5F0E8]/25">
             {companyName || "Demo Company"}
           </p>
@@ -208,6 +200,7 @@ export function Sidebar({
         {role === "admin" && (
           <Link
             href="/admin"
+            onClick={onClose}
             className="flex items-center gap-2.5 rounded px-3 py-2 text-sm text-[#F5D53F]/60 hover:bg-white/5 hover:text-[#F5D53F] transition-colors"
           >
             <Code2 size={13} className="shrink-0" />
@@ -217,6 +210,7 @@ export function Sidebar({
 
         <Link
           href="/dev"
+          onClick={onClose}
           className="flex items-center gap-2.5 rounded px-3 py-2 text-sm text-[#F5F0E8]/30 hover:bg-white/5 hover:text-[#F5F0E8]/55 transition-colors border border-[#F5F0E8]/8 hover:border-[#F5F0E8]/15"
         >
           <Code2 size={13} className="shrink-0" />
@@ -231,6 +225,44 @@ export function Sidebar({
           <span className="font-mono text-[10px] uppercase tracking-[0.15em]">Cerrar sesión</span>
         </button>
       </div>
-    </aside>
+    </div>
+  );
+}
+
+export function Sidebar({ companyName, role }: { companyName: string; role: string }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex h-full w-56 shrink-0 flex-col border-r border-[#F5F0E8]/8">
+        <SidebarContent companyName={companyName} role={role} />
+      </aside>
+
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed top-3 left-3 z-40 rounded-md bg-[#1A1A1A] p-2 text-[#F5F0E8]/70 hover:text-[#F5F0E8] shadow-lg"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <>
+          <div
+            className="md:hidden fixed inset-0 z-40 bg-black/60"
+            onClick={() => setMobileOpen(false)}
+          />
+          <aside className="md:hidden fixed inset-y-0 left-0 z-50 w-72 shadow-2xl">
+            <SidebarContent
+              companyName={companyName}
+              role={role}
+              onClose={() => setMobileOpen(false)}
+            />
+          </aside>
+        </>
+      )}
+    </>
   );
 }

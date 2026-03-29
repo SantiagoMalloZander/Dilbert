@@ -29,17 +29,17 @@ export default function AdminPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-5 border-b bg-card/60">
+      <div className="px-4 md:px-6 py-4 md:py-5 border-b bg-card/60">
         <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           Acceso interno
         </p>
-        <h1 className="font-heading text-4xl tracking-wide mt-1 leading-none">ADMIN</h1>
-        <p className="text-sm text-muted-foreground mt-1.5">
+        <h1 className="font-heading text-3xl md:text-4xl tracking-wide mt-1 leading-none">ADMIN</h1>
+        <p className="text-xs md:text-sm text-muted-foreground mt-1.5">
           Panel de control para la sesión de demo — solo visible para el equipo.
         </p>
       </div>
 
-      <div className="p-6 space-y-6 max-w-2xl">
+      <div className="p-4 md:p-6 space-y-6 max-w-2xl">
 
         {/* Jurado account info */}
         <div className="rounded-lg border bg-card p-5 space-y-4">
