@@ -41,17 +41,17 @@ const CHANNELS = [
 export default function ConfiguracionPage() {
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 md:px-6 py-4 md:py-5 border-b bg-card/60">
+      <div className="px-6 py-5 border-b bg-card/60">
         <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           Configuración
         </p>
-        <h1 className="font-heading text-3xl md:text-4xl tracking-wide mt-1 leading-none">CANALES</h1>
-        <p className="text-xs md:text-sm text-muted-foreground mt-1.5 max-w-xl">
+        <h1 className="font-heading text-4xl tracking-wide mt-1 leading-none">CANALES</h1>
+        <p className="text-sm text-muted-foreground mt-1.5 max-w-xl">
           Elegí desde qué plataformas Dilbert lee conversaciones y extrae datos de ventas.
         </p>
       </div>
 
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="p-6 space-y-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {CHANNELS.map((channel) => (
             <div

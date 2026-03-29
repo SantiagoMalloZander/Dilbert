@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
 
-from config import BUFFER_MAX_MESSAGES, BUFFER_TIMEOUT_SECONDS  # noqa: F401 (re-exported)
+from config import BUFFER_MAX_MESSAGES, BUFFER_TIMEOUT_SECONDS
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,6 @@ class ChatBuffer:
     messages: list[BufferedMessage] = field(default_factory=list)
     timeout_task: Optional[asyncio.Task] = field(default=None, repr=False)
     seller_telegram_id: Optional[int] = field(default=None)
-    # Persisted record IDs — se setean en el primer auto-análisis y se reusan
-    current_lead_id: Optional[str] = field(default=None)
-    current_interaction_id: Optional[str] = field(default=None)
 
 
 # Global buffer: chat_id → ChatBuffer
@@ -71,12 +68,6 @@ def add_message(
         text[:60],
     )
     return buf
-
-
-def peek_messages(chat_id: int) -> list[BufferedMessage]:
-    """Return accumulated messages WITHOUT clearing the buffer."""
-    buf = _buffers.get(chat_id)
-    return buf.messages.copy() if buf else []
 
 
 def flush(chat_id: int) -> list[BufferedMessage]:

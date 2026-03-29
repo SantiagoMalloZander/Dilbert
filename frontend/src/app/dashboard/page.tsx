@@ -72,6 +72,7 @@ export default function Dashboard() {
           event: "*",
           schema: "public",
           table: "leads",
+          filter: `company_id=eq.${DEMO_COMPANY_ID}`,
         },
         async () => {
           const { data } = await supabase
@@ -96,27 +97,23 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col h-full">
       {/* Page header */}
-      <div className="px-4 md:px-6 py-4 md:py-5 border-b bg-card/60">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-              Vista operativa
-            </p>
-            <h1 className="font-heading text-3xl md:text-4xl tracking-wide mt-1 leading-none">
-              PIPELINE
-            </h1>
-            <p className="text-xs md:text-sm text-muted-foreground mt-1.5 max-w-md">
-              Leads en tiempo real. Se actualiza automáticamente.
-            </p>
-          </div>
-          <div className="shrink-0 mt-1">
-            <AddLeadDialog />
-          </div>
+      <div className="px-6 py-5 border-b bg-card/60 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            Vista operativa
+          </p>
+          <h1 className="font-heading text-4xl tracking-wide mt-1 leading-none">
+            PIPELINE
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            Leads en tiempo real. Se actualiza automáticamente cuando el bot procesa conversaciones.
+          </p>
         </div>
+        <AddLeadDialog />
       </div>
 
       {/* Content */}
-      <div className="p-4 md:p-6 space-y-4 md:space-y-5">
+      <div className="p-6 space-y-5">
         <MetricsCards leads={leads} />
 
         {/* Leads panel header with realtime indicator */}

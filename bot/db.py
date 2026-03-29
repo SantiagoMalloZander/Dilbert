@@ -223,31 +223,6 @@ def create_interaction(
     return interaction
 
 
-def update_interaction(interaction_id: str, transcript: str, result: ExtractionResult) -> dict:
-    """Update raw_messages, extracted_data and summary on an existing interaction."""
-    db = _get_client()
-    updates = {
-        "raw_messages": transcript,
-        "extracted_data": result.raw,
-        "summary": result.summary,
-    }
-    res = db.table("interactions").update(updates).eq("id", interaction_id).execute()
-    interaction = res.data[0]
-    logger.info("interaction updated id=%s", interaction_id)
-    return interaction
-
-
-def upsert_lead(seller_id: str, company_id: str, result: ExtractionResult) -> dict:
-    """Find-or-create + update lead fields. Returns the lead row."""
-    if result.client_name:
-        existing = find_lead(seller_id, result.client_name, result.client_company)
-    else:
-        existing = None
-    if existing:
-        return update_lead(existing["id"], result)
-    return create_lead(seller_id, company_id, result)
-
-
 # ---------------------------------------------------------------------------
 # Main upsert — called from main.py after extraction
 # ---------------------------------------------------------------------------
