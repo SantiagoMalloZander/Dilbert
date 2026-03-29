@@ -33,6 +33,9 @@ DEFAULT_SELLER_COMPANY_NAME: str = os.getenv(
 BUFFER_TIMEOUT_SECONDS: int = 15        # 15s inactivity → trigger analysis
 BUFFER_MAX_MESSAGES: int = 20           # 20 messages → trigger analysis
 
+# HubSpot integration (optional — if set, leads are synced automatically)
+HUBSPOT_API_KEY: Optional[str] = os.getenv("HUBSPOT_API_KEY")
+
 # Fathom webhook integration
 FATHOM_WEBHOOK_SECRET: Optional[str] = os.getenv("FATHOM_WEBHOOK_SECRET")
 PORT: int = int(os.getenv("PORT", "8080"))

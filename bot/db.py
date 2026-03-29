@@ -10,8 +10,10 @@ from config import (
     SUPABASE_SERVICE_KEY,
     DEFAULT_SELLER_COMPANY_ID,
     DEFAULT_SELLER_COMPANY_NAME,
+    HUBSPOT_API_KEY,
 )
 from extractor import ExtractionResult
+import hubspot_sync
 
 logger = logging.getLogger(__name__)
 
@@ -284,6 +286,8 @@ def upsert_lead_and_interaction(
         lead = create_lead(seller_id, company_id, result)
 
     create_interaction(lead["id"], seller_id, transcript, result, source_metadata=source_metadata)
+    if HUBSPOT_API_KEY:
+        hubspot_sync.sync_lead(lead, HUBSPOT_API_KEY)
     return lead
 
 
@@ -309,4 +313,6 @@ def upsert_lead_and_interaction_for_fathom(
         lead = create_lead(seller_id, company_id, result)
 
     create_interaction(lead["id"], seller_id, transcript, result, source_metadata=source_metadata)
+    if HUBSPOT_API_KEY:
+        hubspot_sync.sync_lead(lead, HUBSPOT_API_KEY)
     return lead
