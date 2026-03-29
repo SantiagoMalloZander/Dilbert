@@ -14,11 +14,13 @@ from telegram.ext import (
 
 import buffer as buf
 import db
+import extractor as ext
 import fathom_webhook
 import intake
 import proactive
 import review_queue
 import transcription
+from validation import validate_extraction_result
 from config import (
     TELEGRAM_BOT_TOKEN,
     BUFFER_TIMEOUT_SECONDS,
@@ -516,8 +518,10 @@ async def _auto_analyze_conversation(
     seller_telegram_id: Optional[int],
 ) -> None:
     """
-    Analiza el buffer acumulado y actualiza (o crea) el lead e interaction en la DB.
-    NO vacía el buffer — la conversación sigue acumulando para el próximo trigger.
+    Flujo completo automático cada BUFFER_TIMEOUT_SECONDS de inactividad:
+      1. Extrae datos con LLM sobre el transcript acumulado (sin vaciar el buffer)
+      2. Valida — si hay ambigüedades le pregunta al vendedor por privado
+      3. Si todo ok — crea o actualiza lead+interaction en DB y confirma
     """
     chat_buffer = buf.get_or_create(chat_id)
     messages = buf.peek_messages(chat_id)  # peek: no flush
@@ -527,7 +531,6 @@ async def _auto_analyze_conversation(
     seller_ids = [m.sender_id for m in messages if m.is_seller]
     if seller_telegram_id and seller_telegram_id not in seller_ids:
         seller_ids.append(seller_telegram_id)
-
     if not seller_ids:
         logger.info("auto-analyze: no seller in chat=%s, dropping", chat_id)
         return
@@ -535,49 +538,110 @@ async def _auto_analyze_conversation(
     primary_seller_id = seller_ids[0]
     transcript = buf.format_for_llm(messages)
 
+    # --- 1. Extracción ---
     try:
-        result = await extractor.extract(transcript)
+        result = await ext.extract(transcript)
     except Exception as exc:
         logger.error("auto-analyze: extraction failed chat=%s: %s", chat_id, exc)
         return
 
     logger.info(
-        "auto-analyze: chat=%s client=%s status=%s existing_interaction=%s",
-        chat_id, result.client_name, result.suggested_status, chat_buffer.current_interaction_id,
+        "auto-analyze: chat=%s client=%s status=%s ambiguities=%s",
+        chat_id, result.client_name, result.suggested_status, result.ambiguities,
     )
 
+    # --- 2. Validación ---
+    seller = await asyncio.to_thread(db.get_seller_by_telegram_id, primary_seller_id)
+    if not seller:
+        logger.warning("auto-analyze: seller not found telegram_id=%s", primary_seller_id)
+        return
+
+    lead_match_count = None
+    if result.client_name:
+        candidates = await asyncio.to_thread(
+            db.find_lead_candidates, seller["id"], result.client_name, result.client_company
+        )
+        lead_match_count = len(candidates)
+
+    validation = validate_extraction_result(result, lead_match_count=lead_match_count)
+
+    # Clave estable de sesión basada en el primer mensaje de la conversación
+    session_key = f"auto:{chat_id}:{messages[0].message_id}"
+
+    if not validation.can_write:
+        # --- 2a. Ambigüedades: preguntar al vendedor por privado ---
+        proactive.set_pending(
+            chat_id=primary_seller_id,
+            previous_transcript=transcript,
+            seller_telegram_id=primary_seller_id,
+            questions=validation.questions,
+            source_type="group_chat",
+            source_chat_id=chat_id,
+            source_message_id=messages[-1].message_id,
+            source_user_id=messages[-1].sender_id,
+            source_message_key=session_key,
+        )
+        amount_line = (
+            f"💰 Monto: {result.estimated_amount:,} {result.currency or ''}".strip()
+            if result.estimated_amount
+            else "💰 Monto: no detectado"
+        )
+        lines = [
+            f"🤔 Entendí esto de la conversación en {chat_buffer.chat_title or 'el grupo'}:",
+            f"👤 Cliente: {result.client_name or 'no detectado'}",
+            amount_line,
+            f"📦 Producto: {result.product_interest or 'no detectado'}",
+            "",
+            "Antes de guardarlo en el CRM, necesito que me aclares:",
+        ]
+        for q in validation.questions:
+            lines.append(f"🤖 {q}")
+        try:
+            await context.bot.send_message(chat_id=primary_seller_id, text="\n".join(lines))
+        except Exception as exc:
+            logger.error("auto-analyze: could not send questions seller=%s: %s", primary_seller_id, exc)
+        return
+
+    # --- 3. Todo ok: crear o actualizar registros ---
     try:
         if chat_buffer.current_interaction_id and chat_buffer.current_lead_id:
-            # Actualizar registros existentes
             await asyncio.to_thread(db.update_lead, chat_buffer.current_lead_id, result)
             await asyncio.to_thread(
                 db.update_interaction, chat_buffer.current_interaction_id, transcript, result
             )
-        else:
-            # Primera vez: crear lead e interaction
-            seller = await asyncio.to_thread(db.get_seller_by_telegram_id, primary_seller_id)
-            if not seller:
-                logger.warning("auto-analyze: seller not found telegram_id=%s", primary_seller_id)
-                return
-            lead = await asyncio.to_thread(
-                db.upsert_lead, seller["id"], seller["company_id"], result
+            logger.info(
+                "auto-analyze: updated lead=%s interaction=%s",
+                chat_buffer.current_lead_id, chat_buffer.current_interaction_id,
             )
+        else:
+            lead = await asyncio.to_thread(db.upsert_lead, seller["id"], seller["company_id"], result)
             source_metadata = db.InteractionSourceMetadata(
                 source_type="group_chat",
                 source_chat_id=chat_id,
-                source_message_key=f"auto:{chat_id}:{messages[0].message_id}",
+                source_message_key=session_key,
             )
             interaction = await asyncio.to_thread(
                 db.create_interaction, lead["id"], seller["id"], transcript, result, source_metadata
             )
             chat_buffer.current_lead_id = lead["id"]
             chat_buffer.current_interaction_id = interaction["id"]
+            logger.info(
+                "auto-analyze: created lead=%s interaction=%s", lead["id"], interaction["id"],
+            )
 
+        amount_str = (
+            f"{result.estimated_amount:,} {result.currency or ''}".strip()
+            if result.estimated_amount
+            else "no detectado"
+        )
         await context.bot.send_message(
             chat_id=primary_seller_id,
             text=(
-                f"✅ CRM actualizado\n"
-                f"👤 {result.client_name or 'cliente'} — {result.suggested_status}\n"
+                f"✅ CRM actualizado — {chat_buffer.chat_title or 'grupo'}\n"
+                f"👤 Cliente: {result.client_name or 'no detectado'}\n"
+                f"💰 Monto: {amount_str}\n"
+                f"📦 Producto: {result.product_interest or 'no detectado'}\n"
+                f"📋 Status: {result.suggested_status}\n"
                 f"📝 {result.summary or 'sin resumen'}"
             ),
         )
