@@ -6,7 +6,7 @@ const SECRET = new TextEncoder().encode(
   process.env.AUTH_SECRET || "dilbert-hackitba-secret-2026"
 );
 
-const PUBLIC = ["/login", "/qr", "/api/auth", "/landing.html", "/_next", "/favicon", "/CRMs", "/Canales", "/dilbert-crm-logo.svg"];
+const PUBLIC = ["/login", "/qr", "/waitlist", "/api/auth", "/api/waitlist", "/landing.html", "/_next", "/favicon", "/CRMs", "/Canales", "/dilbert-crm-logo.svg"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
