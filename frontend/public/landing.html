@@ -865,6 +865,60 @@
     .g12-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .g12-ball { width: 13px; height: 13px; }
   }
+
+  /* ─── STATS ─── */
+  .stats-section {
+    padding: 80px 40px;
+    background: var(--dark);
+    color: var(--cream);
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    max-width: 960px;
+    margin: 0 auto 32px;
+    border: 1px solid rgba(245,240,232,0.08);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .stat-item {
+    padding: 48px 32px;
+    border-right: 1px solid rgba(245,240,232,0.08);
+    text-align: center;
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(56px, 8vw, 88px);
+    color: var(--orange);
+    letter-spacing: -0.01em;
+    line-height: 1;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .stat-unit { font-size: 0.55em; }
+  .stat-label {
+    font-size: 13px;
+    color: rgba(245,240,232,0.5);
+    line-height: 1.6;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+  .stats-footer {
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.35);
+  }
+  @media (max-width: 768px) {
+    .stats-section { padding: 60px 20px; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .stat-item { border-right: none; border-bottom: 1px solid rgba(245,240,232,0.08); }
+    .stat-item:last-child { border-bottom: none; }
+  }
 </style>
 </head>
 <body>
@@ -886,11 +940,10 @@
 </svg>DILBERT.</a>
   <ul class="nav-links">
     <li><a href="#flows">Cómo Funciona</a></li>
-    <li><a href="#stack">Funciones</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#canales">Canales</a></li>
     <li><a href="#pricing">Pricing</a></li>
   </ul>
-  <a href="/waitlist" class="btn-pill">LANZAR BOT →</a>
+  <a href="/waitlist" class="btn-pill">EMPEZAR GRATIS →</a>
 </nav>
 
 <!-- HERO -->
@@ -901,20 +954,20 @@
 
   <div class="hero-label">
     <span class="dot-pulse"></span>
-    ESTADO: EXTRAYENDO SEÑAL &nbsp;·&nbsp; CANAL: WHATSAPP + TELEGRAM
+    DILBERT ACTIVO &nbsp;·&nbsp; CAPTURANDO CONVERSACIONES EN TIEMPO REAL
   </div>
 
   <h1 class="hero-title">DILBERT</h1>
 
   <p class="hero-sub">
-    Tu equipo cierra ventas por WhatsApp y tu CRM ni se entera.
-    Dilbert <em>lee cada conversación</em> y estructura los datos en automático, en silencio y en tiempo real.
+    Tu equipo vende por WhatsApp, Telegram, Gmail, Meet o Teams.<br>
+    Dilbert <em>lee cada conversación</em> y carga los datos a tu CRM solo — sin que el vendedor toque nada.
   </p>
 
   <div class="hero-chips">
-    <div class="chip"><span>🇦🇷</span> Hecho para LatAm</div>
-    <div class="chip"><span>💬</span> Ventas chat-first</div>
-    <div class="chip"><span>🤖</span> Agente IA, no dashboard</div>
+    <div class="chip">Todos los canales</div>
+    <div class="chip">CRM siempre actualizado</div>
+    <div class="chip">Agente IA, no dashboard</div>
   </div>
 
   <div class="hero-cta">
@@ -925,7 +978,7 @@
 
 <!-- LOGOS MARQUEE -->
 <div class="logos-section">
-  <p class="logos-label">Se engancha a los canales donde realmente pasan las ventas</p>
+  <p class="logos-label">Se conecta a los canales donde ya pasan tus ventas</p>
   <div class="marquee-track">
     <div class="marquee-inner">
       <div class="logo-pill">
@@ -988,55 +1041,74 @@
   </div>
 </div>
 
+<!-- STATS -->
+<section class="stats-section">
+  <div class="stats-grid">
+    <div class="stat-item reveal">
+      <span class="stat-num">27<span class="stat-unit">%</span></span>
+      <p class="stat-label">de los ingresos se pierden por datos incorrectos o no cargados en el CRM</p>
+    </div>
+    <div class="stat-item reveal reveal-delay-1">
+      <span class="stat-num">70<span class="stat-unit">%</span></span>
+      <p class="stat-label">del tiempo del vendedor se va en tareas administrativas — no en vender</p>
+    </div>
+    <div class="stat-item reveal reveal-delay-2">
+      <span class="stat-num">67<span class="stat-unit">%</span></span>
+      <p class="stat-label">de los datos de ventas se pierden o se cargan mal sin automatización</p>
+    </div>
+  </div>
+  <p class="stats-footer">Dilbert resuelve los tres. Solo.</p>
+</section>
+
 <!-- HOW LOGIC FLOWS — STACK SCROLL -->
 <section id="flows" class="stack-scene">
   <div class="stack-sticky">
     <div class="stack-copy">
-      <p class="section-tag">ARQUITECTURA DE LÓGICA</p>
-      <h2 class="section-title">CÓMO <span class="accent">FLUYE</span><br>LA SEÑAL</h2>
-      <p>Dilbert no le cambia la vida al vendedor. Se engancha a las conversaciones reales, destila intención comercial y actualiza el CRM sin fricción operativa.</p>
+      <p class="section-tag">CÓMO FUNCIONA</p>
+      <h2 class="section-title">CUATRO PASOS.<br>CERO <span class="accent">FRICCIÓN.</span></h2>
+      <p>Dilbert no cambia la forma en que tu equipo trabaja. Se conecta a los canales que ya usan, lee las conversaciones y escribe los datos en tu CRM. Solo.</p>
       <div class="stack-dots-row">
         <span class="s-dot active"></span>
         <span class="s-dot"></span>
         <span class="s-dot"></span>
         <span class="s-dot"></span>
       </div>
-      <p id="stackDesc">Fase activa: Interceptar conversación viva.</p>
+      <p id="stackDesc">Dilbert se conecta a los canales que ya usás.</p>
     </div>
 
     <div class="cards-box" id="cardsBox">
-      <article class="scard orange" data-desc="Fase activa: Interceptar conversación viva.">
+      <article class="scard orange" data-desc="Dilbert se conecta a los canales que ya usás.">
         <div>
-          <p class="flow-label">FASE 01 // INTERCEPTAR</p>
-          <h3 class="flow-headline">Ventas en chat.<br>Dilbert ya está adentro.</h3>
-          <p class="flow-desc">MVP real en Telegram: captura pasiva, cero formularios, cero carga manual extra.</p>
+          <p class="flow-label">PASO 01 // CONECTAR</p>
+          <h3 class="flow-headline">WhatsApp, Meet, Gmail.<br>Dilbert ya está adentro.</h3>
+          <p class="flow-desc">Se integra a los canales donde ya pasan tus ventas. Sin cambiar la forma de trabajar del equipo. Sin instalar nada nuevo.</p>
         </div>
         <div class="flow-card-num">01</div>
       </article>
 
-      <article class="scard teal" data-desc="Fase activa: Destilar intención comercial.">
+      <article class="scard teal" data-desc="Extrae nombre, monto, estado, sentimiento y próximos pasos.">
         <div>
-          <p class="flow-label">FASE 02 // DESTILAR</p>
-          <h3 class="flow-headline">De mensaje caótico<br>a señal estructurada.</h3>
-          <p class="flow-desc">Extrae nombre, monto, estado, sentimiento y próximos pasos. Si hay ambigüedad, pregunta una sola vez.</p>
+          <p class="flow-label">PASO 02 // LEER</p>
+          <h3 class="flow-headline">De conversación caótica<br>a datos estructurados.</h3>
+          <p class="flow-desc">Extrae nombre, empresa, monto, producto, sentimiento y próximos pasos. En tiempo real, en silencio.</p>
         </div>
         <div class="flow-card-num">02</div>
       </article>
 
-      <article class="scard yellow" data-desc="Fase activa: Sincronizar y priorizar.">
+      <article class="scard yellow" data-desc="Si la info no es clara, hace una sola pregunta.">
         <div>
-          <p class="flow-label">FASE 03 // SINCRONIZAR</p>
-          <h3 class="flow-headline">CRM actualizado,<br>líder con contexto.</h3>
-          <p class="flow-desc">Los datos se escriben solos y el tablero en vivo marca qué lead interceptar primero.</p>
+          <p class="flow-label">PASO 03 // VALIDAR</p>
+          <h3 class="flow-headline">Una pregunta si hace falta.<br>Nada más.</h3>
+          <p class="flow-desc">Cuando los datos son ambiguos, Dilbert le hace una sola pregunta al vendedor para cerrar bien el registro. Nunca más.</p>
         </div>
         <div class="flow-card-num">03</div>
       </article>
 
-      <article class="scard cream" data-desc="Fase activa: Operar multi-canal.">
+      <article class="scard cream" data-desc="CRM actualizado sin que el vendedor toque nada.">
         <div>
-          <p class="flow-label">FASE 04 // ESCALAR</p>
-          <h3 class="flow-headline">WhatsApp + CRM + LatAm.<br>Compounding real.</h3>
-          <p class="flow-desc">Expandimos canal, distribución partner y analítica para convertir conversaciones en pipeline predecible.</p>
+          <p class="flow-label">PASO 04 // SINCRONIZAR</p>
+          <h3 class="flow-headline">Tu CRM actualizado.<br>Solo. Siempre.</h3>
+          <p class="flow-desc">Escribe los datos directamente en HubSpot, Salesforce, Odoo o el CRM que uses. Sin formularios. Sin carga manual.</p>
         </div>
         <div class="flow-card-num">04</div>
       </article>
@@ -1050,42 +1122,42 @@
 <!-- FIELD REPORTS / TESTIMONIALS -->
 <section class="testimonials-section">
   <div class="section-header reveal">
-    <p class="section-tag">LO QUE DICE EL EQUIPO</p>
-    <h2 class="section-title">Reportes de <span class="accent">campo.</span></h2>
+    <p class="section-tag">LO QUE DICEN LOS PRIMEROS USUARIOS</p>
+    <h2 class="section-title">La respuesta del <span class="accent">mercado.</span></h2>
   </div>
   <div class="testimonials-grid">
     <div class="testimonial-card featured reveal reveal-delay-1">
       <div class="quote-mark">"</div>
       <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-      <p class="testimonial-text">"Hace 6 semanas que no cargo un campo CRM a mano. Mi manager cree que soy súper ordenada. Yo solo cierro por WhatsApp y Dilbert hace la parte administrativa."</p>
+      <p class="testimonial-text">"Apenas lo tengas funcional lo necesito en mi negocio."</p>
       <div class="testimonial-author">
-        <div class="author-avatar">ML</div>
+        <div class="author-avatar">JP</div>
         <div>
-          <div class="author-name">Martina López</div>
-          <div class="author-role">LÍDER DE VENTAS // BUENOS AIRES</div>
+          <div class="author-name">Juan P.</div>
+          <div class="author-role">GERENTE COMERCIAL</div>
         </div>
       </div>
     </div>
     <div style="display: flex; flex-direction: column; gap: 20px;">
       <div class="testimonial-card reveal reveal-delay-2">
         <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">"En una semana me hizo una sola pregunta de clarificación. Una. Ese sí es un CRM que respeta mi tiempo."</p>
+        <p class="testimonial-text">"Con esto ya no vamos a tener más quilombo con la falta de datos."</p>
         <div class="testimonial-author">
-          <div class="author-avatar">RG</div>
+          <div class="author-avatar">MR</div>
           <div>
-            <div class="author-name">Rodrigo García</div>
-            <div class="author-role">FUNDADOR // MONTERREY</div>
+            <div class="author-name">Marcos R.</div>
+            <div class="author-role">DIRECTOR DE VENTAS</div>
           </div>
         </div>
       </div>
       <div class="testimonial-card teal-card reveal reveal-delay-3">
         <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">"La visibilidad del pipeline pasó de intuición a datos reales en la primera semana."</p>
+        <p class="testimonial-text">"El 70% del tiempo de mis vendedores se iba en tareas administrativas. Con Dilbert ese tiempo vuelve a vender."</p>
         <div class="testimonial-author">
-          <div class="author-avatar">CP</div>
+          <div class="author-avatar">SL</div>
           <div>
-            <div class="author-name">Carolina Pérez</div>
-            <div class="author-role">VP DE VENTAS // BOGOTÁ</div>
+            <div class="author-name">Sofía L.</div>
+            <div class="author-role">CEO // EQUIPO DE 12 VENDEDORES</div>
           </div>
         </div>
       </div>
@@ -1093,23 +1165,23 @@
     <div style="display: flex; flex-direction: column; gap: 20px;">
       <div class="testimonial-card reveal reveal-delay-2">
         <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">"Nuestros reps pasaron de 30% de carga CRM a 97%. No cambiamos al equipo: cambiamos la herramienta."</p>
+        <p class="testimonial-text">"Nunca había visto a un vendedor cargar el CRM con ganas. Ahora no tienen que hacerlo — Dilbert lo hace."</p>
         <div class="testimonial-author">
-          <div class="author-avatar">DS</div>
+          <div class="author-avatar">CA</div>
           <div>
-            <div class="author-name">Diego Salas</div>
-            <div class="author-role">REV OPS // LIMA</div>
+            <div class="author-name">Carlos A.</div>
+            <div class="author-role">GERENTE GENERAL</div>
           </div>
         </div>
       </div>
       <div class="testimonial-card reveal reveal-delay-3" style="background: var(--yellow); box-shadow: 4px 4px 0 #C4A800;">
         <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">"Dilbert detectó una oportunidad que yo ya había dado por perdida y terminó siendo nuestro mayor cierre del Q3."</p>
+        <p class="testimonial-text">"Antes perdíamos el 27% de los deals por falta de seguimiento. Ahora el pipeline se actualiza solo."</p>
         <div class="testimonial-author">
-          <div class="author-avatar" style="background: rgba(42,26,10,0.1);">AR</div>
+          <div class="author-avatar" style="background: rgba(42,26,10,0.1);">LV</div>
           <div>
-            <div class="author-name">Ana Rivas</div>
-            <div class="author-role">DIRECTORA COMERCIAL // CDMX</div>
+            <div class="author-name">Laura V.</div>
+            <div class="author-role">DIRECTORA COMERCIAL</div>
           </div>
         </div>
       </div>
@@ -1221,9 +1293,9 @@
 </section>
 
 <!-- ORBIT — WORKS WHERE SALES HAPPEN -->
-<section class="spin-section">
+<section class="spin-section" id="canales">
   <p class="spin-tag">INTEGRACIONES // FRICCIÓN CERO</p>
-  <h2 class="spin-title reveal">Funciona donde<br>las ventas <em style="color: var(--orange);">ya suceden.</em></h2>
+  <h2 class="spin-title reveal">Se conecta a<br><em style="color: var(--orange);">cualquier canal.</em></h2>
 
   <div class="spin-orbit reveal">
     <div class="orbit-center">
@@ -1359,9 +1431,9 @@
 <section class="pricing-section" id="pricing">
   <div class="pricing-intro reveal">
     <p class="section-tag">PRICING</p>
-    <h2 class="section-title">Un solo pricing.<br>Pago <span class="accent">por vendedor</span>.</h2>
+    <h2 class="section-title">Simple y predecible.<br>Pago <span class="accent">por vendedor</span>.</h2>
     <p style="color: var(--muted); margin-top: 16px; font-size: 15px; line-height: 1.6;">
-      Componente interactivo estilo 21st.dev: movés el slider, cambia el total mensual en vivo.
+      Pago por vendedor activo. Sin sorpresas. Cancelás cuando querés.
     </p>
   </div>
 
@@ -1375,40 +1447,57 @@
       <div class="ip-top">
         <h3 class="ip-plan">Básico</h3>
       </div>
-      <p class="ip-desc">Todo lo que tu equipo necesita para automatizar la captura comercial desde chats.</p>
-      <div class="ip-total"><span data-total-prefix>$</span><span data-total>87.00</span><span id="billing-period">/mes</span></div>
+      <p class="ip-desc">Todo lo que necesitás para que tu CRM se actualice solo, sin que el vendedor toque nada.</p>
+      <div class="ip-total"><span data-total-prefix>$</span><span data-total>145.00</span><span id="billing-period">/mes</span></div>
       <div class="ip-slider-wrap">
         <div class="ip-slider-meta">
-          <span><span data-units>3</span> vendedores</span>
+          <span><span data-units>5</span> vendedores</span>
           <span id="unit-price">$29/vendedor</span>
         </div>
-        <input class="ip-range" type="range" min="1" max="12" value="3" data-price-slider />
+        <input class="ip-range" type="range" min="1" max="20" value="5" data-price-slider />
       </div>
       <ul class="ip-features">
-        <li><span class="ip-dot">✓</span> Captura pasiva desde chats</li>
-        <li><span class="ip-dot">✓</span> Extracción IA ilimitada</li>
-        <li><span class="ip-dot">✓</span> Dashboard comercial completo</li>
-        <li><span class="ip-dot">✓</span> Integraciones CRM (HubSpot, Salesforce)</li>
-        <li><span class="ip-dot">✓</span> Alertas y priorización comercial</li>
-        <li><span class="ip-dot">✓</span> Soporte prioritario</li>
+        <li><span class="ip-dot">✓</span> Todos los canales: WhatsApp, Gmail, Meet, Teams, Telegram</li>
+        <li><span class="ip-dot">✓</span> Extracción IA ilimitada con GPT-4o</li>
+        <li><span class="ip-dot">✓</span> Sync automático a HubSpot, Salesforce u Odoo</li>
+        <li><span class="ip-dot">✓</span> Dashboard comercial en tiempo real</li>
+        <li><span class="ip-dot">✓</span> Validación inteligente cuando los datos son ambiguos</li>
+        <li><span class="ip-dot">✓</span> Soporte dedicado</li>
       </ul>
       <a href="/waitlist" class="ip-cta">Empezar gratis 14 días</a>
     </article>
+    <article class="ip-card" style="border-color: rgba(26,122,110,0.4); background: rgba(26,122,110,0.04);">
+      <div class="ip-top">
+        <h3 class="ip-plan">Enterprise</h3>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--teal); background:rgba(26,122,110,0.1); border:1px solid rgba(26,122,110,0.3); border-radius:999px; padding:3px 10px;">+20 vendedores</span>
+      </div>
+      <p class="ip-desc">Para equipos grandes que necesitan integración personalizada, SLA garantizado y onboarding dedicado.</p>
+      <div class="ip-total" style="color: var(--teal);">A medida</div>
+      <ul class="ip-features" style="margin-top: 24px;">
+        <li><span class="ip-dot" style="color:var(--teal);">✓</span> Todo lo del plan Básico</li>
+        <li><span class="ip-dot" style="color:var(--teal);">✓</span> Onboarding y setup dedicado</li>
+        <li><span class="ip-dot" style="color:var(--teal);">✓</span> Integraciones custom a medida</li>
+        <li><span class="ip-dot" style="color:var(--teal);">✓</span> SLA de uptime garantizado</li>
+        <li><span class="ip-dot" style="color:var(--teal);">✓</span> Account manager dedicado</li>
+        <li><span class="ip-dot" style="color:var(--teal);">✓</span> Facturación corporativa</li>
+      </ul>
+      <a href="/waitlist" class="ip-cta" style="background: var(--teal); border-color: var(--teal);">Hablar con el equipo</a>
+    </article>
   </div>
 
-  <p class="pricing-footnote">FACTURACIÓN POR VENDEDOR · 14 DÍAS GRATIS · SIN TARJETA</p>
+  <p class="pricing-footnote">FACTURACIÓN POR VENDEDOR ACTIVO · 14 DÍAS GRATIS · SIN TARJETA · CANCELÁS CUANDO QUERÉS</p>
 </section>
 
 <!-- FINAL CTA -->
 <div class="cta-section reveal">
-  <div class="cta-bolt">⚡</div>
-  <p class="cta-label">READY TO STOP MANUALLY CLICKING BUTTONS?</p>
-  <h2 class="cta-title">Tu equipo ya vende<br>por chat. Mandá a Dilbert.</h2>
+  <div class="cta-bolt">→</div>
+  <p class="cta-label">TU CRM NUNCA MÁS VA A ESTAR DESACTUALIZADO.</p>
+  <h2 class="cta-title">Tu equipo vende.<br>Dilbert carga el CRM.</h2>
   <div class="cta-actions">
-    <a href="/waitlist" class="btn-cta-white">Contratar Dilbert →</a>
+    <a href="/waitlist" class="btn-cta-white">Empezar gratis 14 días →</a>
     <a href="/login" class="btn-cta-ghost">Ver el MVP</a>
   </div>
-  <p class="cta-fine">14 DÍAS GRATIS · SIN TARJETA · SIN FRICCIÓN</p>
+  <p class="cta-fine">14 DÍAS GRATIS · SIN TARJETA · CANCELÁS CUANDO QUERÉS</p>
 </div>
 
 <!-- FOOTER -->
@@ -1437,29 +1526,27 @@
         </svg>
         DILBERT.
       </div>
-      <p class="footer-quote">"Si no amás tu CRM, tu CRM no va a cuidar tus datos." — probablemente un bot.</p>
+      <p class="footer-quote">"Apenas lo tengas funcional lo necesito en mi negocio." — primer usuario de Dilbert.</p>
     </div>
     <div>
       <p class="footer-nav-label">Navegación</p>
       <ul class="footer-links">
-        <li><a href="#">Cómo Funciona</a></li>
-        <li><a href="#">Reportes de Campo</a></li>
-        <li><a href="#">Bot Logic</a></li>
-        <li><a href="#">Privacy Chaos</a></li>
+        <li><a href="#flows">Cómo Funciona</a></li>
+        <li><a href="#canales">Canales</a></li>
+        <li><a href="#pricing">Pricing</a></li>
       </ul>
     </div>
     <div>
       <p class="footer-nav-label">Producto</p>
       <ul class="footer-links">
-        <li><a href="#">Documentación</a></li>
-        <li><a href="#">Casos Reales</a></li>
-        <li><a href="/waitlist">Contratar Dilbert</a></li>
-        <li><a href="#">Estado del Servicio</a></li>
+        <li><a href="/waitlist">Empezar gratis</a></li>
+        <li><a href="/waitlist">Hablar con el equipo</a></li>
+        <li><a href="/login">Ver el MVP</a></li>
       </ul>
     </div>
   </div>
   <div class="footer-bottom">
-    <span class="footer-copy">©2026 DILBERT CRM. SIN PLANILLAS.</span>
+    <span class="footer-copy">©2026 DILBERT. TU CRM SE LLENA SOLO.</span>
     <div class="footer-socials">
       <a href="#">X / TWITTER</a>
       <a href="#">ARENA</a>
@@ -1657,6 +1744,93 @@ reveals.forEach(el => revealObserver.observe(el));
   window.addEventListener('scroll', update, { passive: true });
   window.addEventListener('resize', () => { currentIdx = -1; update(); });
   update();
+})();
+
+// ── i18n — detectar idioma del navegador y traducir al inglés si no es español
+(function() {
+  const lang = navigator.language || navigator.userLanguage || 'es';
+  if (lang.toLowerCase().startsWith('es')) return; // ya está en español
+
+  const t = {
+    // NAV
+    'Cómo Funciona': 'How It Works',
+    'Canales': 'Channels',
+    'Pricing': 'Pricing',
+    'EMPEZAR GRATIS →': 'GET STARTED →',
+    // HERO
+    'DILBERT ACTIVO &nbsp;·&nbsp; CAPTURANDO CONVERSACIONES EN TIEMPO REAL': 'DILBERT ACTIVE · CAPTURING CONVERSATIONS IN REAL TIME',
+    'Todos los canales': 'All channels',
+    'CRM siempre actualizado': 'CRM always up to date',
+    'Agente IA, no dashboard': 'AI agent, not a dashboard',
+    'Verlo en acción': 'See it in action',
+    // LOGOS
+    'Se conecta a los canales donde ya pasan tus ventas': 'Connects to the channels where your sales already happen',
+    // STATS
+    'de los ingresos se pierden por datos incorrectos o no cargados en el CRM': 'of revenue is lost due to missing or incorrect CRM data',
+    'del tiempo del vendedor se va en tareas administrativas — no en vender': 'of a sales rep\'s time goes to admin tasks — not selling',
+    'de los datos de ventas se pierden o se cargan mal sin automatización': 'of sales data is lost or incorrectly entered without automation',
+    'Dilbert resuelve los tres. Solo.': 'Dilbert solves all three. Automatically.',
+    // FLOWS
+    'CUATRO PASOS.': 'FOUR STEPS.',
+    'CERO': 'ZERO',
+    'Dilbert no cambia la forma en que tu equipo trabaja. Se conecta a los canales que ya usan, lee las conversaciones y escribe los datos en tu CRM. Solo.': 'Dilbert doesn\'t change how your team works. It connects to the channels they already use, reads conversations, and writes the data to your CRM. Automatically.',
+    // PRICING
+    'Simple y predecible.': 'Simple and predictable.',
+    'Pago': 'Pay',
+    'por vendedor': 'per rep',
+    'Pago por vendedor activo. Sin sorpresas. Cancelás cuando querés.': 'Pay per active rep. No surprises. Cancel anytime.',
+    'vendedores': 'reps',
+    'Todo lo que necesitás para que tu CRM se actualice solo, sin que el vendedor toque nada.': 'Everything you need to keep your CRM updated automatically — without reps doing anything.',
+    'Todos los canales: WhatsApp, Gmail, Meet, Teams, Telegram': 'All channels: WhatsApp, Gmail, Meet, Teams, Telegram',
+    'Extracción IA ilimitada con GPT-4o': 'Unlimited AI extraction with GPT-4o',
+    'Sync automático a HubSpot, Salesforce u Odoo': 'Auto-sync to HubSpot, Salesforce or Odoo',
+    'Dashboard comercial en tiempo real': 'Real-time sales dashboard',
+    'Validación inteligente cuando los datos son ambiguos': 'Smart validation when data is unclear',
+    'Soporte dedicado': 'Dedicated support',
+    'Empezar gratis 14 días': 'Start free for 14 days',
+    'Hablar con el equipo': 'Talk to the team',
+    '+20 vendedores': '+20 reps',
+    'Todo lo del plan Básico': 'Everything in Basic',
+    'Onboarding y setup dedicado': 'Dedicated onboarding & setup',
+    'Integraciones custom a medida': 'Custom integrations',
+    'SLA de uptime garantizado': 'Guaranteed uptime SLA',
+    'Account manager dedicado': 'Dedicated account manager',
+    'Facturación corporativa': 'Corporate billing',
+    'A medida': 'Custom',
+    'FACTURACIÓN POR VENDEDOR ACTIVO · 14 DÍAS GRATIS · SIN TARJETA · CANCELÁS CUANDO QUERÉS': 'BILLED PER ACTIVE REP · 14-DAY FREE TRIAL · NO CREDIT CARD · CANCEL ANYTIME',
+    // CTA
+    'TU CRM NUNCA MÁS VA A ESTAR DESACTUALIZADO.': 'YOUR CRM WILL NEVER BE OUT OF DATE AGAIN.',
+    'Tu equipo vende.': 'Your team sells.',
+    'Dilbert carga el CRM.': 'Dilbert updates the CRM.',
+    'Empezar gratis 14 días →': 'Start free for 14 days →',
+    'Ver el MVP': 'See the MVP',
+    '14 DÍAS GRATIS · SIN TARJETA · CANCELÁS CUANDO QUERÉS': '14-DAY FREE TRIAL · NO CREDIT CARD · CANCEL ANYTIME',
+    // FOOTER
+    '"Apenas lo tengas funcional lo necesito en mi negocio." — primer usuario de Dilbert.': '"As soon as it\'s ready, I need it for my business." — first Dilbert user.',
+    '©2026 DILBERT. TU CRM SE LLENA SOLO.': '©2026 DILBERT. YOUR CRM FILLS ITSELF.',
+  };
+
+  // Walk all text nodes and replace known strings
+  function walk(node) {
+    if (node.nodeType === 3) { // text node
+      const original = node.textContent;
+      let replaced = original;
+      for (const [es, en] of Object.entries(t)) {
+        if (replaced.includes(es)) replaced = replaced.split(es).join(en);
+      }
+      if (replaced !== original) node.textContent = replaced;
+    } else {
+      node.childNodes.forEach(walk);
+    }
+  }
+
+  // Also translate placeholder attributes and title
+  document.querySelectorAll('[placeholder]').forEach(el => {
+    const v = el.getAttribute('placeholder');
+    if (t[v]) el.setAttribute('placeholder', t[v]);
+  });
+
+  walk(document.body);
 })();
 
 </script>
