@@ -9,3 +9,6 @@ __pycache__/
 test-results/
 playwright-report/
 .vercel
+
+# Local Netlify folder
+.netlify
