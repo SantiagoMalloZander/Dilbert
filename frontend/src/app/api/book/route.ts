@@ -41,23 +41,27 @@ export async function POST(req: NextRequest) {
     const dateLabel = humanDate(date);
 
     // ── 1. Guardar en Supabase ──────────────────────────────────────────────
-    const { error: dbErr } = await db().from("demos").insert({
-      name: name.trim(),
-      company: company.trim(),
-      email: email.trim().toLowerCase(),
-      phone: phone?.trim() || null,
-      team_size: team_size || null,
-      date,
-      time,
-      status: "scheduled",
-    });
+    try {
+      const { error: dbErr } = await db().from("demos").insert({
+        name: name.trim(),
+        company: company.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone?.trim() || null,
+        team_size: team_size || null,
+        date,
+        time,
+        status: "scheduled",
+      });
 
-    if (dbErr) {
-      if (dbErr.code === "23505") {
-        return NextResponse.json({ error: "Ese horario ya fue reservado. Elegí otro." }, { status: 409 });
+      if (dbErr) {
+        if (dbErr.code === "23505") {
+          return NextResponse.json({ error: "Ese horario ya fue reservado. Elegí otro." }, { status: 409 });
+        }
+        // Log but don't block — email still goes out
+        console.error("[book] supabase error:", dbErr.code, dbErr.message);
       }
-      console.error("[book] supabase error:", dbErr);
-      return NextResponse.json({ error: "Error al guardar la reserva. Intentá de nuevo." }, { status: 500 });
+    } catch (err) {
+      console.error("[book] supabase exception:", err);
     }
 
     // ── 2. Emails via Resend ────────────────────────────────────────────────
