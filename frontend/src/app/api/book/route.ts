@@ -18,62 +18,61 @@ function humanDate(dateStr: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  let body: Record<string, string>;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
-  }
-
-  const { name, company, email, phone, team_size, date, time } = body;
-
-  if (!name?.trim() || !company?.trim() || !email?.trim() || !date || !time) {
-    return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 });
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ error: "Email inválido" }, { status: 400 });
-  }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
-    return NextResponse.json({ error: "Fecha u hora con formato incorrecto" }, { status: 400 });
-  }
-
-  const dateLabel = humanDate(date);
-
-  // ── 1. Guardar en Supabase ────────────────────────────────────────────────
-  const { error: dbErr } = await db().from("demos").insert({
-    name: name.trim(),
-    company: company.trim(),
-    email: email.trim().toLowerCase(),
-    phone: phone?.trim() || null,
-    team_size: team_size || null,
-    date,
-    time,
-    status: "scheduled",
-  });
-
-  if (dbErr) {
-    // Slot ya ocupado (unique constraint)
-    if (dbErr.code === "23505") {
-      return NextResponse.json({ error: "Ese horario ya fue reservado. Elegí otro." }, { status: 409 });
-    }
-    console.error("[book] supabase error:", dbErr);
-    return NextResponse.json({ error: "Error al guardar la reserva" }, { status: 500 });
-  }
-
-  // ── 2. Emails via Resend ──────────────────────────────────────────────────
-  if (process.env.RESEND_API_KEY) {
+    let body: Record<string, string>;
     try {
-      const { Resend } = await import("resend");
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      const from = process.env.RESEND_FROM_EMAIL ?? "Dilbert <onboarding@resend.dev>";
-      const teamEmail = process.env.TEAM_NOTIFICATION_EMAIL;
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+    }
 
-      // Confirmación al visitante
-      await resend.emails.send({
-        from,
-        to: email.trim(),
-        subject: `Tu demo de Dilbert: ${dateLabel} a las ${time}`,
-        html: `
+    const { name, company, email, phone, team_size, date, time } = body;
+
+    if (!name?.trim() || !company?.trim() || !email?.trim() || !date || !time) {
+      return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: "Email inválido" }, { status: 400 });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
+      return NextResponse.json({ error: "Fecha u hora con formato incorrecto" }, { status: 400 });
+    }
+
+    const dateLabel = humanDate(date);
+
+    // ── 1. Guardar en Supabase ──────────────────────────────────────────────
+    const { error: dbErr } = await db().from("demos").insert({
+      name: name.trim(),
+      company: company.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone?.trim() || null,
+      team_size: team_size || null,
+      date,
+      time,
+      status: "scheduled",
+    });
+
+    if (dbErr) {
+      if (dbErr.code === "23505") {
+        return NextResponse.json({ error: "Ese horario ya fue reservado. Elegí otro." }, { status: 409 });
+      }
+      console.error("[book] supabase error:", dbErr);
+      return NextResponse.json({ error: "Error al guardar la reserva. Intentá de nuevo." }, { status: 500 });
+    }
+
+    // ── 2. Emails via Resend ────────────────────────────────────────────────
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const { Resend } = await import("resend");
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const from = process.env.RESEND_FROM_EMAIL ?? "Dilbert <onboarding@resend.dev>";
+        const teamEmail = process.env.TEAM_NOTIFICATION_EMAIL;
+
+        await resend.emails.send({
+          from,
+          to: email.trim(),
+          subject: `Tu demo de Dilbert: ${dateLabel} a las ${time}`,
+          html: `
 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#1A1A1A;color:#F5F0E8;border-radius:12px;">
   <p style="font-family:Arial,sans-serif;font-size:26px;font-weight:900;color:#D4420A;margin:0 0 4px;letter-spacing:0.04em;">DILBERT</p>
   <p style="font-size:11px;color:rgba(245,240,232,0.35);text-transform:uppercase;letter-spacing:0.1em;margin:0 0 28px;">Confirmación de demo</p>
@@ -89,15 +88,14 @@ export async function POST(req: NextRequest) {
   </p>
   <p style="color:rgba(245,240,232,0.18);font-size:11px;margin-top:32px;letter-spacing:0.06em;text-transform:uppercase;">dilbert · tu crm se llena solo</p>
 </div>`,
-      });
+        });
 
-      // Notificación al equipo
-      if (teamEmail) {
-        await resend.emails.send({
-          from,
-          to: teamEmail,
-          subject: `🔔 Nueva demo — ${name.trim()} (${company.trim()}) · ${dateLabel} ${time}`,
-          html: `
+        if (teamEmail) {
+          await resend.emails.send({
+            from,
+            to: teamEmail,
+            subject: `🔔 Nueva demo — ${name.trim()} (${company.trim()}) · ${dateLabel} ${time}`,
+            html: `
 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#1A1A1A;color:#F5F0E8;border-radius:12px;">
   <p style="font-family:Arial,sans-serif;font-size:22px;font-weight:900;color:#D4420A;margin:0 0 20px;">Nueva demo agendada</p>
   <table style="width:100%;border-collapse:collapse;">
@@ -113,13 +111,17 @@ export async function POST(req: NextRequest) {
     ).join("")}
   </table>
 </div>`,
-        });
+          });
+        }
+      } catch (err) {
+        console.error("[book] resend error:", err);
+        // Email failed but booking was saved — don't error out
       }
-    } catch (err) {
-      // Email failed but booking was saved — don't error out
-      console.error("[book] resend error:", err);
     }
-  }
 
-  return NextResponse.json({ ok: true, date: dateLabel, time });
+    return NextResponse.json({ ok: true, date: dateLabel, time });
+  } catch (err) {
+    console.error("[book] unhandled error:", err);
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+  }
 }
