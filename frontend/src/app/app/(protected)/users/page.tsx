@@ -1,11 +1,24 @@
 import { Badge } from "@/components/ui/badge";
+import { ErrorState } from "@/components/error-state";
 import { requireOwner } from "@/lib/workspace-auth";
+import { getFriendlyWorkspaceErrorMessage } from "@/lib/workspace-session-security";
 import { getUsersCenterData } from "@/lib/workspace-users";
 import { UsersCenter } from "@/components/users-center";
 
 export default async function UsersPage() {
   const session = await requireOwner();
-  const data = await getUsersCenterData(session.user.companyId);
+  let data: Awaited<ReturnType<typeof getUsersCenterData>>;
+
+  try {
+    data = await getUsersCenterData(session.user.companyId);
+  } catch (error) {
+    return (
+      <ErrorState
+        title="No pudimos cargar el Centro de Usuarios"
+        message={getFriendlyWorkspaceErrorMessage(error)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -1,9 +1,7 @@
 import { getSession } from "@/lib/auth";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY =
-  process.env.SUPABASE_SERVICE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY!;
 
 const DEMO_COMPANY_ID = "11111111-1111-1111-1111-111111111111";
 
@@ -28,6 +26,13 @@ export async function POST() {
   const session = await getSession();
   if (!session || session.role !== "admin") {
     return Response.json({ error: "No autorizado." }, { status: 403 });
+  }
+
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    return Response.json(
+      { error: "Falta configurar la credencial server-side de Supabase." },
+      { status: 500 }
+    );
   }
 
   const steps: { step: string; ok: boolean; detail?: string }[] = [];

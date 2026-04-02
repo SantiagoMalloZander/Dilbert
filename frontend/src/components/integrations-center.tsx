@@ -25,6 +25,7 @@ import { INTEGRATION_DEFINITIONS } from "@/lib/workspace-integrations";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { emitGlobalToast } from "@/lib/global-toast";
 import {
   Card,
   CardContent,
@@ -272,6 +273,10 @@ export function IntegrationsCenter({
       });
       startTransition(() => router.refresh());
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setFlashMessage({
         tone: "error",
         text: "No pude desconectar el canal.",
@@ -319,6 +324,10 @@ export function IntegrationsCenter({
       });
       startTransition(() => router.refresh());
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setFlashMessage({
         tone: "error",
         text: "No pude guardar la configuración del canal.",

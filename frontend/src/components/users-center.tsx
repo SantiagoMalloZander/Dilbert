@@ -17,6 +17,7 @@ import type {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { emitGlobalToast } from "@/lib/global-toast";
 import {
   Card,
   CardContent,
@@ -138,6 +139,10 @@ export function UsersCenter({
       });
       startTransition(() => router.refresh());
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setFlashMessage({
         tone: "error",
         text: "No pude regenerar el link.",
@@ -180,6 +185,10 @@ export function UsersCenter({
       });
       startTransition(() => router.refresh());
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setFlashMessage({
         tone: "error",
         text: "No pude agregar el usuario.",
@@ -224,6 +233,10 @@ export function UsersCenter({
       });
       startTransition(() => router.refresh());
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setFlashMessage({
         tone: "error",
         text: "No pude actualizar el rol.",
@@ -267,6 +280,10 @@ export function UsersCenter({
       });
       startTransition(() => router.refresh());
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setFlashMessage({
         tone: "error",
         text: "No pude quitar el acceso.",

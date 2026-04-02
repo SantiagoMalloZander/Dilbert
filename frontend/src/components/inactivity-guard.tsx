@@ -5,8 +5,10 @@ import { signOut } from "next-auth/react";
 import {
   clearSessionTrackingCookies,
   getLastActivity,
+  shouldRememberSession,
   writeLastActivity,
 } from "@/lib/workspace-activity";
+import { emitGlobalToast } from "@/lib/global-toast";
 
 const MAX_IDLE_MS = 30 * 60 * 1000;
 const SYNC_INTERVAL_MS = 60 * 1000;
@@ -15,6 +17,10 @@ const SIGN_OUT_CALLBACK_URL = "/app/";
 
 export function InactivityGuard() {
   useEffect(() => {
+    if (!shouldRememberSession()) {
+      return;
+    }
+
     let lastSync = 0;
 
     const syncActivity = () => {
@@ -36,6 +42,10 @@ export function InactivityGuard() {
 
       if (Date.now() - lastActivity > MAX_IDLE_MS) {
         clearSessionTrackingCookies();
+        emitGlobalToast({
+          tone: "error",
+          text: "Tu sesión se cerró por 30 minutos de inactividad.",
+        });
         await signOut({ callbackUrl: SIGN_OUT_CALLBACK_URL });
       }
     };

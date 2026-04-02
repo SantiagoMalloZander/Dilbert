@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Anton, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
+import { GlobalToast } from "@/components/global-toast";
 import { Sidebar } from "@/components/sidebar";
 import { RealtimeProvider } from "@/components/realtime-provider";
 
@@ -51,6 +52,7 @@ export default async function RootLayout({
       className={`${dmSans.variable} ${anton.variable} ${jetbrainsMono.variable} h-full`}
     >
       <body className={isWorkspaceApp ? "min-h-screen bg-background text-foreground" : "flex h-full bg-background text-foreground"}>
+        <GlobalToast />
         {isWorkspaceApp ? (
           children
         ) : (

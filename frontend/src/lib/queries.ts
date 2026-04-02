@@ -34,7 +34,15 @@ export async function getSellers(companyId: string): Promise<Seller[]> {
   return data ?? [];
 }
 
-export async function getInteractions(leadId: string): Promise<Interaction[]> {
+export async function getInteractions(
+  leadId: string,
+  companyId: string
+): Promise<Interaction[]> {
+  const lead = await getLeadById(leadId, companyId);
+  if (!lead) {
+    return [];
+  }
+
   const { data, error } = await getDb()
     .from("interactions")
     .select("*")
@@ -56,11 +64,12 @@ export async function getCompany(companyId: string): Promise<Company> {
   return data;
 }
 
-export async function getLeadById(id: string): Promise<Lead | null> {
+export async function getLeadById(id: string, companyId: string): Promise<Lead | null> {
   const { data, error } = await getDb()
     .from("leads")
     .select("*, sellers(name)")
     .eq("id", id)
+    .eq("company_id", companyId)
     .maybeSingle();
 
   if (error) throw error;

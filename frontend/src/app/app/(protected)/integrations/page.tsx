@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { ErrorState } from "@/components/error-state";
 import { IntegrationsCenter } from "@/components/integrations-center";
 import { requireSession } from "@/lib/workspace-auth";
+import { getFriendlyWorkspaceErrorMessage } from "@/lib/workspace-session-security";
 import {
   getOwnerIntegrationsData,
   getVendorIntegrationsData,
@@ -15,14 +17,26 @@ export default async function IntegrationsPage() {
   }
 
   const isOwner = session.user.role === "owner";
-  const ownerData =
-    isOwner && session.user.companyId
-      ? await getOwnerIntegrationsData(session.user.companyId)
-      : null;
-  const vendorData =
-    session.user.role === "vendor"
-      ? await getVendorIntegrationsData(session.user.id)
-      : null;
+  let ownerData: Awaited<ReturnType<typeof getOwnerIntegrationsData>> | null = null;
+  let vendorData: Awaited<ReturnType<typeof getVendorIntegrationsData>> | null = null;
+
+  try {
+    ownerData =
+      isOwner && session.user.companyId
+        ? await getOwnerIntegrationsData(session.user.companyId)
+        : null;
+    vendorData =
+      session.user.role === "vendor"
+        ? await getVendorIntegrationsData(session.user.id)
+        : null;
+  } catch (error) {
+    return (
+      <ErrorState
+        title="No pudimos cargar tus integraciones"
+        message={getFriendlyWorkspaceErrorMessage(error)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

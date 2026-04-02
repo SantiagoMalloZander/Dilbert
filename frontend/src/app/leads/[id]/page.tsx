@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SourceBadge } from "@/components/source-badge";
 
+const DEMO_COMPANY_ID = "11111111-1111-1111-1111-111111111111";
+
 const statusLabels: Record<string, string> = {
   new: "Nuevo",
   contacted: "Contactado",
@@ -34,6 +36,7 @@ export default function LeadDetail() {
           .from("leads")
           .select("*, sellers(name)")
           .eq("id", id)
+          .eq("company_id", DEMO_COMPANY_ID)
           .single(),
         supabase
           .from("interactions")

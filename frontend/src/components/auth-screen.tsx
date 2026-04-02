@@ -9,6 +9,7 @@ import {
   clearSessionTrackingCookies,
   writeLastActivity,
 } from "@/lib/workspace-activity";
+import { emitGlobalToast } from "@/lib/global-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -193,6 +194,10 @@ export function AuthScreen({
       setEmail(normalizedEmail);
       setStep(data.exists ? "login" : "register");
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Revisá internet e intentá de nuevo.",
+      });
       setEmailError("No pude validar tu email.");
     } finally {
       setLoadingAction(null);
@@ -282,6 +287,10 @@ export function AuthScreen({
       router.replace(`/app/?${nextStepUrl.toString()}`);
       setGlobalMessage("Te mandamos un código de 6 dígitos por email.");
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Revisá internet e intentá de nuevo.",
+      });
       setGlobalMessage("No pude enviarte el código.");
     } finally {
       setLoadingAction(null);
@@ -345,6 +354,10 @@ export function AuthScreen({
 
       router.push(getPostLoginPath(email));
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Revisá internet e intentá de nuevo.",
+      });
       setOtpError("No pude validar el código.");
     } finally {
       setLoadingAction(null);
@@ -382,6 +395,10 @@ export function AuthScreen({
       persistRememberPreference();
       await signIn(provider, { callbackUrl: getPostLoginPath(email) });
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Revisá internet e intentá de nuevo.",
+      });
       setGlobalMessage("No pude iniciar el flujo OAuth.");
       setLoadingAction(null);
     }

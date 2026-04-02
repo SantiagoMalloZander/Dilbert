@@ -7,6 +7,7 @@ import {
   INTEGRATION_DEFINITIONS,
   type IntegrationChannelType,
 } from "@/lib/workspace-integrations";
+import { revokeAuthSessionsByUserId } from "@/lib/workspace-session-security";
 
 const AVATAR_BUCKET = "avatars";
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
@@ -114,13 +115,18 @@ async function getAuthUserById(userId: string) {
   return data.user;
 }
 
-async function getAccountUser(userId: string) {
+async function getAccountUser(userId: string, companyId?: string | null) {
   const supabase = createAdminSupabaseClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("users")
     .select("id, company_id, email, name, avatar_url, role, phone, created_at")
-    .eq("id", userId)
-    .maybeSingle();
+    .eq("id", userId);
+
+  if (companyId) {
+    query = query.eq("company_id", companyId);
+  }
+
+  const { data, error } = await query.maybeSingle();
 
   if (error) {
     throw error;
@@ -183,7 +189,7 @@ export async function getAccountPageData(params: {
 }) {
   const supabase = createAdminSupabaseClient();
   const [userRow, authUser, company] = await Promise.all([
-    getAccountUser(params.userId),
+    getAccountUser(params.userId, params.companyId),
     getAuthUserById(params.userId),
     params.companyId ? getCompanyById(params.companyId) : Promise.resolve(null),
   ]);
@@ -395,18 +401,5 @@ export async function updateAccountPassword(params: {
 }
 
 export async function revokeAllAccountSessions(userId: string) {
-  const supabase = createAdminSupabaseClient();
-  const authUser = await getAuthUserById(userId);
-  const nextAppMetadata = {
-    ...(authUser.app_metadata || {}),
-    session_revoked_at: new Date().toISOString(),
-  };
-
-  const { error } = await supabase.auth.admin.updateUserById(userId, {
-    app_metadata: nextAppMetadata,
-  });
-
-  if (error) {
-    throw error;
-  }
+  await revokeAuthSessionsByUserId(userId);
 }

@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { emitGlobalToast } from "@/lib/global-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -124,6 +125,10 @@ export function AdminPanel({
       setIsCreateOpen(false);
       startTransition(() => router.refresh());
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setFlashMessage({
         tone: "error",
         text: "No pude crear la empresa.",
@@ -162,6 +167,10 @@ export function AdminPanel({
         router.refresh();
       });
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setFlashMessage({
         tone: "error",
         text: "No pude entrar como owner.",
@@ -203,6 +212,10 @@ export function AdminPanel({
       });
       startTransition(() => router.refresh());
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setFlashMessage({
         tone: "error",
         text: "No pude dar de baja la empresa.",
@@ -245,6 +258,10 @@ export function AdminPanel({
       });
       startTransition(() => router.refresh());
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setFlashMessage({
         tone: "error",
         text: "No pude actualizar el límite.",

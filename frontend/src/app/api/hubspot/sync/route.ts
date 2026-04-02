@@ -4,11 +4,6 @@ import { getSession, USERS } from "@/lib/auth";
 
 const HS_BASE = "https://api.hubapi.com";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 const DEMO_COMPANY_ID = "11111111-1111-1111-1111-111111111111";
 
 const STAGE_MAP: Record<string, string> = {
@@ -55,6 +50,18 @@ function makeHs(token: string) {
 }
 
 export async function POST() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    return NextResponse.json(
+      { error: "Falta configurar la credencial server-side de Supabase." },
+      { status: 500 }
+    );
+  }
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+
   const session = await getSession();
   const userEntry = session ? USERS[session.username] : null;
   const token = userEntry?.hubspotKey ?? process.env.HUBSPOT_API_KEY;

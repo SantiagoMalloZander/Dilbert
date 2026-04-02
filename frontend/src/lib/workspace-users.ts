@@ -6,6 +6,7 @@ import {
   normalizeEmail,
   syncWorkspaceAccessByEmail,
 } from "@/lib/workspace-auth-flow";
+import { revokeAuthSessionsByUserId } from "@/lib/workspace-session-security";
 import { createAdminSupabaseClient } from "@/lib/workspace-supabase";
 
 type CompanyRow = {
@@ -302,6 +303,7 @@ export async function getUsersCenterData(companyId: string) {
     const { data: pendingUsers, error: pendingUsersError } = await supabase
       .from("users")
       .select("id, company_id, email, name, avatar_url, role, created_at")
+      .eq("company_id", companyId)
       .in("email", pendingEmailList);
 
     if (pendingUsersError) {
@@ -506,9 +508,14 @@ export async function revokeCompanyUserAccess(params: {
     throw pendingRegistrationError;
   }
 
+  if (activeUser?.id) {
+    await revokeAuthSessionsByUserId(activeUser.id);
+  }
+
   const { error: userDeleteError } = await supabase
     .from("users")
     .delete()
+    .eq("company_id", params.companyId)
     .eq("email", email);
 
   if (userDeleteError) {

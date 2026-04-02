@@ -12,6 +12,7 @@ import {
   Upload,
 } from "lucide-react";
 import type { AccountPageData } from "@/lib/workspace-account";
+import { emitGlobalToast } from "@/lib/global-toast";
 import { clearSessionTrackingCookies } from "@/lib/workspace-activity";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -124,6 +125,10 @@ export function AccountSettings({
       await fetch(APP_ADMIN_IMPERSONATION_API, { method: "DELETE" }).catch(() => undefined);
       await signOut({ callbackUrl: SIGN_OUT_CALLBACK_URL });
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setToast({
         tone: "error",
         text: "No pude cerrar las sesiones activas.",
@@ -180,6 +185,10 @@ export function AccountSettings({
       });
       startTransition(() => router.refresh());
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setToast({
         tone: "error",
         text: "No pude guardar tu perfil.",
@@ -228,6 +237,10 @@ export function AccountSettings({
       });
       startTransition(() => router.refresh());
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setToast({
         tone: "error",
         text: "No pude subir tu foto.",
@@ -300,6 +313,10 @@ export function AccountSettings({
         text: data.message || "Contraseña actualizada.",
       });
     } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
       setToast({
         tone: "error",
         text: "No pude actualizar la contraseña.",

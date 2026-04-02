@@ -4,19 +4,15 @@ let serverClient: SupabaseClient | null = null;
 
 export function getSupabaseServerClient() {
   if (!serverClient) {
-    const supabaseUrl =
-      process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey =
-      process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
     if (!supabaseUrl) {
       throw new Error("Missing required environment variable: SUPABASE_URL");
     }
 
     if (!supabaseKey) {
-      throw new Error(
-        "Missing required environment variable: SUPABASE_SERVICE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY"
-      );
+      throw new Error("Missing required environment variable: SUPABASE_SERVICE_KEY");
     }
 
     serverClient = createClient(supabaseUrl, supabaseKey);
