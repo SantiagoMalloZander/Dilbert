@@ -17,7 +17,7 @@ export default async function AuthPage({
   const resolvedSearchParams = (await searchParams) ?? {};
 
   if (session?.user?.email) {
-    if (session.user.isSuperAdmin && !session.user.companyId) {
+    if (session.user.isSuperAdmin) {
       redirect("/app/admin");
     }
 

@@ -29,8 +29,12 @@ type AuthScreenProps = {
 
 const STORAGE_KEY = "dilbert-remember-preference";
 const PASSWORD_RULE = /^(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
-const OAUTH_CALLBACK_URL = "/app/crm";
 const APP_AUTH_API_BASE = "/app/api/auth";
+const SUPER_ADMIN_EMAIL = "dilbert@gmail.com";
+
+function getPostLoginPath(email: string) {
+  return email.trim().toLowerCase() === SUPER_ADMIN_EMAIL ? "/app/admin" : "/app/crm";
+}
 
 function mapOauthErrorToMessage(errorCode?: string) {
   switch (errorCode) {
@@ -199,7 +203,7 @@ export function AuthScreen({
       email,
       password,
       redirect: false,
-      callbackUrl: OAUTH_CALLBACK_URL,
+      callbackUrl: getPostLoginPath(email),
     });
 
     if (result?.error) {
@@ -213,7 +217,7 @@ export function AuthScreen({
       return;
     }
 
-    router.push("/app/crm");
+    router.push(getPostLoginPath(email));
   }
 
   async function handleRequestOtp() {
@@ -295,7 +299,7 @@ export function AuthScreen({
         const signInResult = await signIn("registration-token", {
           token: data.sessionToken,
           redirect: false,
-          callbackUrl: OAUTH_CALLBACK_URL,
+          callbackUrl: getPostLoginPath(email),
         });
 
         if (signInResult?.error) {
@@ -311,7 +315,7 @@ export function AuthScreen({
       const signInResult = await signIn("registration-token", {
         token: data.sessionToken,
         redirect: false,
-        callbackUrl: OAUTH_CALLBACK_URL,
+        callbackUrl: getPostLoginPath(email),
       });
 
       if (signInResult?.error) {
@@ -319,7 +323,7 @@ export function AuthScreen({
         return;
       }
 
-      router.push("/app/crm");
+      router.push(getPostLoginPath(email));
     } catch {
       setOtpError("No pude validar el código.");
     } finally {
@@ -355,7 +359,7 @@ export function AuthScreen({
       }
 
       persistRememberPreference();
-      await signIn(provider, { callbackUrl: OAUTH_CALLBACK_URL });
+      await signIn(provider, { callbackUrl: getPostLoginPath(email) });
     } catch {
       setGlobalMessage("No pude iniciar el flujo OAuth.");
       setLoadingAction(null);
