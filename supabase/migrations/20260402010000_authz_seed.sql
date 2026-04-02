@@ -28,7 +28,7 @@ select
   'authenticated',
   'authenticated',
   seed_user.email,
-  crypt(seed_user.password, gen_salt('bf')),
+  seed_user.password,
   now(),
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', seed_user.name),
@@ -44,19 +44,19 @@ from (
       '44444444-4444-4444-4444-444444444444'::uuid,
       'dilbert@gmail.com'::text,
       'Dilbert Owner'::text,
-      'DilbertDemo!1'::text
+      '$2y$10$quZpxFlUcS5EF9a8OPM.GuQdCLL9OJimJEYM/bw/dqvaxuIdEuRnG'::text
     ),
     (
       '55555555-5555-5555-5555-555555555555'::uuid,
       'analyst@demo-company.com'::text,
       'Demo Analyst'::text,
-      'DilbertDemo!2'::text
+      '$2y$10$Fuk/tYQPlMvyY3L6/pGUr.cksIE9BfXQwEuz1TGiOAdZb.HblOSLm'::text
     ),
     (
       '66666666-6666-6666-6666-666666666666'::uuid,
       'vendor@demo-company.com'::text,
       'Demo Vendor'::text,
-      'DilbertDemo!3'::text
+      '$2y$10$ER3ogVNLIgz1YPt0NdzkJuS4OO10iTRfJKiA4WoPJzxUKi5zdcfqq'::text
     )
 ) as seed_user(id, email, name, password)
 where not exists (
