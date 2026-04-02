@@ -4,7 +4,7 @@ import { AppNav } from "@/components/app-nav";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { LogoutButton } from "@/components/logout-button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { getRoleLabel } from "@/lib/workspace-roles";
 
@@ -99,6 +99,12 @@ export function AppShell({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-background/70 px-3 py-2">
                     <Avatar className="h-10 w-10 border border-white/10">
+                      {session.user.image ? (
+                        <AvatarImage
+                          src={session.user.image}
+                          alt={session.user.name || session.user.email || "Usuario"}
+                        />
+                      ) : null}
                       <AvatarFallback>{getInitials(session.user.name, session.user.email)}</AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">

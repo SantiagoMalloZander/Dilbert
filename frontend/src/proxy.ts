@@ -107,6 +107,36 @@ async function fetchWorkspaceUserSnapshot(email: string) {
   return data[0] || null;
 }
 
+async function fetchWorkspaceAuthControl(userId: string) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    return null;
+  }
+
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+    headers: {
+      apikey: SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json()) as {
+    user?: {
+      app_metadata?: {
+        session_revoked_at?: string | null;
+      } | null;
+    } | null;
+  };
+
+  return {
+    sessionRevokedAt: payload.user?.app_metadata?.session_revoked_at || null,
+  };
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -143,12 +173,23 @@ export async function proxy(request: NextRequest) {
       ? parseImpersonationCookieValue(request.cookies.get(IMPERSONATION_COOKIE)?.value)
       : null;
     const workspaceUser = isSuperAdmin ? null : await fetchWorkspaceUserSnapshot(email);
+    const authControl =
+      !isSuperAdmin && typeof token.sub === "string"
+        ? await fetchWorkspaceAuthControl(token.sub)
+        : null;
     const role = String(
       impersonation ? "owner" : workspaceUser?.role || token.role || ""
     ).toLowerCase();
     const companyId =
       impersonation?.companyId ||
       String(workspaceUser?.company_id || token.companyId || "");
+
+    if (authControl?.sessionRevokedAt && typeof token.iat === "number") {
+      const revokedAtMs = new Date(authControl.sessionRevokedAt).getTime();
+      if (Number.isFinite(revokedAtMs) && revokedAtMs > token.iat * 1000) {
+        return redirectToWorkspaceRevoked(request);
+      }
+    }
 
     if (pathname.startsWith("/app/admin")) {
       if (!isSuperAdmin) {

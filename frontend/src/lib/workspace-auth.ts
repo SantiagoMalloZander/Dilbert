@@ -364,6 +364,7 @@ export async function getAuthSession() {
       session.user.email = appUser.email;
       session.user.role = (appUser.role as AppRole | null) || "analyst";
       session.user.companyId = appUser.company_id || "";
+      session.user.image = appUser.avatar_url || session.user.image || null;
     } else {
       session.user.role = "analyst";
       session.user.companyId = "";

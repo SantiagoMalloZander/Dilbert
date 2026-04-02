@@ -1,4 +1,5 @@
 import * as React from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 function Avatar({
@@ -30,4 +31,29 @@ function AvatarFallback({
   );
 }
 
-export { Avatar, AvatarFallback };
+function AvatarImage({
+  className,
+  alt = "",
+  src,
+}: {
+  className?: string;
+  alt?: string;
+  src?: string | null;
+}) {
+  if (typeof src !== "string" || !src) {
+    return null;
+  }
+
+  return (
+    <Image
+      data-slot="avatar-image"
+      src={src}
+      alt={alt}
+      fill
+      unoptimized
+      className={cn("h-full w-full object-cover", className)}
+    />
+  );
+}
+
+export { Avatar, AvatarFallback, AvatarImage };
