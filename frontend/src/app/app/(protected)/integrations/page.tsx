@@ -1,6 +1,7 @@
-import { requireVendor } from "@/lib/workspace-auth";
+import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { requireSession } from "@/lib/workspace-auth";
 
 const integrations = [
   {
@@ -18,15 +19,23 @@ const integrations = [
 ];
 
 export default async function IntegrationsPage() {
-  await requireVendor();
+  const session = await requireSession();
+
+  if (session.user.role === "analyst") {
+    redirect("/app/crm");
+  }
+
+  const isOwner = session.user.role === "owner";
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Badge>Solo Vendedor</Badge>
+        <Badge>{isOwner ? "Solo lectura" : "Editable"}</Badge>
         <h2 className="text-3xl font-semibold tracking-tight">Centro de integraciones</h2>
         <p className="text-sm text-muted-foreground">
-          Ruta protegida para operadores comerciales. Los owners quedan afuera por regla.
+          {isOwner
+            ? "Ves el estado de las integraciones conectadas por tu equipo, pero no podés modificarlas desde este rol."
+            : "Desde aca vas a conectar tus canales y revisar el estado operativo de cada integracion."}
         </p>
       </div>
 
@@ -38,7 +47,9 @@ export default async function IntegrationsPage() {
               <CardDescription>{integration.detail}</CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Placeholder listo para conectar settings reales, secretos y estado de salud.
+              {isOwner
+                ? "Vista de seguimiento para owner. Aca vas a ver que conecto cada vendedor y el estado de salud de cada canal."
+                : "Placeholder listo para sumar secretos, permisos y estado de salud por canal."}
             </CardContent>
           </Card>
         ))}

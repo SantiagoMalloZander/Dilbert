@@ -32,18 +32,23 @@ export function AppNav({
 
   const items: NavItem[] = [
     { href: "/app/crm", label: "CRM", icon: Activity, visible: hasWorkspaceAccess },
-    { href: "/app/account", label: "Cuenta", icon: Building2, visible: hasWorkspaceAccess },
     {
       href: "/app/users",
-      label: "Usuarios",
+      label: "Centro de Usuarios",
       icon: Users,
       visible: hasWorkspaceAccess && role === "owner",
     },
     {
       href: "/app/integrations",
-      label: "Integraciones",
+      label: role === "vendor" ? "Mis Integraciones" : "Integraciones",
       icon: FolderCog,
-      visible: hasWorkspaceAccess && role === "vendor",
+      visible: hasWorkspaceAccess && (role === "owner" || role === "vendor"),
+    },
+    {
+      href: "/app/account",
+      label: "Mi Perfil",
+      icon: Building2,
+      visible: hasWorkspaceAccess,
     },
     {
       href: "/app/admin",
@@ -54,11 +59,12 @@ export function AppNav({
   ];
 
   return (
-    <nav className="flex flex-wrap gap-2">
+    <nav className="space-y-1">
       {items
         .filter((item) => item.visible)
         .map((item) => {
-          const active = pathname === item.href;
+          const active =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
 
           return (
@@ -66,13 +72,13 @@ export function AppNav({
               key={item.href}
               href={item.href}
               className={cn(
-                "inline-flex items-center rounded-full border px-3 py-1.5 text-sm transition-colors",
+                "flex items-center rounded-2xl border px-3 py-3 text-sm transition-colors",
                 active
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                  ? "border-primary/30 bg-primary/15 text-primary"
+                  : "border-transparent text-muted-foreground hover:border-white/10 hover:bg-white/5 hover:text-foreground"
               )}
             >
-              <Icon className="mr-2 h-4 w-4" />
+              <Icon className="mr-3 h-4 w-4" />
               {item.label}
             </Link>
           );

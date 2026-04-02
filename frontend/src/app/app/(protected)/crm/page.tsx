@@ -1,49 +1,64 @@
-import { BarChart3, Clock3, ShieldCheck } from "lucide-react";
+import { BarChart3, MessageSquareText, PlugZap, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { requireSession } from "@/lib/workspace-auth";
+import { getRoleLabel } from "@/lib/workspace-roles";
 
 const cards = [
   {
-    title: "Pipeline privado",
-    description:
-      "Este panel queda protegido por middleware y por chequeo server-side antes de renderizar.",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Sesión activa",
-    description:
-      "La app fuerza cierre automático después de 30 minutos sin interacción del usuario.",
-    icon: Clock3,
-  },
-  {
-    title: "Base lista para crecer",
-    description:
-      "Quedan conectadas las capas para sumar CRM, bookings, métricas y automatizaciones.",
+    title: "Leads este mes",
+    description: "Todavia no hay datos cargados.",
+    value: "--",
     icon: BarChart3,
+  },
+  {
+    title: "Conversaciones activas",
+    description: "Esperando conexiones de canales.",
+    value: "--",
+    icon: MessageSquareText,
+  },
+  {
+    title: "Canales conectados",
+    description: "WhatsApp, Gmail, Instagram y mas.",
+    value: "--",
+    icon: PlugZap,
+  },
+  {
+    title: "Vendedores activos",
+    description: "Usuarios comerciales con acceso vigente.",
+    value: "--",
+    icon: Users,
   },
 ];
 
-export default function CrmPage() {
+export default async function CrmPage() {
+  const session = await requireSession();
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Badge>Ruta protegida</Badge>
-        <h2 className="text-3xl font-semibold tracking-tight">Panel principal</h2>
+        <Badge>{getRoleLabel(session.user.role)}</Badge>
+        <h2 className="text-3xl font-semibold tracking-tight">
+          Bienvenido, {session.user.name || "equipo"}
+        </h2>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Esta es la home privada de la app bajo <code>/app/crm</code>. Desde acá
-          podés extender el workspace con pipelines, conversaciones, reporting y acciones
-          automáticas.
+          El CRM se ira completando a medida que conectes tus canales.
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {cards.map(({ title, description, icon: Icon }) => (
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {cards.map(({ title, description, value, icon: Icon }) => (
           <Card key={title} className="bg-card/90">
             <CardHeader>
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-                <Icon className="h-5 w-5" />
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <span className="text-3xl font-semibold tracking-tight text-foreground">
+                  {value}
+                </span>
               </div>
-              <CardTitle className="text-xl">{title}</CardTitle>
+              <CardTitle className="text-lg">{title}</CardTitle>
               <CardDescription>{description}</CardDescription>
             </CardHeader>
           </Card>
@@ -52,16 +67,14 @@ export default function CrmPage() {
 
       <Card className="bg-card/90">
         <CardHeader>
-          <CardTitle>Siguiente paso recomendado</CardTitle>
+          <CardTitle>Workspace listo para crecer</CardTitle>
           <CardDescription>
-            Conectar Supabase con la tabla <code>users</code> y empezar a colgar
-            módulos reales de CRM sobre esta shell.
+            Esta home ya separa lo que puede ver cada rol dentro del producto.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          La estructura ya separa lo público de lo privado, define el acceso por rol y deja
-          lista la autenticación OAuth. Eso evita refactorizar la base cuando entren features
-          reales.
+          A medida que entren leads, conversaciones y sincronizaciones reales, este panel va a
+          mostrar metricas de pipeline, actividad comercial y estado de los canales conectados.
         </CardContent>
       </Card>
     </div>

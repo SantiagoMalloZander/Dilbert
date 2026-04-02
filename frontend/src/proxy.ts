@@ -182,7 +182,11 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/app/crm", request.url));
     }
 
-    if (pathname.startsWith("/app/integrations") && role !== "vendor") {
+    if (
+      pathname.startsWith("/app/integrations") &&
+      role !== "vendor" &&
+      role !== "owner"
+    ) {
       return NextResponse.redirect(new URL("/app/crm", request.url));
     }
 
