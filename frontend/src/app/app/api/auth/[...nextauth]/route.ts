@@ -1,3 +1,4 @@
+import "@/lib/workspace-auth-env";
 import NextAuth from "next-auth";
 import { authOptions } from "@/lib/workspace-auth";
 
