@@ -3,6 +3,10 @@ import { createServerSupabaseAuthClient } from "@/lib/workspace-supabase";
 import { createAdminSupabaseClient } from "@/lib/workspace-supabase";
 import { getCompanyById } from "@/lib/workspace-admin";
 import { getRoleLabel, type AppRole } from "@/lib/workspace-roles";
+import {
+  INTEGRATION_DEFINITIONS,
+  type IntegrationChannelType,
+} from "@/lib/workspace-integrations";
 
 const AVATAR_BUCKET = "avatars";
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
@@ -20,29 +24,13 @@ type UserRow = {
 };
 
 type ChannelCredentialRow = {
-  channel_type:
-    | "whatsapp"
-    | "gmail"
-    | "instagram"
-    | "meet"
-    | "zoom"
-    | "teams"
-    | "fathom";
+  channel_type: string;
   connected_at: string | null;
+  status?: "pending" | "connected" | null;
 };
 
-const CHANNELS = [
-  { type: "whatsapp", label: "WhatsApp" },
-  { type: "gmail", label: "Gmail" },
-  { type: "instagram", label: "Instagram" },
-  { type: "meet", label: "Google Meet" },
-  { type: "zoom", label: "Zoom" },
-  { type: "teams", label: "Microsoft Teams" },
-  { type: "fathom", label: "Fathom" },
-] as const;
-
 export type AccountChannelRecord = {
-  type: (typeof CHANNELS)[number]["type"];
+  type: IntegrationChannelType;
   label: string;
   status: "connected" | "disconnected";
   connectedAt: string | null;
@@ -202,7 +190,7 @@ export async function getAccountPageData(params: {
 
   const { data: channelRows, error: channelError } = await supabase
     .from("channel_credentials")
-    .select("channel_type, connected_at")
+    .select("channel_type, connected_at, status")
     .eq("user_id", params.userId);
 
   if (channelError) {
@@ -217,11 +205,11 @@ export async function getAccountPageData(params: {
     )
   );
 
-  const channels = CHANNELS.map((channel) => {
-    const row = channelMap.get(channel.type);
+  const channels = INTEGRATION_DEFINITIONS.map((channel) => {
+    const row = channelMap.get(channel.channelType);
     return {
-      type: channel.type,
-      label: channel.label,
+      type: channel.channelType,
+      label: channel.name,
       status: row ? "connected" : "disconnected",
       connectedAt: row?.connected_at || null,
     } satisfies AccountChannelRecord;

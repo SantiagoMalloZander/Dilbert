@@ -1,22 +1,11 @@
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { IntegrationsCenter } from "@/components/integrations-center";
 import { requireSession } from "@/lib/workspace-auth";
-
-const integrations = [
-  {
-    name: "Supabase",
-    detail: "Base de datos, perfiles y estado del workspace.",
-  },
-  {
-    name: "Resend",
-    detail: "Emails transaccionales para onboarding, booking y alertas.",
-  },
-  {
-    name: "OAuth",
-    detail: "Ingreso con Google y Microsoft mediante NextAuth.",
-  },
-];
+import {
+  getOwnerIntegrationsData,
+  getVendorIntegrationsData,
+} from "@/lib/workspace-integrations";
 
 export default async function IntegrationsPage() {
   const session = await requireSession();
@@ -26,6 +15,14 @@ export default async function IntegrationsPage() {
   }
 
   const isOwner = session.user.role === "owner";
+  const ownerData =
+    isOwner && session.user.companyId
+      ? await getOwnerIntegrationsData(session.user.companyId)
+      : null;
+  const vendorData =
+    session.user.role === "vendor"
+      ? await getVendorIntegrationsData(session.user.id)
+      : null;
 
   return (
     <div className="space-y-6">
@@ -34,26 +31,16 @@ export default async function IntegrationsPage() {
         <h2 className="text-3xl font-semibold tracking-tight">Centro de integraciones</h2>
         <p className="text-sm text-muted-foreground">
           {isOwner
-            ? "Ves el estado de las integraciones conectadas por tu equipo, pero no podés modificarlas desde este rol."
-            : "Desde aca vas a conectar tus canales y revisar el estado operativo de cada integracion."}
+            ? "Ves el estado de los canales conectados por cada vendedor de tu empresa, sin poder modificarlos."
+            : "Desde acá podés conectar y desconectar tus canales. Las nuevas conexiones quedan en pendiente hasta validar credenciales."}
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {integrations.map((integration) => (
-          <Card key={integration.name} className="bg-card/90">
-            <CardHeader>
-              <CardTitle className="text-xl">{integration.name}</CardTitle>
-              <CardDescription>{integration.detail}</CardDescription>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              {isOwner
-                ? "Vista de seguimiento para owner. Aca vas a ver que conecto cada vendedor y el estado de salud de cada canal."
-                : "Placeholder listo para sumar secretos, permisos y estado de salud por canal."}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <IntegrationsCenter
+        role={isOwner ? "owner" : "vendor"}
+        ownerVendors={ownerData?.vendors}
+        vendorChannels={vendorData?.channels}
+      />
     </div>
   );
 }
