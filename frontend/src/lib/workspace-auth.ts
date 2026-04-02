@@ -120,16 +120,12 @@ async function validatePasswordLogin(email: string, password: string) {
     throw new Error("INVALID_CREDENTIALS");
   }
 
-  if (!userHasWorkspaceAccess(appUser)) {
-    throw new Error("ACCESS_PENDING");
-  }
-
   return buildSessionUser(appUser);
 }
 
 async function validateRegistrationSession(sessionToken: string) {
   const appUser = await consumeRegistrationSessionToken(sessionToken);
-  if (!appUser || !userHasWorkspaceAccess(appUser)) {
+  if (!appUser) {
     throw new Error("REGISTRATION_SESSION_INVALID");
   }
 
@@ -235,14 +231,6 @@ export const authOptions: NextAuthOptions = {
 
       const existingUser = await getAppUserByEmail(email);
       if (existingUser) {
-        if (!userHasWorkspaceAccess(existingUser)) {
-          return encodeAuthRedirect({
-            step: "login",
-            pending_access: "1",
-            email,
-          });
-        }
-
         return true;
       }
 

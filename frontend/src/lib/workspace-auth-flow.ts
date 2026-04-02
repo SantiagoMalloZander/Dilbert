@@ -444,18 +444,15 @@ export async function finalizeRegistration(params: {
     role: accessRecord?.role || null,
   });
 
-  if (!accessRecord) {
-    const supabase = createAdminSupabaseClient();
-    await supabase
-      .from("pending_registrations")
-      .delete()
-      .eq("id", pending.id);
-
-    return { status: "pending_access" as const };
-  }
-
   const sessionToken = generateSessionToken();
   await markPendingRegistrationCompleted(pending.id, sessionToken);
+
+  if (!accessRecord) {
+    return {
+      status: "pending_access" as const,
+      sessionToken,
+    };
+  }
 
   return {
     status: "authorized" as const,
@@ -488,7 +485,7 @@ export async function consumeRegistrationSessionToken(sessionToken: string) {
   }
 
   const appUser = await getAppUserByEmail(pending.email);
-  if (!appUser || !userHasWorkspaceAccess(appUser)) {
+  if (!appUser) {
     return null;
   }
 
@@ -506,8 +503,8 @@ export function buildSessionUser(user: AppUserRecord) {
     email: user.email,
     name: user.name,
     image: user.avatar_url,
-    role: user.role as AppRole,
-    companyId: user.company_id as string,
+    role: (user.role || "analyst") as AppRole,
+    companyId: user.company_id || "",
     isSuperAdmin: normalizeEmail(user.email) === "dilbert@gmail.com",
   };
 }

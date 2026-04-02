@@ -109,7 +109,15 @@ export async function proxy(request: NextRequest) {
         return redirectToWorkspaceAdmin(request);
       }
 
-      return redirectToWorkspaceSignIn(request);
+      if (pathname !== "/app/pending-access") {
+        return NextResponse.redirect(new URL("/app/pending-access", request.url));
+      }
+
+      return continueWithPathname(request, pathname);
+    }
+
+    if (pathname === "/app/pending-access") {
+      return NextResponse.redirect(new URL("/app/crm", request.url));
     }
 
     if (pathname.startsWith("/app/users") && role !== "owner") {

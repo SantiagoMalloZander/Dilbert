@@ -21,6 +21,10 @@ export default async function AuthPage({
       redirect("/app/admin");
     }
 
+    if (!session.user.companyId) {
+      redirect("/app/pending-access");
+    }
+
     redirect("/app/crm");
   }
 

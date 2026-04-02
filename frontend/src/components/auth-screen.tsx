@@ -50,8 +50,6 @@ function mapCredentialError(errorCode?: string | null) {
     case "INVALID_CREDENTIALS":
     case "CredentialsSignin":
       return "La contraseña es incorrecta.";
-    case "ACCESS_PENDING":
-      return "Tu empresa todavía no te habilitó el acceso. Compartiles este mail y pediles que te agreguen en el Centro de Usuarios.";
     case "MISSING_CREDENTIALS":
       return "Completá tu contraseña para continuar.";
     case "REGISTRATION_SESSION_INVALID":
@@ -293,10 +291,19 @@ export function AuthScreen({
       }
 
       if (data.status === "pending_access") {
-        setGlobalMessage(
-          data.message ||
-            "Tu empresa todavía no te habilitó el acceso. Compartiles este mail y pediles que te agreguen en el Centro de Usuarios."
-        );
+        persistRememberPreference();
+        const signInResult = await signIn("registration-token", {
+          token: data.sessionToken,
+          redirect: false,
+          callbackUrl: OAUTH_CALLBACK_URL,
+        });
+
+        if (signInResult?.error) {
+          setGlobalMessage(mapCredentialError(signInResult.error));
+          return;
+        }
+
+        router.push("/app/pending-access");
         return;
       }
 
@@ -347,7 +354,7 @@ export function AuthScreen({
         return;
       }
 
-      window.localStorage.setItem(STORAGE_KEY, rememberMe ? "1" : "0");
+      persistRememberPreference();
       await signIn(provider, { callbackUrl: OAUTH_CALLBACK_URL });
     } catch {
       setGlobalMessage("No pude iniciar el flujo OAuth.");
