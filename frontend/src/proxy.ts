@@ -16,6 +16,9 @@ const SECRET = new TextEncoder().encode(
   process.env.AUTH_SECRET || "dilbert-hackitba-secret-2026"
 );
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || "dilbert-app-local-secret";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_SERVICE_KEY =
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const WORKSPACE_ADMIN_EMAIL = (
   process.env.DILBERT_ADMIN_EMAIL || "dilbert@gmail.com"
 ).toLowerCase();
@@ -47,6 +50,20 @@ function redirectToWorkspaceSignIn(request: NextRequest, reason?: "timeout") {
   return response;
 }
 
+function redirectToWorkspaceRevoked(request: NextRequest) {
+  const url = new URL("/app/", request.url);
+  url.searchParams.set("revoked", "1");
+
+  const response = NextResponse.redirect(url);
+  response.cookies.delete(LAST_ACTIVITY_COOKIE);
+  response.cookies.delete(BROWSER_SESSION_COOKIE);
+  response.cookies.delete("next-auth.session-token");
+  response.cookies.delete("__Secure-next-auth.session-token");
+  response.cookies.delete("next-auth.callback-url");
+  response.cookies.delete("__Secure-next-auth.callback-url");
+  return response;
+}
+
 function redirectToWorkspaceAdmin(request: NextRequest) {
   return NextResponse.redirect(new URL("/app/admin", request.url));
 }
@@ -56,6 +73,38 @@ function continueWithPathname(request: NextRequest, pathname: string) {
   requestHeaders.set("x-pathname", pathname);
 
   return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
+async function fetchWorkspaceUserSnapshot(email: string) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    return null;
+  }
+
+  const url = new URL(`${SUPABASE_URL}/rest/v1/users`);
+  url.searchParams.set("select", "id,email,company_id,role");
+  url.searchParams.set("email", `eq.${email}`);
+  url.searchParams.set("limit", "1");
+
+  const response = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = (await response.json()) as Array<{
+    id: string;
+    email: string;
+    company_id: string | null;
+    role: string | null;
+  }>;
+
+  return data[0] || null;
 }
 
 export async function proxy(request: NextRequest) {
@@ -93,8 +142,13 @@ export async function proxy(request: NextRequest) {
     const impersonation = isSuperAdmin
       ? parseImpersonationCookieValue(request.cookies.get(IMPERSONATION_COOKIE)?.value)
       : null;
-    const role = String(impersonation ? "owner" : token.role || "").toLowerCase();
-    const companyId = impersonation?.companyId || String(token.companyId || "");
+    const workspaceUser = isSuperAdmin ? null : await fetchWorkspaceUserSnapshot(email);
+    const role = String(
+      impersonation ? "owner" : workspaceUser?.role || token.role || ""
+    ).toLowerCase();
+    const companyId =
+      impersonation?.companyId ||
+      String(workspaceUser?.company_id || token.companyId || "");
 
     if (pathname.startsWith("/app/admin")) {
       if (!isSuperAdmin) {
@@ -107,6 +161,10 @@ export async function proxy(request: NextRequest) {
     if (!companyId) {
       if (isSuperAdmin) {
         return redirectToWorkspaceAdmin(request);
+      }
+
+      if (!workspaceUser?.id) {
+        return redirectToWorkspaceRevoked(request);
       }
 
       if (pathname !== "/app/pending-access") {

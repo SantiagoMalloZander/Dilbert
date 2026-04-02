@@ -17,6 +17,7 @@ const requestOtpSchema = z.object({
       passwordRule,
       "La contraseña debe tener al menos 1 número, 1 carácter especial y 8 caracteres."
     ),
+  joinToken: z.string().min(8).optional(),
 });
 
 export async function POST(request: Request) {

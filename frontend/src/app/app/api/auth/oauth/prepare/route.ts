@@ -12,12 +12,13 @@ const oauthPrepareSchema = z.object({
   email: z.string().email("Ingresá un email válido."),
   mode: z.enum(["login", "register"]),
   remember: z.boolean().default(true),
+  joinToken: z.string().min(8).optional(),
 });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, mode, remember } = oauthPrepareSchema.parse(body);
+    const { email, mode, remember, joinToken } = oauthPrepareSchema.parse(body);
 
     const response = NextResponse.json({ ok: true });
     const cookiePayload = Buffer.from(
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
         email: normalizeEmail(email),
         mode,
         remember,
+        joinToken: joinToken || null,
       })
     ).toString("base64url");
 

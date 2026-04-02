@@ -25,6 +25,8 @@ type AuthScreenProps = {
   initialStep?: AuthStep;
   pendingAccess?: boolean;
   oauthError?: string;
+  initialJoinToken?: string;
+  revoked?: boolean;
 };
 
 const STORAGE_KEY = "dilbert-remember-preference";
@@ -71,6 +73,8 @@ export function AuthScreen({
   initialStep = "email",
   pendingAccess = false,
   oauthError,
+  initialJoinToken = "",
+  revoked = false,
 }: AuthScreenProps) {
   const router = useRouter();
   const [step, setStep] = useState<AuthStep>(() => {
@@ -84,6 +88,7 @@ export function AuthScreen({
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
+  const [joinToken] = useState(initialJoinToken);
   const [rememberMe, setRememberMe] = useState(true);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
@@ -114,11 +119,16 @@ export function AuthScreen({
       return;
     }
 
+    if (revoked) {
+      setGlobalMessage("Tu acceso fue revocado. Si necesitás volver a entrar, pedile a tu empresa que te habilite otra vez.");
+      return;
+    }
+
     const oauthMessage = mapOauthErrorToMessage(oauthError);
     if (oauthMessage) {
       setGlobalMessage(oauthMessage);
     }
-  }, [oauthError, pendingAccess, timeout]);
+  }, [oauthError, pendingAccess, revoked, timeout]);
 
   const canUseOauth = googleReady || microsoftReady;
   const subtitle = useMemo(() => {
@@ -202,6 +212,7 @@ export function AuthScreen({
     const result = await signIn("credentials", {
       email,
       password,
+      joinToken: joinToken || undefined,
       redirect: false,
       callbackUrl: getPostLoginPath(email),
     });
@@ -244,6 +255,7 @@ export function AuthScreen({
           email,
           fullName,
           password,
+          joinToken: joinToken || undefined,
         }),
       });
       const data = await response.json();
@@ -260,7 +272,14 @@ export function AuthScreen({
       }
 
       setStep("otp");
-      router.replace(`/app/?step=otp&email=${encodeURIComponent(email)}`);
+      const nextStepUrl = new URLSearchParams({
+        step: "otp",
+        email,
+      });
+      if (joinToken) {
+        nextStepUrl.set("join", joinToken);
+      }
+      router.replace(`/app/?${nextStepUrl.toString()}`);
       setGlobalMessage("Te mandamos un código de 6 dígitos por email.");
     } catch {
       setGlobalMessage("No pude enviarte el código.");
@@ -285,6 +304,7 @@ export function AuthScreen({
         body: JSON.stringify({
           email,
           otp,
+          joinToken: joinToken || undefined,
         }),
       });
 
@@ -348,6 +368,7 @@ export function AuthScreen({
           email,
           mode,
           remember: rememberMe,
+          joinToken: joinToken || undefined,
         }),
       });
       const data = await response.json();

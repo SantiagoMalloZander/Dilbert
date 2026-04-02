@@ -1,9 +1,11 @@
-import { requireOwner } from "@/lib/workspace-auth";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { requireOwner } from "@/lib/workspace-auth";
+import { getUsersCenterData } from "@/lib/workspace-users";
+import { UsersCenter } from "@/components/users-center";
 
 export default async function UsersPage() {
   const session = await requireOwner();
+  const data = await getUsersCenterData(session.user.companyId);
 
   return (
     <div className="space-y-6">
@@ -11,20 +13,17 @@ export default async function UsersPage() {
         <Badge>Solo Owner</Badge>
         <h2 className="text-3xl font-semibold tracking-tight">Centro de usuarios</h2>
         <p className="text-sm text-muted-foreground">
-          Este módulo queda reservado para el rol <strong>{session.user.role}</strong>.
+          Administrá accesos, roles y el link compartible de <strong>{data.companyName}</strong>.
         </p>
       </div>
 
-      <Card className="bg-card/90">
-        <CardHeader>
-          <CardTitle>Qué conviene colgar acá</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p>1. Alta y baja de usuarios internos.</p>
-          <p>2. Asignación de roles y permisos por workspace.</p>
-          <p>3. Auditoría de ingresos y cambios sensibles.</p>
-        </CardContent>
-      </Card>
+      <UsersCenter
+        companyId={data.companyId}
+        vendorLimit={data.vendorLimit}
+        activeVendors={data.activeVendors}
+        inviteLink={data.inviteLink}
+        users={data.users}
+      />
     </div>
   );
 }

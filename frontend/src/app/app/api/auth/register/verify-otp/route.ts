@@ -7,16 +7,18 @@ const verifyOtpSchema = z.object({
   otp: z
     .string()
     .regex(/^\d{6}$/, "Ingresá el código de 6 dígitos."),
+  joinToken: z.string().min(8).optional(),
 });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, otp } = verifyOtpSchema.parse(body);
+    const { email, otp, joinToken } = verifyOtpSchema.parse(body);
 
     const result = await finalizeRegistration({
       email: normalizeEmail(email),
       otp,
+      joinToken: joinToken || null,
     });
 
     switch (result.status) {

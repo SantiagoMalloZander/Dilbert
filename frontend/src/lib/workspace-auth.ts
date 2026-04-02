@@ -9,10 +9,9 @@ import { redirect } from "next/navigation";
 import {
   buildSessionUser,
   consumeRegistrationSessionToken,
-  getAppUserByEmail,
   normalizeEmail as normalizeAuthFlowEmail,
   prepareOAuthRegistration,
-  userHasWorkspaceAccess,
+  syncWorkspaceAccessByEmail,
 } from "@/lib/workspace-auth-flow";
 import {
   BROWSER_SESSION_COOKIE,
@@ -44,6 +43,7 @@ type OAuthIntent = {
   email: string;
   mode: "login" | "register";
   remember: boolean;
+  joinToken?: string | null;
 };
 
 function buildSuperAdminSessionUser(params: {
@@ -95,7 +95,7 @@ async function readOAuthIntent(): Promise<OAuthIntent | null> {
   }
 }
 
-async function validatePasswordLogin(email: string, password: string) {
+async function validatePasswordLogin(email: string, password: string, joinToken?: string | null) {
   const supabase = createServerSupabaseAuthClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -106,7 +106,19 @@ async function validatePasswordLogin(email: string, password: string) {
     throw new Error("INVALID_CREDENTIALS");
   }
 
-  const appUser = await getAppUserByEmail(email);
+  const appUser = await syncWorkspaceAccessByEmail({
+    email,
+    joinToken,
+    authIdentity: {
+      id: data.user.id,
+      email,
+      name:
+        String(data.user.user_metadata?.full_name || "").trim() ||
+        String(data.user.email || email),
+      avatarUrl: String(data.user.user_metadata?.avatar_url || "") || null,
+    },
+  });
+
   if (!appUser) {
     if (isSuperAdminEmail(email)) {
       return buildSuperAdminSessionUser({
@@ -139,16 +151,18 @@ const providers: NonNullable<NextAuthOptions["providers"]> = [
     credentials: {
       email: { label: "Email", type: "email" },
       password: { label: "Contraseña", type: "password" },
+      joinToken: { label: "Join token", type: "text" },
     },
     async authorize(credentials) {
       const email = normalizeAuthFlowEmail(credentials?.email || "");
       const password = String(credentials?.password || "");
+      const joinToken = String(credentials?.joinToken || "") || null;
 
       if (!email || !password) {
         throw new Error("MISSING_CREDENTIALS");
       }
 
-      return validatePasswordLogin(email, password);
+      return validatePasswordLogin(email, password, joinToken);
     },
   }),
   CredentialsProvider({
@@ -229,7 +243,17 @@ export const authOptions: NextAuthOptions = {
         });
       }
 
-      const existingUser = await getAppUserByEmail(email);
+      const existingUser = await syncWorkspaceAccessByEmail({
+        email,
+        joinToken: intent.joinToken,
+        authIdentity: {
+          id: user.id || account.providerAccountId || email,
+          email,
+          name: user.name || email,
+          avatarUrl: user.image,
+        },
+      });
+
       if (existingUser) {
         return true;
       }
@@ -257,6 +281,7 @@ export const authOptions: NextAuthOptions = {
       return encodeAuthRedirect({
         step: "otp",
         email,
+        ...(intent.joinToken ? { join: intent.joinToken } : {}),
       });
     },
     async jwt({ token, user }) {
@@ -265,6 +290,7 @@ export const authOptions: NextAuthOptions = {
         const userIsSuperAdmin = Boolean(user.isSuperAdmin || isSuperAdminEmail(normalizedEmail));
 
         token.email = normalizedEmail;
+        token.sub = user.id;
         token.role = user.role as AppRole;
         token.companyId = user.companyId as string;
         token.isSuperAdmin = userIsSuperAdmin;
@@ -277,13 +303,14 @@ export const authOptions: NextAuthOptions = {
         token.isSuperAdmin = Boolean(token.isSuperAdmin || isSuperAdminEmail(token.email));
       }
 
-      if (token.email && (!token.role || (!token.companyId && !token.isSuperAdmin))) {
-        const appUser = await getAppUserByEmail(token.email);
-        if (appUser && userHasWorkspaceAccess(appUser)) {
-          token.role = appUser.role as AppRole;
-          token.companyId = appUser.company_id as string;
-          token.isSuperAdmin = isSuperAdminEmail(appUser.email);
-        }
+      if (token.email && !token.isSuperAdmin) {
+        const appUser = await syncWorkspaceAccessByEmail({
+          email: token.email,
+        });
+
+        token.role = (appUser?.role as AppRole | null) || "analyst";
+        token.companyId = appUser?.company_id || "";
+        token.isSuperAdmin = false;
       }
 
       return token;
@@ -292,6 +319,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user && token.email) {
         const sessionIsSuperAdmin = Boolean(token.isSuperAdmin || isSuperAdminEmail(token.email));
 
+        session.user.id = token.sub || "";
         session.user.email = token.email;
         session.user.role = (token.role as AppRole | undefined) || (sessionIsSuperAdmin ? "owner" : "analyst");
         session.user.companyId = typeof token.companyId === "string" ? token.companyId : "";
@@ -324,6 +352,22 @@ export async function getAuthSession() {
 
   if (!session?.user?.email) {
     return session;
+  }
+
+  if (!session.user.isSuperAdmin) {
+    const appUser = await syncWorkspaceAccessByEmail({
+      email: session.user.email,
+    });
+
+    if (appUser) {
+      session.user.name = appUser.name || session.user.name;
+      session.user.email = appUser.email;
+      session.user.role = (appUser.role as AppRole | null) || "analyst";
+      session.user.companyId = appUser.company_id || "";
+    } else {
+      session.user.role = "analyst";
+      session.user.companyId = "";
+    }
   }
 
   session.user.isSuperAdmin = Boolean(

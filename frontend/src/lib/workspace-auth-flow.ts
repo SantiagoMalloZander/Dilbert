@@ -54,6 +54,21 @@ type AuthorizedEmailRecord = {
   created_at: string;
 };
 
+type InviteLinkRecord = {
+  id: string;
+  company_id: string;
+  token: string;
+  expires_at: string;
+  created_at: string;
+};
+
+type AuthIdentitySnapshot = {
+  id: string;
+  email: string;
+  name: string;
+  avatarUrl?: string | null;
+};
+
 type PendingRegistrationInput = {
   email: string;
   fullName?: string | null;
@@ -183,6 +198,77 @@ async function getAuthorizedAccessByEmail(email: string) {
   return (data as AuthorizedEmailRecord | null) ?? null;
 }
 
+async function getInviteLinkByToken(token: string) {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("invite_links")
+    .select("id, company_id, token, expires_at, created_at")
+    .eq("token", token)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as InviteLinkRecord | null) ?? null;
+}
+
+async function getCompanyOwnerId(companyId: string) {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("role", "owner")
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data?.id as string | undefined) || null;
+}
+
+async function ensureAuthorizedAccessForEmail(params: {
+  email: string;
+  joinToken?: string | null;
+}) {
+  const normalizedEmail = normalizeEmail(params.email);
+  const existingAccess = await getAuthorizedAccessByEmail(normalizedEmail);
+
+  if (existingAccess || !params.joinToken) {
+    return existingAccess;
+  }
+
+  const inviteLink = await getInviteLinkByToken(params.joinToken);
+  if (!inviteLink || isExpired(inviteLink.expires_at)) {
+    return null;
+  }
+
+  const ownerId = await getCompanyOwnerId(inviteLink.company_id);
+  if (!ownerId) {
+    throw new Error("INVITE_LINK_OWNER_NOT_FOUND");
+  }
+
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("authorized_emails")
+    .insert({
+      company_id: inviteLink.company_id,
+      email: normalizedEmail,
+      added_by: ownerId,
+      role: "analyst",
+    })
+    .select("id, company_id, email, role, created_at")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as AuthorizedEmailRecord;
+}
+
 export async function getPendingRegistrationByEmail(email: string) {
   const supabase = createAdminSupabaseClient();
   const normalizedEmail = normalizeEmail(email);
@@ -282,7 +368,7 @@ export async function createPendingRegistration(input: PendingRegistrationInput)
   return id;
 }
 
-async function findAuthUserByEmail(email: string) {
+export async function findAuthUserByEmail(email: string) {
   const supabase = createAdminSupabaseClient();
   const normalizedEmail = normalizeEmail(email);
 
@@ -384,6 +470,99 @@ async function upsertAppUser(params: {
   }
 }
 
+async function clearAppUserAccess(userId: string) {
+  const supabase = createAdminSupabaseClient();
+  const { error } = await supabase
+    .from("users")
+    .update({
+      company_id: null,
+      role: null,
+    })
+    .eq("id", userId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function syncWorkspaceAccessByEmail(params: {
+  email: string;
+  authIdentity?: AuthIdentitySnapshot | null;
+  joinToken?: string | null;
+}) {
+  const normalizedEmail = normalizeEmail(params.email);
+  const [existingUser, accessRecord] = await Promise.all([
+    getAppUserByEmail(normalizedEmail),
+    ensureAuthorizedAccessForEmail({
+      email: normalizedEmail,
+      joinToken: params.joinToken,
+    }),
+  ]);
+
+  if (!accessRecord) {
+    if (existingUser?.company_id || existingUser?.role) {
+      await clearAppUserAccess(existingUser.id);
+      return getAppUserByEmail(normalizedEmail);
+    }
+
+    if (existingUser) {
+      return existingUser;
+    }
+
+    if (!params.authIdentity) {
+      return null;
+    }
+
+    await upsertAppUser({
+      id: params.authIdentity.id,
+      email: normalizedEmail,
+      name: params.authIdentity.name,
+      avatarUrl: params.authIdentity.avatarUrl,
+      companyId: null,
+      role: null,
+    });
+
+    return getAppUserByEmail(normalizedEmail);
+  }
+
+  if (existingUser) {
+    const needsSync =
+      existingUser.company_id !== accessRecord.company_id ||
+      existingUser.role !== accessRecord.role;
+
+    if (needsSync) {
+      await upsertAppUser({
+        id: existingUser.id,
+        email: normalizedEmail,
+        name: existingUser.name,
+        avatarUrl: existingUser.avatar_url,
+        companyId: accessRecord.company_id,
+        role: accessRecord.role,
+      });
+      return getAppUserByEmail(normalizedEmail);
+    }
+
+    return existingUser;
+  }
+
+  const authIdentity =
+    params.authIdentity ||
+    (() => {
+      throw new Error("AUTH_IDENTITY_REQUIRED");
+    })();
+
+  await upsertAppUser({
+    id: authIdentity.id,
+    email: normalizedEmail,
+    name: authIdentity.name,
+    avatarUrl: authIdentity.avatarUrl,
+    companyId: accessRecord.company_id,
+    role: accessRecord.role,
+  });
+
+  return getAppUserByEmail(normalizedEmail);
+}
+
 async function markPendingRegistrationCompleted(id: string, sessionToken: string) {
   const supabase = createAdminSupabaseClient();
   const { error } = await supabase
@@ -402,6 +581,7 @@ async function markPendingRegistrationCompleted(id: string, sessionToken: string
 export async function finalizeRegistration(params: {
   email: string;
   otp: string;
+  joinToken?: string | null;
 }) {
   const normalizedEmail = normalizeEmail(params.email);
   const pending = await getPendingRegistrationByEmail(normalizedEmail);
@@ -429,25 +609,39 @@ export async function finalizeRegistration(params: {
     password,
   });
 
-  const accessRecord = await getAuthorizedAccessByEmail(normalizedEmail);
   const fullName =
     pending.full_name ||
     String(authUser.user_metadata?.full_name || "").trim() ||
     getDisplayNameFromEmail(normalizedEmail);
 
+  const appUser = await syncWorkspaceAccessByEmail({
+    email: normalizedEmail,
+    joinToken: params.joinToken,
+    authIdentity: {
+      id: authUser.id,
+      email: normalizedEmail,
+      name: fullName,
+      avatarUrl: pending.avatar_url || String(authUser.user_metadata?.avatar_url || "") || null,
+    },
+  });
+
+  if (!appUser) {
+    throw new Error("APP_USER_SYNC_FAILED");
+  }
+
   await upsertAppUser({
-    id: authUser.id,
+    id: appUser.id,
     email: normalizedEmail,
     name: fullName,
     avatarUrl: pending.avatar_url || String(authUser.user_metadata?.avatar_url || "") || null,
-    companyId: accessRecord?.company_id || null,
-    role: accessRecord?.role || null,
+    companyId: appUser.company_id,
+    role: appUser.role,
   });
 
   const sessionToken = generateSessionToken();
   await markPendingRegistrationCompleted(pending.id, sessionToken);
 
-  if (!accessRecord) {
+  if (!userHasWorkspaceAccess(appUser)) {
     return {
       status: "pending_access" as const,
       sessionToken,

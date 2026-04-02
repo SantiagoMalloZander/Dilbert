@@ -11,6 +11,8 @@ export default async function AuthPage({
     email?: string;
     pending_access?: string;
     oauth_error?: string;
+    join?: string;
+    revoked?: string;
   }>;
 }) {
   const session = await getAuthSession();
@@ -41,6 +43,8 @@ export default async function AuthPage({
       initialStep={resolvedSearchParams.step || "email"}
       pendingAccess={resolvedSearchParams.pending_access === "1"}
       oauthError={resolvedSearchParams.oauth_error}
+      initialJoinToken={resolvedSearchParams.join || ""}
+      revoked={resolvedSearchParams.revoked === "1"}
     />
   );
 }

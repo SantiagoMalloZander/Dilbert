@@ -4,6 +4,7 @@ import type { AppRole } from "@/lib/workspace-roles";
 
 declare module "next-auth" {
   interface User {
+    id: string;
     role: AppRole;
     companyId: string;
     isSuperAdmin: boolean;
@@ -12,6 +13,7 @@ declare module "next-auth" {
 
   interface Session {
     user: DefaultSession["user"] & {
+      id: string;
       role: AppRole;
       companyId: string;
       isSuperAdmin: boolean;
@@ -22,6 +24,7 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
+    sub?: string;
     role?: AppRole;
     companyId?: string;
     isSuperAdmin?: boolean;
