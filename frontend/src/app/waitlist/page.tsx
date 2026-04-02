@@ -12,15 +12,18 @@ const BRAND = {
   border: "rgba(245,240,232,0.1)",
 };
 
+const BURST_PARTICLES = Array.from({ length: 18 }, (_, i) => ({
+  angle: (i / 18) * 360,
+  dist: 60 + ((i * 17) % 7) * 10,
+  size: 4 + ((i * 13) % 4) * 2,
+}));
+
 /* ── tiny particle burst on success ─────────────────────── */
 function Burst() {
   const colors = [BRAND.orange, BRAND.teal, "#F5D53F", BRAND.cream];
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {Array.from({ length: 18 }).map((_, i) => {
-        const angle = (i / 18) * 360;
-        const dist = 60 + Math.random() * 60;
-        const size = 4 + Math.random() * 6;
+      {BURST_PARTICLES.map(({ angle, dist, size }, i) => {
         const color = colors[i % colors.length];
         return (
           <span

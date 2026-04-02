@@ -37,18 +37,29 @@ export default async function RootLayout({
   const pathname = headersList.get("x-pathname") || "";
   const companyName = headersList.get("x-company-name") || "";
   const role = headersList.get("x-user-role") || "";
+  const isWorkspaceApp = pathname === "/app" || pathname.startsWith("/app/");
 
-  const showSidebar = pathname !== "/login" && pathname !== "/" && pathname !== "";
+  const showSidebar =
+    !isWorkspaceApp &&
+    pathname !== "/login" &&
+    pathname !== "/" &&
+    pathname !== "";
 
   return (
     <html
       lang="es"
       className={`${dmSans.variable} ${anton.variable} ${jetbrainsMono.variable} h-full`}
     >
-      <body className="flex h-full bg-background text-foreground">
-        {showSidebar && <Sidebar companyName={companyName} role={role} />}
-        <RealtimeProvider />
-        <main className="flex-1 overflow-y-auto pt-12 md:pt-0">{children}</main>
+      <body className={isWorkspaceApp ? "min-h-screen bg-background text-foreground" : "flex h-full bg-background text-foreground"}>
+        {isWorkspaceApp ? (
+          children
+        ) : (
+          <>
+            {showSidebar && <Sidebar companyName={companyName} role={role} />}
+            <RealtimeProvider />
+            <main className="flex-1 overflow-y-auto pt-12 md:pt-0">{children}</main>
+          </>
+        )}
       </body>
     </html>
   );

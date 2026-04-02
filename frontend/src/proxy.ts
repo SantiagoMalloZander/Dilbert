@@ -1,15 +1,127 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { getToken } from "next-auth/jwt";
 import { SESSION_COOKIE } from "@/lib/auth";
+import {
+  BROWSER_SESSION_COOKIE,
+  LAST_ACTIVITY_COOKIE,
+  REMEMBER_COOKIE,
+} from "@/lib/workspace-activity";
+import {
+  IMPERSONATION_COOKIE,
+  parseImpersonationCookieValue,
+} from "@/lib/workspace-impersonation";
 
 const SECRET = new TextEncoder().encode(
   process.env.AUTH_SECRET || "dilbert-hackitba-secret-2026"
 );
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || "dilbert-app-local-secret";
+const WORKSPACE_ADMIN_EMAIL = (
+  process.env.DILBERT_ADMIN_EMAIL || "dilbert@gmail.com"
+).toLowerCase();
+const WORKSPACE_MAX_IDLE_MS = 30 * 60 * 1000;
 
 const PUBLIC = ["/login", "/qr", "/waitlist", "/reservar", "/api/auth", "/api/waitlist", "/api/availability", "/api/book", "/landing.html", "/_next", "/favicon", "/CRMs", "/Canales", "/dilbert-crm-logo.svg", "/logos"];
 
+function isWorkspacePath(pathname: string) {
+  return pathname === "/app" || pathname.startsWith("/app/");
+}
+
+function isWorkspacePublicPath(pathname: string) {
+  return (
+    pathname === "/app" ||
+    pathname === "/app/" ||
+    pathname.startsWith("/app/api/auth")
+  );
+}
+
+function redirectToWorkspaceSignIn(request: NextRequest, reason?: "timeout") {
+  const url = new URL("/app/", request.url);
+  if (reason) {
+    url.searchParams.set(reason, "1");
+  }
+
+  const response = NextResponse.redirect(url);
+  response.cookies.delete(LAST_ACTIVITY_COOKIE);
+  response.cookies.delete(BROWSER_SESSION_COOKIE);
+  return response;
+}
+
+function redirectToWorkspaceAdmin(request: NextRequest) {
+  return NextResponse.redirect(new URL("/app/admin", request.url));
+}
+
+function continueWithPathname(request: NextRequest, pathname: string) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (isWorkspacePath(pathname)) {
+    if (isWorkspacePublicPath(pathname)) {
+      return continueWithPathname(request, pathname);
+    }
+
+    const token = await getToken({
+      req: request,
+      secret: NEXTAUTH_SECRET,
+    });
+
+    if (!token?.email) {
+      return redirectToWorkspaceSignIn(request);
+    }
+
+    const remember = request.cookies.get(REMEMBER_COOKIE)?.value === "1";
+    if (!remember && !request.cookies.get(BROWSER_SESSION_COOKIE)?.value) {
+      return redirectToWorkspaceSignIn(request);
+    }
+
+    const rawLastActivity = request.cookies.get(LAST_ACTIVITY_COOKIE)?.value;
+    if (rawLastActivity) {
+      const lastActivity = Number(rawLastActivity);
+      if (Number.isFinite(lastActivity) && Date.now() - lastActivity > WORKSPACE_MAX_IDLE_MS) {
+        return redirectToWorkspaceSignIn(request, "timeout");
+      }
+    }
+
+    const email = token.email.toLowerCase();
+    const isSuperAdmin = email === WORKSPACE_ADMIN_EMAIL;
+    const impersonation = isSuperAdmin
+      ? parseImpersonationCookieValue(request.cookies.get(IMPERSONATION_COOKIE)?.value)
+      : null;
+    const role = String(impersonation ? "owner" : token.role || "").toLowerCase();
+    const companyId = impersonation?.companyId || String(token.companyId || "");
+
+    if (pathname.startsWith("/app/admin")) {
+      if (!isSuperAdmin) {
+        return NextResponse.redirect(new URL("/app/crm", request.url));
+      }
+
+      return continueWithPathname(request, pathname);
+    }
+
+    if (!companyId) {
+      if (isSuperAdmin) {
+        return redirectToWorkspaceAdmin(request);
+      }
+
+      return redirectToWorkspaceSignIn(request);
+    }
+
+    if (pathname.startsWith("/app/users") && role !== "owner") {
+      return NextResponse.redirect(new URL("/app/crm", request.url));
+    }
+
+    if (pathname.startsWith("/app/integrations") && role !== "vendor") {
+      return NextResponse.redirect(new URL("/app/crm", request.url));
+    }
+
+    return continueWithPathname(request, pathname);
+  }
 
   // Always allow public paths
   if (PUBLIC.some((p) => pathname.startsWith(p))) {
