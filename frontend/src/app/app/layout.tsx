@@ -7,7 +7,7 @@ export default function WorkspaceLayout({
 }>) {
   return (
     <AuthSessionProvider>
-      <div className="workspace-app-theme min-h-screen">{children}</div>
+      <div className="min-h-screen">{children}</div>
     </AuthSessionProvider>
   );
 }

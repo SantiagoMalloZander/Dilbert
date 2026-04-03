@@ -40,14 +40,14 @@ export function AppShell({
 
         <div className="flex min-h-[calc(100vh-2rem)] flex-col gap-4 lg:flex-row">
           <aside className="w-full lg:w-72">
-            <div className="sticky top-4 rounded-[30px] border border-white/10 bg-card/80 p-5 shadow-panel backdrop-blur">
+            <div className="sticky top-4 rounded-[30px] border border-border bg-card p-5 shadow-sm">
               <div className="mb-8 space-y-4">
                 <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                   <Sparkles className="h-3.5 w-3.5" />
                   Dilbert
                 </div>
 
-                <div className="rounded-3xl border border-white/10 bg-background/60 p-4">
+                <div className="rounded-3xl border border-border bg-background p-4">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
                     Empresa
                   </p>
@@ -78,7 +78,7 @@ export function AppShell({
           </aside>
 
           <div className="min-w-0 flex-1">
-            <header className="rounded-[30px] border border-white/10 bg-card/80 p-5 shadow-panel backdrop-blur">
+            <header className="rounded-[30px] border border-border bg-card p-5 shadow-sm">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="space-y-2">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
@@ -97,8 +97,8 @@ export function AppShell({
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-background/70 px-3 py-2">
-                    <Avatar className="h-10 w-10 border border-white/10">
+                  <div className="flex items-center gap-3 rounded-2xl border border-border bg-background px-3 py-2">
+                    <Avatar className="h-10 w-10 border border-border">
                       {session.user.image ? (
                         <AvatarImage
                           src={session.user.image}
