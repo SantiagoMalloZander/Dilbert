@@ -38,23 +38,23 @@ export default async function CrmPage() {
     <div className="space-y-6">
       <div className="space-y-2">
         <Badge>{getRoleLabel(session.user.role)}</Badge>
-        <h2 className="text-3xl font-semibold tracking-tight">
-          Bienvenido, {session.user.name || "equipo"}
+        <h2 className="font-heading text-4xl text-[#1A1A1A]">
+          BIENVENIDO, {(session.user.name || "EQUIPO").split(" ")[0].toUpperCase()}.
         </h2>
-        <p className="max-w-2xl text-sm text-muted-foreground">
+        <p className="max-w-2xl text-sm text-[#1A1A1A]/60">
           El CRM se ira completando a medida que conectes tus canales.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {cards.map(({ title, description, value, icon: Icon }) => (
-          <Card key={title} className="bg-card/90">
+          <Card key={title}>
             <CardHeader>
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
                   <Icon className="h-5 w-5" />
                 </div>
-                <span className="text-3xl font-semibold tracking-tight text-foreground">
+                <span className="font-heading text-4xl text-[#D4420A]">
                   {value}
                 </span>
               </div>
@@ -65,9 +65,9 @@ export default async function CrmPage() {
         ))}
       </div>
 
-      <Card className="bg-card/90">
+      <Card>
         <CardHeader>
-          <CardTitle>Workspace listo para crecer</CardTitle>
+          <CardTitle>WORKSPACE LISTO PARA CRECER</CardTitle>
           <CardDescription>
             Esta home ya separa lo que puede ver cada rol dentro del producto.
           </CardDescription>

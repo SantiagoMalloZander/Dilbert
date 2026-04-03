@@ -59,7 +59,7 @@ export function AppNav({
   ];
 
   return (
-    <nav className="space-y-1">
+    <nav className="space-y-0.5">
       {items
         .filter((item) => item.visible)
         .map((item) => {
@@ -72,13 +72,13 @@ export function AppNav({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center rounded-2xl border px-3 py-3 text-sm transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 active
-                  ? "border-primary/30 bg-primary/15 text-primary"
-                  : "border-transparent text-muted-foreground hover:border-white/10 hover:bg-white/5 hover:text-foreground"
+                  ? "bg-[#D4420A] text-[#F5F0E8]"
+                  : "text-[#F5F0E8]/55 hover:bg-white/8 hover:text-[#F5F0E8]"
               )}
             >
-              <Icon className="mr-3 h-4 w-4" />
+              <Icon className="h-4 w-4 shrink-0" />
               {item.label}
             </Link>
           );

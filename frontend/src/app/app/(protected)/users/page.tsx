@@ -24,8 +24,8 @@ export default async function UsersPage() {
     <div className="space-y-6">
       <div className="space-y-2">
         <Badge>Solo Owner</Badge>
-        <h2 className="text-3xl font-semibold tracking-tight">Centro de usuarios</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="font-heading text-4xl text-[#1A1A1A]">CENTRO DE USUARIOS</h2>
+        <p className="text-sm text-[#1A1A1A]/60">
           Administrá accesos, roles y el link compartible de <strong>{data.companyName}</strong>.
         </p>
       </div>

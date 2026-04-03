@@ -405,303 +405,286 @@ export function AuthScreen({
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#060b14] px-4 py-10 text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(77,233,195,0.16),transparent_30%),radial-gradient(circle_at_bottom,rgba(59,130,246,0.16),transparent_32%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent)]" />
+    <div className="flex min-h-screen items-center justify-center bg-[#F5F0E8] px-4 py-10">
+      <div className="w-full max-w-[420px]">
 
-      <div className="relative w-full max-w-[420px]">
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.28em] text-white/65">
-            Dilbert
-          </div>
-          <h1 className="text-center text-3xl font-semibold tracking-tight">Acceso a la app</h1>
-          <p className="text-center text-sm leading-6 text-white/60">{subtitle}</p>
+        {/* Brand header */}
+        <div className="mb-8 text-center">
+          <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#1A1A1A]/40">
+            WORKSPACE //
+          </span>
+          <h1 className="font-heading text-5xl text-[#D4420A] mt-1 leading-none">DILBERT.</h1>
+          <p className="mt-3 text-sm text-[#1A1A1A]/60">{subtitle}</p>
         </div>
 
-        <Card className="border-white/10 bg-white/5 shadow-panel backdrop-blur">
-          <CardContent className="p-6">
-            <div
-              key={step}
-              className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-200"
-            >
-              {globalMessage ? (
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80">
-                  <div className="flex gap-3">
-                    <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-[#f0c55b]" />
-                    <span>{globalMessage}</span>
-                  </div>
+        {/* Card */}
+        <div className="rounded-xl border-[3px] border-[#2A1A0A] bg-white shadow-[4px_4px_0px_#2A1A0A] p-6">
+          <div
+            key={step}
+            className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          >
+            {/* Global message */}
+            {globalMessage ? (
+              <div className="rounded-lg border-2 border-[#D4420A]/30 bg-[#D4420A]/8 px-4 py-3 text-sm text-[#1A1A1A]">
+                <div className="flex gap-3">
+                  <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-[#D4420A]" />
+                  <span>{globalMessage}</span>
                 </div>
-              ) : null}
+              </div>
+            ) : null}
 
-              {step !== "email" ? (
-                <div className="rounded-2xl border border-white/10 bg-[#0d1524] px-4 py-3">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-white/40">Email</p>
-                  <p className="mt-1 text-sm font-medium text-white/85">{email}</p>
+            {/* Email display chip */}
+            {step !== "email" ? (
+              <div className="rounded-lg border-2 border-[#2A1A0A] bg-[#F5F0E8] px-4 py-3">
+                <p className="font-mono text-[9px] uppercase tracking-[0.24em] text-[#1A1A1A]/40">Email</p>
+                <p className="mt-1 text-sm font-medium text-[#1A1A1A]">{email}</p>
+              </div>
+            ) : null}
+
+            {/* ── Step: email ── */}
+            {step === "email" ? (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="font-sans text-sm font-medium text-[#1A1A1A]">
+                    Ingresá tu email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="nombre@empresa.com"
+                  />
+                  {emailError ? (
+                    <p className="text-sm text-[#D4420A] font-sans">{emailError}</p>
+                  ) : null}
                 </div>
-              ) : null}
+                <Button size="lg" className="w-full" onClick={handleEmailContinue} disabled={loadingAction !== null}>
+                  {loadingAction === "email" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Continuar
+                </Button>
+              </div>
+            ) : null}
 
-              {step === "email" ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Ingresá tu email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      inputMode="email"
-                      autoComplete="email"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      placeholder="nombre@empresa.com"
-                      className="border-white/10 bg-[#0d1524] text-white placeholder:text-white/35"
-                    />
-                    {emailError ? (
-                      <p className="text-sm text-[#ff8a8a]">{emailError}</p>
-                    ) : null}
-                  </div>
+            {/* ── Step: login ── */}
+            {step === "login" ? (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="login-password" className="font-sans text-sm font-medium text-[#1A1A1A]">
+                    Contraseña
+                  </Label>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Tu contraseña"
+                  />
+                  {passwordError ? (
+                    <p className="text-sm text-[#D4420A] font-sans">{passwordError}</p>
+                  ) : null}
+                </div>
 
+                <Button size="lg" className="w-full" onClick={handlePasswordLogin} disabled={loadingAction !== null}>
+                  {loadingAction === "password" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Continuar
+                </Button>
+
+                <div className="space-y-2">
                   <Button
-                    className="h-11 w-full"
-                    onClick={handleEmailContinue}
-                    disabled={loadingAction !== null}
+                    variant="secondary"
+                    size="lg"
+                    className="w-full justify-start"
+                    onClick={() => handleOauth("google", "login")}
+                    disabled={!googleReady || loadingAction !== null}
                   >
-                    {loadingAction === "email" ? (
+                    {loadingAction === "google" ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Continuar
+                    ) : (
+                      <Mail className="mr-2 h-4 w-4" />
+                    )}
+                    Continuar con Google
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full justify-start"
+                    onClick={() => handleOauth("azure-ad", "login")}
+                    disabled={!microsoftReady || loadingAction !== null}
+                  >
+                    {loadingAction === "microsoft" ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Mail className="mr-2 h-4 w-4" />
+                    )}
+                    Continuar con Microsoft
                   </Button>
                 </div>
-              ) : null}
 
-              {step === "login" ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Contraseña</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="Tu contraseña"
-                      className="border-white/10 bg-[#0d1524] text-white placeholder:text-white/35"
-                    />
-                    {passwordError ? (
-                      <p className="text-sm text-[#ff8a8a]">{passwordError}</p>
-                    ) : null}
+                <div className="flex items-start gap-3 rounded-lg border-2 border-[#2A1A0A] bg-[#F5F0E8] px-4 py-3">
+                  <Checkbox
+                    id="remember-login"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
+                  />
+                  <div className="space-y-0.5">
+                    <Label htmlFor="remember-login" className="text-sm font-medium text-[#1A1A1A]">Recordarme</Label>
+                    <p className="text-xs leading-5 text-[#1A1A1A]/55">
+                      30 min de inactividad y cierre automático.
+                    </p>
                   </div>
+                </div>
 
-                  <Button
-                    className="h-11 w-full"
-                    onClick={handlePasswordLogin}
-                    disabled={loadingAction !== null}
-                  >
-                    {loadingAction === "password" ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Continuar
-                  </Button>
+                <Button variant="ghost" size="lg" className="w-full" onClick={goToEmailStep}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Volver
+                </Button>
+              </div>
+            ) : null}
 
+            {/* ── Step: register ── */}
+            {step === "register" ? (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="full-name" className="font-sans text-sm font-medium text-[#1A1A1A]">
+                    Nombre completo
+                  </Label>
+                  <Input
+                    id="full-name"
+                    value={fullName}
+                    onChange={(event) => setFullName(event.target.value)}
+                    placeholder="Tu nombre y apellido"
+                  />
+                  {nameError ? <p className="text-sm text-[#D4420A]">{nameError}</p> : null}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="register-password" className="font-sans text-sm font-medium text-[#1A1A1A]">
+                    Contraseña
+                  </Label>
+                  <Input
+                    id="register-password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Mínimo 1 número y 1 carácter especial"
+                  />
+                  {passwordError ? (
+                    <p className="text-sm text-[#D4420A]">{passwordError}</p>
+                  ) : (
+                    <p className="text-xs text-[#1A1A1A]/45">
+                      Al menos 8 caracteres, 1 número y 1 carácter especial.
+                    </p>
+                  )}
+                </div>
+
+                <Button size="lg" className="w-full" onClick={handleRequestOtp} disabled={loadingAction !== null}>
+                  {loadingAction === "password" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Continuar
+                </Button>
+
+                {canUseOauth ? (
                   <div className="space-y-2">
                     <Button
                       variant="secondary"
-                      className="h-11 w-full justify-start border border-white/10 bg-[#0d1524] text-white hover:bg-[#111c30]"
-                      onClick={() => handleOauth("google", "login")}
+                      size="lg"
+                      className="w-full justify-start"
+                      onClick={() => handleOauth("google", "register")}
                       disabled={!googleReady || loadingAction !== null}
                     >
-                      {loadingAction === "google" ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Mail className="mr-2 h-4 w-4" />
-                      )}
+                      {loadingAction === "google" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
                       Continuar con Google
                     </Button>
                     <Button
                       variant="secondary"
-                      className="h-11 w-full justify-start border border-white/10 bg-[#0d1524] text-white hover:bg-[#111c30]"
-                      onClick={() => handleOauth("azure-ad", "login")}
+                      size="lg"
+                      className="w-full justify-start"
+                      onClick={() => handleOauth("azure-ad", "register")}
                       disabled={!microsoftReady || loadingAction !== null}
                     >
-                      {loadingAction === "microsoft" ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Mail className="mr-2 h-4 w-4" />
-                      )}
+                      {loadingAction === "microsoft" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
                       Continuar con Microsoft
                     </Button>
                   </div>
+                ) : null}
 
-                  <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[#0d1524] px-4 py-3">
-                    <Checkbox
-                      id="remember-login"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor="remember-login">Recordarme</Label>
-                      <p className="text-sm leading-5 text-white/55">
-                        30 minutos de inactividad y cierre automático. Si no lo marcás,
-                        la sesión también cae al cerrar el navegador.
-                      </p>
-                    </div>
+                <div className="flex items-start gap-3 rounded-lg border-2 border-[#2A1A0A] bg-[#F5F0E8] px-4 py-3">
+                  <Checkbox
+                    id="remember-register"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
+                  />
+                  <div className="space-y-0.5">
+                    <Label htmlFor="remember-register" className="text-sm font-medium text-[#1A1A1A]">Recordarme</Label>
+                    <p className="text-xs leading-5 text-[#1A1A1A]/55">
+                      30 min de inactividad. Sin esta opción, la sesión cae al cerrar el navegador.
+                    </p>
                   </div>
-
-                  <Button variant="ghost" className="h-10 w-full" onClick={goToEmailStep}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver
-                  </Button>
                 </div>
-              ) : null}
 
-              {step === "register" ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="full-name">Nombre completo</Label>
-                    <Input
-                      id="full-name"
-                      value={fullName}
-                      onChange={(event) => setFullName(event.target.value)}
-                      placeholder="Tu nombre y apellido"
-                      className="border-white/10 bg-[#0d1524] text-white placeholder:text-white/35"
-                    />
-                    {nameError ? <p className="text-sm text-[#ff8a8a]">{nameError}</p> : null}
-                  </div>
+                <Button variant="ghost" size="lg" className="w-full" onClick={goToEmailStep}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Volver
+                </Button>
+              </div>
+            ) : null}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">Contraseña</Label>
-                    <Input
-                      id="register-password"
-                      type="password"
-                      autoComplete="new-password"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="Mínimo 1 número y 1 carácter especial"
-                      className="border-white/10 bg-[#0d1524] text-white placeholder:text-white/35"
-                    />
-                    {passwordError ? (
-                      <p className="text-sm text-[#ff8a8a]">{passwordError}</p>
-                    ) : (
-                      <p className="text-sm text-white/45">
-                        Usá al menos 8 caracteres, 1 número y 1 carácter especial.
-                      </p>
-                    )}
-                  </div>
-
-                  <Button
-                    className="h-11 w-full"
-                    onClick={handleRequestOtp}
-                    disabled={loadingAction !== null}
-                  >
-                    {loadingAction === "password" ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Continuar
-                  </Button>
-
-                  {canUseOauth ? (
-                    <div className="space-y-2">
-                      <Button
-                        variant="secondary"
-                        className="h-11 w-full justify-start border border-white/10 bg-[#0d1524] text-white hover:bg-[#111c30]"
-                        onClick={() => handleOauth("google", "register")}
-                        disabled={!googleReady || loadingAction !== null}
-                      >
-                        {loadingAction === "google" ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Mail className="mr-2 h-4 w-4" />
-                        )}
-                        Continuar con Google
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        className="h-11 w-full justify-start border border-white/10 bg-[#0d1524] text-white hover:bg-[#111c30]"
-                        onClick={() => handleOauth("azure-ad", "register")}
-                        disabled={!microsoftReady || loadingAction !== null}
-                      >
-                        {loadingAction === "microsoft" ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Mail className="mr-2 h-4 w-4" />
-                        )}
-                        Continuar con Microsoft
-                      </Button>
-                    </div>
-                  ) : null}
-
-                  <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[#0d1524] px-4 py-3">
-                    <Checkbox
-                      id="remember-register"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor="remember-register">Recordarme</Label>
-                      <p className="text-sm leading-5 text-white/55">
-                        30 minutos de inactividad. Si no lo marcás, la sesión cae al cerrar
-                        el navegador.
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button variant="ghost" className="h-10 w-full" onClick={goToEmailStep}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver
-                  </Button>
+            {/* ── Step: otp ── */}
+            {step === "otp" ? (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="otp" className="font-sans text-sm font-medium text-[#1A1A1A]">
+                    Código de 6 dígitos
+                  </Label>
+                  <Input
+                    id="otp"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(event) =>
+                      setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    placeholder="000000"
+                    className="text-center font-mono text-lg tracking-[0.4em] placeholder:tracking-normal"
+                  />
+                  {otpError ? <p className="text-sm text-[#D4420A]">{otpError}</p> : null}
                 </div>
-              ) : null}
 
-              {step === "otp" ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="otp">Código de 6 dígitos</Label>
-                    <Input
-                      id="otp"
-                      inputMode="numeric"
-                      maxLength={6}
-                      value={otp}
-                      onChange={(event) =>
-                        setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))
-                      }
-                      placeholder="000000"
-                      className="border-white/10 bg-[#0d1524] text-center font-mono text-lg tracking-[0.4em] text-white placeholder:tracking-normal placeholder:text-white/35"
-                    />
-                    {otpError ? <p className="text-sm text-[#ff8a8a]">{otpError}</p> : null}
+                <div className="flex items-start gap-3 rounded-lg border-2 border-[#2A1A0A] bg-[#F5F0E8] px-4 py-3">
+                  <Checkbox
+                    id="remember-otp"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
+                  />
+                  <div className="space-y-0.5">
+                    <Label htmlFor="remember-otp" className="text-sm font-medium text-[#1A1A1A]">Recordarme</Label>
+                    <p className="text-xs leading-5 text-[#1A1A1A]/55">
+                      Conserva la sesión entre aperturas solo si lo marcás.
+                    </p>
                   </div>
-
-                  <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[#0d1524] px-4 py-3">
-                    <Checkbox
-                      id="remember-otp"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor="remember-otp">Recordarme</Label>
-                      <p className="text-sm leading-5 text-white/55">
-                        Conserva la sesión entre aperturas solo si lo marcás.
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button
-                    className="h-11 w-full"
-                    onClick={handleVerifyOtp}
-                    disabled={loadingAction !== null}
-                  >
-                    {loadingAction === "otp" ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Verificar código
-                  </Button>
-
-                  <Button variant="ghost" className="h-10 w-full" onClick={goToEmailStep}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver
-                  </Button>
                 </div>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
+
+                <Button size="lg" className="w-full" onClick={handleVerifyOtp} disabled={loadingAction !== null}>
+                  {loadingAction === "otp" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Verificar código
+                </Button>
+
+                <Button variant="ghost" size="lg" className="w-full" onClick={goToEmailStep}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Volver
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <p className="mt-6 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-[#1A1A1A]/30">
+          DILBERT CRM. NO GRID REQUIRED.
+        </p>
       </div>
     </div>
   );

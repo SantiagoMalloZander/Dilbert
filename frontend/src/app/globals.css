@@ -129,8 +129,12 @@
 
 @layer utilities {
   .shadow-panel {
-    box-shadow:
-      0 24px 60px rgba(3, 9, 18, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    box-shadow: 4px 4px 0px #2A1A0A;
+  }
+  .shadow-hard {
+    box-shadow: 4px 4px 0px #2A1A0A;
+  }
+  .shadow-hard-sm {
+    box-shadow: 3px 3px 0px #2A1A0A;
   }
 }

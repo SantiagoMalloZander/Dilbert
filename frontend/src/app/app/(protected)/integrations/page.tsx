@@ -42,8 +42,8 @@ export default async function IntegrationsPage() {
     <div className="space-y-6">
       <div className="space-y-2">
         <Badge>{isOwner ? "Solo lectura" : "Editable"}</Badge>
-        <h2 className="text-3xl font-semibold tracking-tight">Centro de integraciones</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="font-heading text-4xl text-[#1A1A1A]">CENTRO DE INTEGRACIONES</h2>
+        <p className="text-sm text-[#1A1A1A]/60">
           {isOwner
             ? "Ves el estado de los canales conectados por cada vendedor de tu empresa, sin poder modificarlos."
             : "Desde acá podés conectar y desconectar tus canales. Las nuevas conexiones quedan en pendiente hasta validar credenciales."}
