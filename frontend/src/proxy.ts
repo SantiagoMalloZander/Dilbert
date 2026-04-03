@@ -47,6 +47,14 @@ function redirectToWorkspaceSignIn(request: NextRequest, reason?: "timeout") {
   const response = NextResponse.redirect(url);
   response.cookies.delete(LAST_ACTIVITY_COOKIE);
   response.cookies.delete(BROWSER_SESSION_COOKIE);
+  response.cookies.delete(REMEMBER_COOKIE);
+  // Clear NextAuth JWT to prevent redirect loop:
+  // if JWT exists but browser session is gone, the login page would
+  // see the session and redirect back to /app/crm → infinite loop.
+  response.cookies.delete("next-auth.session-token");
+  response.cookies.delete("__Secure-next-auth.session-token");
+  response.cookies.delete("next-auth.callback-url");
+  response.cookies.delete("__Secure-next-auth.callback-url");
   return response;
 }
 
