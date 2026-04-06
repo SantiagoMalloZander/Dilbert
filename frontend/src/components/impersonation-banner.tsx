@@ -30,22 +30,22 @@ export function ImpersonationBanner({
   }
 
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-[24px] border border-[#f0c55b]/25 bg-[#31260d]/90 p-4 text-[#ffe7a2] shadow-panel sm:flex-row sm:items-center sm:justify-between">
+    <div className="mb-4 flex flex-col gap-3 rounded-xl border-[3px] border-[#2A1A0A] bg-[#1A1A1A] p-4 text-[#F5F0E8] shadow-[4px_4px_0px_#2A1A0A] sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
-        <div className="rounded-full border border-[#f0c55b]/30 bg-[#f0c55b]/12 p-2">
-          <ShieldAlert className="h-4 w-4" />
+        <div className="rounded-full border border-[#D4420A]/40 bg-[#D4420A]/15 p-2 shrink-0">
+          <ShieldAlert className="h-4 w-4 text-[#D4420A]" />
         </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium">Estás viendo como {companyName}. Salir</p>
-          <p className="text-xs text-[#f5df9c]/75">
-            Estás operando con permisos de owner sobre esa empresa.
+        <div className="space-y-0.5">
+          <p className="text-sm font-medium text-[#F5F0E8]">Estás viendo como <span className="text-[#D4420A]">{companyName}</span></p>
+          <p className="font-mono text-[10px] uppercase tracking-wider text-[#F5F0E8]/45">
+            Operando con permisos de owner sobre esa empresa.
           </p>
         </div>
       </div>
 
       <Button
         variant="outline"
-        className="border-[#f0c55b]/30 bg-transparent text-[#ffe7a2] hover:bg-[#f0c55b]/10 hover:text-[#fff2c7]"
+        className="border-[#F5F0E8]/20 bg-transparent text-[#F5F0E8] hover:bg-[#F5F0E8]/10 hover:text-[#F5F0E8] shrink-0"
         onClick={handleExit}
         disabled={isExiting}
       >

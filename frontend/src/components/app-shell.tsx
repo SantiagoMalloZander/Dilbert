@@ -32,10 +32,12 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <div className="mx-auto flex min-h-screen max-w-7xl gap-5 px-4 py-5 md:px-6 lg:flex-row flex-col">
+      <div className="mx-auto max-w-7xl px-4 py-5 md:px-6">
         {session.user.impersonation ? (
           <ImpersonationBanner companyName={session.user.impersonation.companyName} />
         ) : null}
+
+        <div className="flex min-h-screen gap-5 lg:flex-row flex-col">
 
         {/* ── Sidebar ────────────────────────────────────────── */}
         <aside className="w-full lg:w-64 shrink-0">
@@ -93,6 +95,8 @@ export function AppShell({
         <div className="min-w-0 flex-1">
           <main>{children}</main>
         </div>
+
+        </div>{/* end flex row */}
       </div>
     </div>
   );

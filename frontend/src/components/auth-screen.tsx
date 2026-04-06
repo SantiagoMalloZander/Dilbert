@@ -101,6 +101,27 @@ export function AuthScreen({
   >(null);
 
   useEffect(() => {
+    // Auto-clear corrupted cookies when landing on login page
+    // This helps users who have stale/invalid auth cookies from previous sessions
+    const cookiesToClear = [
+      "next-auth.session-token",
+      "__Secure-next-auth.session-token",
+      "next-auth.callback-url",
+      "__Secure-next-auth.callback-url",
+      "next-auth.csrf-token",
+      "__Secure-next-auth.csrf-token",
+      "browser-session",
+      "last-activity",
+      "remember-me",
+      "impersonation",
+    ];
+
+    cookiesToClear.forEach((name) => {
+      document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${window.location.hostname}`;
+      document.cookie = `${name}=; path=/app; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${window.location.hostname}`;
+      document.cookie = `${name}=; path=/app/; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${window.location.hostname}`;
+    });
+
     const savedPreference = window.localStorage.getItem(STORAGE_KEY);
     if (savedPreference !== null) {
       setRememberMe(savedPreference === "1");

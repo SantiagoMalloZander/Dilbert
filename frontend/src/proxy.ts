@@ -38,6 +38,26 @@ function isWorkspacePublicPath(pathname: string) {
   );
 }
 
+function clearAllAuthCookies(response: NextResponse) {
+  // Clear workspace cookies
+  response.cookies.delete(LAST_ACTIVITY_COOKIE);
+  response.cookies.delete(BROWSER_SESSION_COOKIE);
+  response.cookies.delete(REMEMBER_COOKIE);
+  response.cookies.delete(IMPERSONATION_COOKIE);
+
+  // Clear NextAuth JWT and related
+  response.cookies.delete("next-auth.session-token");
+  response.cookies.delete("__Secure-next-auth.session-token");
+  response.cookies.delete("next-auth.callback-url");
+  response.cookies.delete("__Secure-next-auth.callback-url");
+  response.cookies.delete("next-auth.csrf-token");
+  response.cookies.delete("__Secure-next-auth.csrf-token");
+
+  // Clear any other potential auth cookies
+  response.cookies.delete("nextauth");
+  response.cookies.delete("__Secure-nextauth");
+}
+
 function redirectToWorkspaceSignIn(request: NextRequest, reason?: "timeout") {
   const url = new URL("/app/", request.url);
   if (reason) {
@@ -45,16 +65,7 @@ function redirectToWorkspaceSignIn(request: NextRequest, reason?: "timeout") {
   }
 
   const response = NextResponse.redirect(url);
-  response.cookies.delete(LAST_ACTIVITY_COOKIE);
-  response.cookies.delete(BROWSER_SESSION_COOKIE);
-  response.cookies.delete(REMEMBER_COOKIE);
-  // Clear NextAuth JWT to prevent redirect loop:
-  // if JWT exists but browser session is gone, the login page would
-  // see the session and redirect back to /app/crm → infinite loop.
-  response.cookies.delete("next-auth.session-token");
-  response.cookies.delete("__Secure-next-auth.session-token");
-  response.cookies.delete("next-auth.callback-url");
-  response.cookies.delete("__Secure-next-auth.callback-url");
+  clearAllAuthCookies(response);
   return response;
 }
 
@@ -63,12 +74,7 @@ function redirectToWorkspaceRevoked(request: NextRequest) {
   url.searchParams.set("revoked", "1");
 
   const response = NextResponse.redirect(url);
-  response.cookies.delete(LAST_ACTIVITY_COOKIE);
-  response.cookies.delete(BROWSER_SESSION_COOKIE);
-  response.cookies.delete("next-auth.session-token");
-  response.cookies.delete("__Secure-next-auth.session-token");
-  response.cookies.delete("next-auth.callback-url");
-  response.cookies.delete("__Secure-next-auth.callback-url");
+  clearAllAuthCookies(response);
   return response;
 }
 
@@ -153,10 +159,18 @@ export async function proxy(request: NextRequest) {
       return continueWithPathname(request, pathname);
     }
 
-    const token = await getToken({
-      req: request,
-      secret: NEXTAUTH_SECRET,
-    });
+    let token;
+    try {
+      token = await getToken({
+        req: request,
+        secret: NEXTAUTH_SECRET,
+      });
+    } catch {
+      // Token parsing failed (corrupted, invalid signature, etc.)
+      // Clear all auth cookies and redirect to login
+      const response = redirectToWorkspaceSignIn(request);
+      return response;
+    }
 
     if (!token?.email) {
       return redirectToWorkspaceSignIn(request);
