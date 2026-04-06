@@ -564,8 +564,7 @@ export function AdminPanel({
                 <p className="text-xs uppercase tracking-[0.2em] text-primary">Nueva empresa</p>
                 <h3 className="mt-2 text-2xl font-semibold">Crear empresa y owner</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Se crea la empresa, el usuario owner en Supabase Auth, su fila en `users`
-                  y el mail de acceso por Resend.
+                  Se crea la empresa y el owner recibe un email con sus credenciales de acceso.
                 </p>
               </div>
 

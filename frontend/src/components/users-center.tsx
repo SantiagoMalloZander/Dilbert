@@ -177,7 +177,7 @@ export function UsersCenter({
 
       setFlashMessage({
         tone: "success",
-        text: "Usuario agregado correctamente.",
+        text: `Email de acceso enviado a ${addForm.email}`,
       });
       setAddForm({
         email: "",

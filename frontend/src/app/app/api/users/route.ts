@@ -24,6 +24,16 @@ function mapUsersError(error: unknown) {
         message:
           "Límite de vendedores alcanzado. Contactá a Dilbert para ampliar tu plan.",
       };
+    case "RESEND_NOT_CONFIGURED":
+      return {
+        status: 500,
+        message: "El servicio de email no está configurado. Contactá a Dilbert.",
+      };
+    case "COLLABORATOR_AUTH_CREATION_FAILED":
+      return {
+        status: 500,
+        message: "No pude crear la cuenta del usuario. Probá de nuevo.",
+      };
     default:
       return { status: 500, message: "No pude agregar el usuario." };
   }

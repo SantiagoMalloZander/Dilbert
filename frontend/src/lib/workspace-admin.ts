@@ -55,7 +55,7 @@ function getResendClient() {
 }
 
 function getLoginUrl() {
-  return process.env.DILBERT_APP_LOGIN_URL || "https://dilbert.netlify.app/app/";
+  return process.env.DILBERT_APP_LOGIN_URL || "https://dilvert.netlify.app/app/";
 }
 
 function generateTemporaryPassword() {
@@ -104,19 +104,37 @@ async function sendOwnerProvisioningEmail(params: {
   await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: params.ownerEmail,
-    subject: "Tu cuenta de Dilbert fue creada",
+    subject: "Tu acceso a Dilbert está listo",
     html: `
-      <div style="font-family:Arial,Helvetica,sans-serif;background:#08111f;color:#f7f9fb;padding:32px">
-        <div style="max-width:560px;margin:0 auto;background:#101a2e;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:32px">
-          <p style="margin:0 0 12px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#69e6c5">Dilbert</p>
-          <h1 style="margin:0 0 14px;font-size:28px;line-height:1.1">Tu cuenta de Dilbert fue creada</h1>
-          <p style="margin:0 0 16px;color:#b5c0d5">Hola ${params.ownerName}, ya tenés acceso para administrar ${params.companyName}.</p>
-          <p style="margin:0 0 16px;color:#b5c0d5">Entrá a <a href="${loginUrl}" style="color:#69e6c5;text-decoration:none">${loginUrl}</a> y accedé con tu mail.</p>
-          <div style="margin:24px 0;padding:18px;border-radius:16px;background:#08111f;border:1px solid rgba(255,255,255,0.08)">
-            <p style="margin:0 0 8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#8ca0c3">Contraseña temporal</p>
-            <p style="margin:0;font-size:24px;font-weight:700;letter-spacing:.08em">${params.temporaryPassword}</p>
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#F5F0E8;color:#1A1A1A;padding:32px">
+        <div style="max-width:560px;margin:0 auto;background:white;border:3px solid #2A1A0A;border-radius:12px;padding:32px;box-shadow:4px 4px 0px #2A1A0A">
+          <p style="margin:0 0 16px;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:#D4420A;font-weight:600">DILBERT.</p>
+          <h1 style="margin:0 0 12px;font-size:28px;line-height:1.2;color:#1A1A1A;font-weight:700">Tu acceso está listo</h1>
+          <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#1A1A1A">Hola ${params.ownerName},</p>
+          <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#1A1A1A">Ya podés administrar <strong>${params.companyName}</strong> en Dilbert. Entrá con tu email y contraseña:</p>
+
+          <p style="margin:0 0 8px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#1A1A1A;font-weight:600">Email</p>
+          <p style="margin:0 0 20px;font-size:15px;color:#1A1A1A;font-weight:500">${params.ownerEmail}</p>
+
+          <p style="margin:0 0 8px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#1A1A1A;font-weight:600">Contraseña temporal</p>
+          <div style="margin:0 0 20px;padding:16px;background:#F5F0E8;border:2px solid #2A1A0A;border-radius:6px;font-family:monospace">
+            <p style="margin:0;font-size:18px;font-weight:700;color:#1A1A1A;letter-spacing:.05em">${params.temporaryPassword}</p>
           </div>
-          <p style="margin:0;color:#8ca0c3;font-size:13px">Si preferís, también podés continuar con Google o Microsoft si ese proveedor está asociado al mismo email.</p>
+
+          <p style="margin:0 0 8px;font-size:12px;color:#1A1A1A/70;letter-spacing:.05em">🔗 ENLACE DE ACCESO</p>
+          <p style="margin:0 0 24px"><a href="${loginUrl}" style="display:inline-block;background:#D4420A;color:#F5F0E8;padding:12px 24px;text-decoration:none;border-radius:24px;font-weight:600;font-size:14px">Abrir Dilbert</a></p>
+
+          <div style="margin:24px 0 0;padding:16px;background:#F5F0E8;border-left:3px solid #D4420A;border-radius:4px">
+            <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#1A1A1A">⚙️ Lo que sigue</p>
+            <ol style="margin:0;padding-left:20px;font-size:13px;color:#1A1A1A;line-height:1.6">
+              <li>Abre el link de arriba</li>
+              <li>Accedé con tu email y contraseña temporal</li>
+              <li>Cambia tu contraseña en "Mi Perfil" → "Cambiar contraseña"</li>
+              <li>Ve a "Centro de Usuarios" para agregar a tu equipo</li>
+            </ol>
+          </div>
+
+          <p style="margin:24px 0 0;font-size:12px;color:#1A1A1A/60;text-align:center;border-top:1px solid #2A1A0A;padding-top:16px">Si no pediste esta cuenta, contactá a tu administrador.</p>
         </div>
       </div>
     `,
