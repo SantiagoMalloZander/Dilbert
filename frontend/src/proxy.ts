@@ -195,17 +195,15 @@ export async function proxy(request: NextRequest) {
       ? parseImpersonationCookieValue(request.cookies.get(IMPERSONATION_COOKIE)?.value)
       : null;
 
-    // Parallel: only fetch workspace user if JWT doesn't have the data
-    // In steady-state, JWT has companyId and role, so skip the DB query
-    // Only fetch authControl for session revocation check (always needed for security)
-    const [workspaceUser, authControl] = await Promise.all([
-      isSuperAdmin || (token.companyId && token.role)
-        ? Promise.resolve(null)
-        : fetchWorkspaceUserSnapshot(email),
-      !isSuperAdmin && typeof token.sub === "string"
-        ? fetchWorkspaceAuthControl(token.sub)
-        : null,
-    ]);
+    // In steady-state, JWT already has companyId and role — skip ALL Supabase calls
+    // Only fetch from DB when JWT is missing data (new user, first login)
+    const hasJwtData = Boolean(token.companyId && token.role);
+    const workspaceUser = !isSuperAdmin && !hasJwtData
+      ? await fetchWorkspaceUserSnapshot(email)
+      : null;
+    const authControl = !isSuperAdmin && !hasJwtData && typeof token.sub === "string"
+      ? await fetchWorkspaceAuthControl(token.sub)
+      : null;
     const role = String(
       impersonation ? "owner" : workspaceUser?.role || token.role || ""
     ).toLowerCase();

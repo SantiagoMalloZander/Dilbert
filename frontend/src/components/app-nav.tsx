@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useTransition } from "react";
 import {
   Activity,
   Building2,
   FolderCog,
+  Loader2,
   Shield,
   Users,
 } from "lucide-react";
@@ -29,6 +31,8 @@ export function AppNav({
   hasWorkspaceAccess: boolean;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const items: NavItem[] = [
     { href: "/app/crm", label: "CRM", icon: Activity, visible: hasWorkspaceAccess },
@@ -71,14 +75,26 @@ export function AppNav({
             <Link
               key={item.href}
               href={item.href}
+              onClick={(e) => {
+                if (active) return;
+                e.preventDefault();
+                startTransition(() => {
+                  router.push(item.href);
+                });
+              }}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                 active
                   ? "bg-[#D4420A] text-[#F5F0E8]"
-                  : "text-[#F5F0E8]/55 hover:bg-white/8 hover:text-[#F5F0E8]"
+                  : "text-[#F5F0E8]/55 hover:bg-white/8 hover:text-[#F5F0E8]",
+                isPending && !active && "opacity-50 pointer-events-none"
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              {isPending && !active ? (
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+              ) : (
+                <Icon className="h-4 w-4 shrink-0" />
+              )}
               {item.label}
             </Link>
           );

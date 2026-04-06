@@ -1,4 +1,5 @@
 import { randomBytes } from "crypto";
+import { cache } from "react";
 import { Resend } from "resend";
 import { normalizeEmail } from "@/lib/workspace-auth-flow";
 import { createAdminSupabaseClient } from "@/lib/workspace-supabase";
@@ -445,7 +446,7 @@ export async function demoteVendor(params: {
   }
 }
 
-export async function getCompanyById(companyId: string) {
+export const getCompanyById = cache(async function _getCompanyById(companyId: string) {
   const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("companies")
@@ -464,4 +465,4 @@ export async function getCompanyById(companyId: string) {
         status: CompanyStatus;
       }
     | null;
-}
+});

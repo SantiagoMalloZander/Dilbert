@@ -304,7 +304,9 @@ export const authOptions: NextAuthOptions = {
         token.isSuperAdmin = Boolean(token.isSuperAdmin || isSuperAdminEmail(token.email));
       }
 
-      if (token.email && !token.isSuperAdmin) {
+      // Only sync if JWT is missing critical fields (new user or first login)
+      // In steady-state, the token already has companyId and role from initial sign-in
+      if (token.email && !token.isSuperAdmin && (!token.companyId || !token.role)) {
         const appUser = await syncWorkspaceAccessByEmail({
           email: token.email,
         });
