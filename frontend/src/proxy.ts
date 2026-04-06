@@ -194,11 +194,18 @@ export async function proxy(request: NextRequest) {
     const impersonation = isSuperAdmin
       ? parseImpersonationCookieValue(request.cookies.get(IMPERSONATION_COOKIE)?.value)
       : null;
-    const workspaceUser = isSuperAdmin ? null : await fetchWorkspaceUserSnapshot(email);
-    const authControl =
+
+    // Parallel: only fetch workspace user if JWT doesn't have the data
+    // In steady-state, JWT has companyId and role, so skip the DB query
+    // Only fetch authControl for session revocation check (always needed for security)
+    const [workspaceUser, authControl] = await Promise.all([
+      isSuperAdmin || (token.companyId && token.role)
+        ? Promise.resolve(null)
+        : fetchWorkspaceUserSnapshot(email),
       !isSuperAdmin && typeof token.sub === "string"
-        ? await fetchWorkspaceAuthControl(token.sub)
-        : null;
+        ? fetchWorkspaceAuthControl(token.sub)
+        : null,
+    ]);
     const role = String(
       impersonation ? "owner" : workspaceUser?.role || token.role || ""
     ).toLowerCase();

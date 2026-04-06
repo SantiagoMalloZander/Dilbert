@@ -323,14 +323,11 @@ export async function rotateExpiredInviteLinks() {
 
 export async function getUsersCenterData(companyId: string) {
   const supabase = createAdminSupabaseClient();
-  const company = await getCompany(companyId);
 
-  if (!company) {
-    throw new Error("COMPANY_NOT_FOUND");
-  }
-
-  const [{ data: activeUsers, error: activeUsersError }, { data: authorizedEmails, error: authorizedEmailsError }] =
+  // Fetch company + users + authorized_emails in parallel
+  const [company, { data: activeUsers, error: activeUsersError }, { data: authorizedEmails, error: authorizedEmailsError }] =
     await Promise.all([
+      getCompany(companyId),
       supabase
         .from("users")
         .select("id, company_id, email, name, avatar_url, role, created_at")
@@ -342,6 +339,10 @@ export async function getUsersCenterData(companyId: string) {
         .eq("company_id", companyId)
         .order("created_at", { ascending: true }),
     ]);
+
+  if (!company) {
+    throw new Error("COMPANY_NOT_FOUND");
+  }
 
   if (activeUsersError) {
     throw activeUsersError;

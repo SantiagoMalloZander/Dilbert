@@ -1,4 +1,5 @@
 import { Buffer } from "buffer";
+import { cache } from "react";
 import type { NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -347,7 +348,7 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-export async function getAuthSession() {
+export const getAuthSession = cache(async function _getAuthSession() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
@@ -355,19 +356,23 @@ export async function getAuthSession() {
   }
 
   if (!session.user.isSuperAdmin) {
-    const appUser = await syncWorkspaceAccessByEmail({
-      email: session.user.email,
-    });
+    // Only sync if the JWT doesn't already have required fields
+    // In steady-state (normal user), the JWT has companyId and role, so skip the DB hit
+    if (!session.user.companyId || !session.user.role) {
+      const appUser = await syncWorkspaceAccessByEmail({
+        email: session.user.email,
+      });
 
-    if (appUser) {
-      session.user.name = appUser.name || session.user.name;
-      session.user.email = appUser.email;
-      session.user.role = (appUser.role as AppRole | null) || "analyst";
-      session.user.companyId = appUser.company_id || "";
-      session.user.image = appUser.avatar_url || session.user.image || null;
-    } else {
-      session.user.role = "analyst";
-      session.user.companyId = "";
+      if (appUser) {
+        session.user.name = appUser.name || session.user.name;
+        session.user.email = appUser.email;
+        session.user.role = (appUser.role as AppRole | null) || "analyst";
+        session.user.companyId = appUser.company_id || "";
+        session.user.image = appUser.avatar_url || session.user.image || null;
+      } else {
+        session.user.role = "analyst";
+        session.user.companyId = "";
+      }
     }
   }
 
@@ -391,7 +396,7 @@ export async function getAuthSession() {
   }
 
   return session;
-}
+});
 
 export async function requireSession() {
   const session = await getAuthSession();
