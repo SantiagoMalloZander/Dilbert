@@ -12,15 +12,16 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-[[redirects]]
-  from = "/app"
-  to = "/app/"
-  status = 301
-
-[[redirects]]
-  from = "/admin"
-  to = "/app/admin"
-  status = 301
+# Next.js middleware handles routing, no need for Netlify redirects
+# [[redirects]]
+#   from = "/app"
+#   to = "/app/"
+#   status = 301
+#
+# [[redirects]]
+#   from = "/admin"
+#   to = "/app/admin"
+#   status = 301
 
 [[headers]]
   for = "/*"
