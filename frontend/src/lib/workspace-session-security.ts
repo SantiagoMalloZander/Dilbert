@@ -1,4 +1,4 @@
-import { createAdminSupabaseClient } from "@/lib/workspace-supabase";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function isTransientBackendError(error: unknown) {
   if (!(error instanceof Error)) {
