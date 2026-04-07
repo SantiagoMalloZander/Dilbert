@@ -225,12 +225,21 @@ export async function proxy(request: NextRequest) {
     const supabase = createMiddlewareSupabaseClient(request, response);
 
     const remember = request.cookies.get(REMEMBER_COOKIE)?.value === "1";
-    if (!remember && !request.cookies.get(BROWSER_SESSION_COOKIE)?.value) {
+    const hasBrowserSession = Boolean(request.cookies.get(BROWSER_SESSION_COOKIE)?.value);
+
+    // Fast-path: if neither remember nor browser-session cookie is present,
+    // skip Supabase and redirect immediately — no valid session possible.
+    // But if there IS a Supabase cookie, allow the getUser call to bootstrap.
+    const hasSupabaseCookie = request.cookies
+      .getAll()
+      .some(({ name }) => isSupabaseAuthCookieName(name));
+
+    if (!remember && !hasBrowserSession && !hasSupabaseCookie) {
       return redirectToWorkspaceSignIn(request);
     }
 
     const rawLastActivity = request.cookies.get(LAST_ACTIVITY_COOKIE)?.value;
-    if (rawLastActivity) {
+    if (rawLastActivity && hasBrowserSession) {
       const lastActivity = Number(rawLastActivity);
       if (Number.isFinite(lastActivity) && Date.now() - lastActivity > WORKSPACE_MAX_IDLE_MS) {
         return redirectToWorkspaceSignIn(request, "timeout");
@@ -247,6 +256,15 @@ export async function proxy(request: NextRequest) {
 
     if (error || !user?.email) {
       return redirectToWorkspaceSignIn(request);
+    }
+
+    // Bootstrap session cookies if the user authenticated via Supabase but
+    // the browser-session tracking cookie got lost (e.g. after a redeploy).
+    if (!hasBrowserSession) {
+      response.cookies.set(BROWSER_SESSION_COOKIE, "1", {
+        path: "/",
+        sameSite: "lax",
+      });
     }
 
     const email = user.email.toLowerCase();
