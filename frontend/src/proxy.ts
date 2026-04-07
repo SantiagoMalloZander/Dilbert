@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeJwt, jwtVerify } from "jose";
-import { SESSION_COOKIE } from "@/lib/auth";
 import {
   canAccessAdmin,
   canAccessProtectedPath,
@@ -307,7 +306,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  const token = request.cookies.get("dilbert_session")?.value;
   let session = null;
 
   if (token && AUTH_SECRET) {

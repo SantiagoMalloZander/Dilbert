@@ -1,6 +1,6 @@
 [build]
   base    = "frontend"
-  command = "next build"
+  command = "next build && rm -f .next/server/functions-config-manifest.json"
   publish = ".next"
 
 [functions]
