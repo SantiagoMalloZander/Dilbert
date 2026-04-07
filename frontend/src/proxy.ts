@@ -250,7 +250,7 @@ export async function proxy(request: NextRequest) {
           return redirectWorkspaceAuthenticated(request, destination);
         }
       }
-      return continueWithPathname(request, pathname);
+      return NextResponse.next();
     }
 
     const response = continueWithPathname(request, pathname);
