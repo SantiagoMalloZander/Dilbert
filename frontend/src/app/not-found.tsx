@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ErrorState } from "@/components/error-state";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 
 export default function NotFound() {
   return (

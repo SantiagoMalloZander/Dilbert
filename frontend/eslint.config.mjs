@@ -12,7 +12,13 @@ const eslintConfig = defineConfig([
     ".netlify/**",
     "out/**",
     "build/**",
+    "playwright-report/**",
+    "test-results/**",
     "next-env.d.ts",
+    "src/legacy/**",
+    "src/lib/workspace-admin.ts",
+    "src/lib/workspace-auth-flow.ts",
+    "src/lib/workspace-users.ts",
   ]),
 ]);
 

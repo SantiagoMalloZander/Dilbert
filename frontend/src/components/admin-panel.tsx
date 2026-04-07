@@ -10,7 +10,7 @@ import {
   UserMinus,
   Users,
 } from "lucide-react";
-import type { AdminCompanyRecord } from "@/lib/workspace-admin";
+import type { AdminCompanyRecord } from "@/modules/admin/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,7 +38,11 @@ function formatDate(dateString: string) {
 }
 
 function getStatusLabel(status: AdminCompanyRecord["status"]) {
-  return status === "active" ? "Activa" : "Inactiva";
+  if (status === "active") {
+    return "Activa";
+  }
+
+  return status === "inactive" ? "Inactiva" : "Suspendida";
 }
 
 export function AdminPanel({
@@ -114,7 +118,7 @@ export function AdminPanel({
 
       setFlashMessage({
         tone: "success",
-        text: "Empresa creada. El owner ya recibió su mail de acceso.",
+        text: "Empresa creada. El owner ya recibió el mail para registrarse con su email.",
       });
       setCreateForm({
         companyName: "",
@@ -183,7 +187,7 @@ export function AdminPanel({
   async function handleDeactivateCompany(company: AdminCompanyRecord) {
     if (
       !window.confirm(
-        `Vas a dar de baja ${company.name} y pasar todos sus vendedores a analyst.`
+        `Vas a desactivar ${company.name}, bajar sus vendedores a analyst y cerrar las sesiones activas.`
       )
     ) {
       return;
@@ -208,7 +212,7 @@ export function AdminPanel({
 
       setFlashMessage({
         tone: "success",
-        text: `${company.name} quedó inactiva y sin vendedores activos.`,
+        text: `${company.name} quedó inactiva y las sesiones de su equipo fueron cerradas.`,
       });
       startTransition(() => router.refresh());
     } catch {
@@ -318,7 +322,7 @@ export function AdminPanel({
           <Badge>Solo dilbert@gmail.com</Badge>
           <h2 className="text-3xl font-semibold tracking-tight">Panel de administración</h2>
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Alta de empresas, provisioning de owners, control de límites comerciales e
+            Alta de empresas, control de límites comerciales, baja de vendedores e
             impersonación segura por empresa.
           </p>
         </div>
@@ -423,7 +427,7 @@ export function AdminPanel({
                           ) : (
                             <ArrowRight className="mr-2 h-4 w-4" />
                           )}
-                          Acceder como Owner
+                          Ver empresa
                         </Button>
                         <Button
                           variant="outline"
@@ -436,7 +440,7 @@ export function AdminPanel({
                           ) : (
                             <Shield className="mr-2 h-4 w-4" />
                           )}
-                          Dar de baja
+                          Desactivar empresa
                         </Button>
                       </div>
                     </td>
@@ -465,6 +469,11 @@ export function AdminPanel({
                     <CardDescription>
                       Owner: {company.owner?.name || "Sin owner"} · {company.owner?.email || "sin email"}
                     </CardDescription>
+                    {company.owner?.state === "pending" ? (
+                      <p className="text-xs text-amber-300">
+                        El owner todavía no terminó su registro.
+                      </p>
+                    ) : null}
                   </div>
                 </div>
                 <Badge variant={company.status === "active" ? "default" : "secondary"}>
@@ -531,6 +540,9 @@ export function AdminPanel({
                           <p className="text-xs text-muted-foreground">
                             Alta: {formatDate(vendor.createdAt)}
                           </p>
+                          <Badge variant={vendor.status === "active" ? "secondary" : "outline"}>
+                            {vendor.status === "active" ? "Activo" : "Inactivo"}
+                          </Badge>
                         </div>
 
                         <Button
@@ -564,7 +576,7 @@ export function AdminPanel({
                 <p className="text-xs uppercase tracking-[0.2em] text-primary">Nueva empresa</p>
                 <h3 className="mt-2 text-2xl font-semibold">Crear empresa y owner</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Se crea la empresa y el owner recibe un email con sus credenciales de acceso.
+                  Se crea la empresa, se reserva el owner y se le manda el link para registrarse.
                 </p>
               </div>
 

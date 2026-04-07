@@ -26,8 +26,8 @@ export default async function IntegrationsPage() {
         ? await getOwnerIntegrationsData(session.user.companyId)
         : null;
     vendorData =
-      session.user.role === "vendor"
-        ? await getVendorIntegrationsData(session.user.id)
+      session.user.role === "vendor" && session.user.companyId
+        ? await getVendorIntegrationsData(session.user.id, session.user.companyId)
         : null;
   } catch (error) {
     return (

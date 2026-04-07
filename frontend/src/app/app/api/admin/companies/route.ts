@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createCompanyWithOwner } from "@/lib/workspace-admin";
+import { createCompanyWithOwner } from "@/modules/admin/actions";
 import { getAuthSession } from "@/lib/workspace-auth";
 
 const createCompanySchema = z.object({
@@ -28,7 +28,7 @@ function mapAdminError(error: unknown) {
     case "INVALID_VENDOR_LIMIT":
       return { status: 400, message: "El límite de vendedores debe ser al menos 1." };
     case "OWNER_EMAIL_ALREADY_EXISTS":
-      return { status: 409, message: "Ese email ya existe en Dilbert." };
+      return { status: 409, message: "Ese email ya está vinculado a otra empresa en Dilbert." };
     case "RESEND_NOT_CONFIGURED":
       return { status: 500, message: "Resend no está configurado en este entorno." };
     default:
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       companyId: result.companyId,
-      ownerId: result.ownerId,
+      ownerEmail: result.ownerEmail,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

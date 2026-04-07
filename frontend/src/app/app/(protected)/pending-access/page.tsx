@@ -1,8 +1,46 @@
-import { Clock3, Mail } from "lucide-react";
-import { requireSession } from "@/lib/workspace-auth";
+"use client";
 
-export default async function PendingAccessPage() {
-  const session = await requireSession();
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Clock3, Mail } from "lucide-react";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { syncExistingUserAccessAction } from "@/modules/auth/actions";
+
+const POLL_INTERVAL_MS = 6_000;
+
+export default function PendingAccessPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    let emailRef = "";
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) {
+        emailRef = data.user.email;
+        setEmail(data.user.email);
+      }
+    });
+
+    const interval = setInterval(async () => {
+      if (!emailRef) {
+        return;
+      }
+
+      try {
+        const result = await syncExistingUserAccessAction({ email: emailRef });
+        if (result.redirectTo && result.redirectTo !== "/app/pending-access") {
+          clearInterval(interval);
+          router.push(result.redirectTo);
+        }
+      } catch {
+        // Still pending — keep polling
+      }
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [router]);
 
   return (
     <section className="mx-auto max-w-2xl">
@@ -13,19 +51,19 @@ export default async function PendingAccessPage() {
         </div>
 
         <h2 className="text-3xl font-semibold tracking-tight">
-          Tu cuenta ya existe, pero todavia no tiene una empresa asignada.
+          Tu cuenta ya existe, pero todavía no tiene una empresa asignada.
         </h2>
 
         <p className="mt-4 text-base leading-7 text-muted-foreground">
-          Te logueaste correctamente con <strong>{session.user.email}</strong>. El siguiente paso es
-          que tu empresa te agregue en el Centro de Usuarios para asignarte una empresa y un rol.
+          Te logueaste correctamente. El siguiente paso es que tu empresa te agregue en el Centro de
+          Usuarios para asignarte una empresa y un rol.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <div className="rounded-3xl border border-white/10 bg-background/60 p-5">
-            <p className="text-sm font-medium text-foreground">Que tenes que hacer ahora</p>
+            <p className="text-sm font-medium text-foreground">Qué tenés que hacer ahora</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Compartiles este mail y pediles que te agreguen desde el panel de Dilbert.
+              Compartile este email a tu empresa y pediles que te agreguen desde el panel de Dilbert.
             </p>
           </div>
 
@@ -34,15 +72,20 @@ export default async function PendingAccessPage() {
               <Mail className="h-4 w-4" />
               Email para compartir
             </div>
-            <p className="mt-2 break-all text-sm leading-6 text-muted-foreground">
-              {session.user.email}
-            </p>
+            {email ? (
+              <p className="mt-2 break-all font-mono text-sm leading-6 text-muted-foreground">
+                {email}
+              </p>
+            ) : (
+              <div className="mt-2 h-4 w-48 animate-pulse rounded bg-white/10" />
+            )}
           </div>
         </div>
 
         <div className="mt-8 rounded-3xl border border-dashed border-white/15 bg-white/5 p-5">
           <p className="text-sm leading-6 text-muted-foreground">
-            Cuando te habiliten, volve a entrar o refresca esta pagina y te vamos a llevar al CRM automaticamente.
+            Esta página verifica automáticamente cada 6 segundos. Cuando te habiliten, te vamos a
+            llevar al CRM sin que tengas que hacer nada.
           </p>
         </div>
       </div>

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/workspace-auth";
 import {
-  ensureCompanyInviteLink,
-  regenerateCompanyInviteLink,
-} from "@/lib/workspace-users";
+  ensureCompanyInviteLinkAction,
+  regenerateCompanyInviteLinkAction,
+} from "@/modules/users/actions";
 
 export async function GET() {
   const session = await getAuthSession();
@@ -13,7 +13,7 @@ export async function GET() {
   }
 
   try {
-    const inviteLink = await ensureCompanyInviteLink(session.user.companyId);
+    const inviteLink = await ensureCompanyInviteLinkAction(session.user.companyId);
     return NextResponse.json({ ok: true, inviteLink });
   } catch (error) {
     console.error("[users/invite-link:get]", error);
@@ -32,7 +32,7 @@ export async function POST() {
   }
 
   try {
-    const inviteLink = await regenerateCompanyInviteLink(session.user.companyId);
+    const inviteLink = await regenerateCompanyInviteLinkAction(session.user.companyId);
     return NextResponse.json({ ok: true, inviteLink });
   } catch (error) {
     console.error("[users/invite-link:post]", error);

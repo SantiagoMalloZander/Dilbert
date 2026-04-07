@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthSession } from "@/lib/workspace-auth";
-import { updateCompanyUserRole } from "@/lib/workspace-users";
+import { updateCompanyUserRole } from "@/modules/users/actions";
 
 const updateRoleSchema = z.object({
   email: z.string().email("Ingresá un email válido."),

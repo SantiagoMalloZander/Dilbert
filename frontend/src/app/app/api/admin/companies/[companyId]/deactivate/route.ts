@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { deactivateCompany } from "@/lib/workspace-admin";
+import { deactivateCompany } from "@/modules/admin/actions";
 import { getAuthSession } from "@/lib/workspace-auth";
 
 export async function POST(

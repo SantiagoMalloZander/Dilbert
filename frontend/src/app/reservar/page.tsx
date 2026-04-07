@@ -9,12 +9,6 @@ function argToday() {
   return new Date(Date.now() - 3 * 3600_000).toISOString().slice(0, 10);
 }
 
-function humanDate(dateStr: string) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const dow = new Date(y, m - 1, d).getDay();
-  return `${DAYS_ES[dow]} ${d} de ${MONTHS_ES[m - 1]} de ${y}`;
-}
-
 export default function ReservarPage() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ name: "", company: "", email: "", phone: "", teamSize: "" });
@@ -75,7 +69,6 @@ export default function ReservarPage() {
 
   function renderCal() {
     const today = argToday();
-    const [minY, minM] = today.slice(0, 7).split("-").map(Number);
     const firstDow = new Date(calYear, calMonth, 1).getDay();
     const mondayFirst = (firstDow + 6) % 7;
     const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();

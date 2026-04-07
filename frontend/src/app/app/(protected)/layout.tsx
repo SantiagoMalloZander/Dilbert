@@ -2,8 +2,8 @@ import { InactivityGuard } from "@/components/inactivity-guard";
 import { AppShell } from "@/components/app-shell";
 import { ErrorState } from "@/components/error-state";
 import { requireSession } from "@/lib/workspace-auth";
-import { getCompanyById } from "@/lib/workspace-admin";
 import { getFriendlyWorkspaceErrorMessage } from "@/lib/workspace-session-security";
+import { getCompanyById } from "@/modules/admin/queries";
 
 export default async function ProtectedLayout({
   children,

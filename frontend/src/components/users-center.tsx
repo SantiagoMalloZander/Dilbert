@@ -13,7 +13,7 @@ import {
 import type {
   CompanyUserRecord,
   InviteLinkRecord,
-} from "@/lib/workspace-users";
+} from "@/modules/users/queries";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -72,13 +72,11 @@ function getStateLabel(state: CompanyUserRecord["state"]) {
 }
 
 export function UsersCenter({
-  companyId,
   users,
   vendorLimit,
   activeVendors,
   inviteLink,
 }: {
-  companyId: string;
   users: CompanyUserRecord[];
   vendorLimit: number;
   activeVendors: number;
@@ -96,8 +94,9 @@ export function UsersCenter({
     () => ({
       totalUsers: users.length,
       pendingUsers: users.filter((user) => user.state === "pending").length,
+      vendorLimitReached: activeVendors >= vendorLimit && vendorLimit > 0,
     }),
-    [users]
+    [activeVendors, users, vendorLimit]
   );
 
   async function handleCopyInviteLink() {
@@ -177,7 +176,7 @@ export function UsersCenter({
 
       setFlashMessage({
         tone: "success",
-        text: `Email de acceso enviado a ${addForm.email}`,
+        text: `${addForm.email} quedó habilitado en tu empresa.`,
       });
       setAddForm({
         email: "",
@@ -321,8 +320,13 @@ export function UsersCenter({
                 {activeVendors} / {vendorLimit} Vendedores
               </Badge>
               <Badge variant="secondary">{summary.pendingUsers} Pendientes</Badge>
-              <Badge variant="secondary">{companyId}</Badge>
             </div>
+
+            {summary.vendorLimitReached ? (
+              <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+                Límite de vendedores alcanzado. Contactá a Dilbert si necesitás ampliarlo.
+              </div>
+            ) : null}
 
             <Table>
               <TableHeader>
@@ -410,7 +414,7 @@ export function UsersCenter({
             <CardHeader>
               <CardTitle>Agregar usuario</CardTitle>
               <CardDescription>
-                Registralo en `authorized_emails`. El aviso se lo mandás vos.
+                Registralo en `authorized_emails`. No se envía email automático.
               </CardDescription>
             </CardHeader>
             <CardContent>

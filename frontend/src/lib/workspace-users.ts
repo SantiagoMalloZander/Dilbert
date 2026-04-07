@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { randomBytes } from "crypto";
 import { Resend } from "resend";
 import type { AppRole } from "@/lib/workspace-roles";

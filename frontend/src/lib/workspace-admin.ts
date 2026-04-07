@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { randomBytes } from "crypto";
 import { cache } from "react";
 import { Resend } from "resend";

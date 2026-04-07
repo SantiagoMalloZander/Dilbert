@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthSession } from "@/lib/workspace-auth";
-import { updateCompanyVendorLimit } from "@/lib/workspace-admin";
+import { updateCompanyVendorLimit } from "@/modules/admin/actions";
 
 const vendorLimitSchema = z.object({
   vendorLimit: z.coerce.number().int().min(1, "El límite de vendedores debe ser al menos 1."),

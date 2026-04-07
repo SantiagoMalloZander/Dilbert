@@ -1,21 +1,19 @@
 import { test, expect } from "@playwright/test";
 
-test("dashboard loads with header", async ({ page }) => {
+test("landing redirects from root and shows hero", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("h1")).toContainText("Dilbert CRM");
+  await expect(page).toHaveURL(/\/landing\.html$/);
+  await expect(page.locator("h1")).toContainText("DILBERT");
 });
 
-test("dashboard shows metrics cards", async ({ page }) => {
+test("landing exposes primary CTA", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText("Total Leads")).toBeVisible();
-  await expect(page.getByText("En Negociacion")).toBeVisible();
-  await expect(page.getByText("Cerrados (Ganados)")).toBeVisible();
-  await expect(page.getByText("Pipeline Total")).toBeVisible();
+  await expect(page.locator(".hero-cta .btn-pill").first()).toBeVisible();
+  await expect(page.locator(".hero-chips .chip").first()).toBeVisible();
 });
 
-test("dashboard shows empty state when no leads", async ({ page }) => {
+test("landing keeps booking navigation visible", async ({ page }) => {
   await page.goto("/");
-  await expect(
-    page.getByText("No hay leads todavia").or(page.locator("table"))
-  ).toBeVisible();
+  await expect(page.locator("nav .btn-pill")).toBeVisible();
+  await expect(page.locator(".hero-cta .btn-ghost")).toBeVisible();
 });

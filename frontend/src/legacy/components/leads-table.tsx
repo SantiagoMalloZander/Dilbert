@@ -1,0 +1,179 @@
+// @ts-nocheck
+"use client";
+
+import { Loader2, PackageOpen } from "lucide-react";
+import { SourceBadge } from "@/components/source-badge";
+import Link from "next/link";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Lead } from "@/lib/types";
+import { formatDate } from "@/lib/utils";
+
+const statusConfig: Record<string, { label: string; className: string }> = {
+  new: { label: "Nuevo", className: "bg-[#EDE8DF] text-[#6B6B6B] border-[rgba(42,26,10,0.15)]" },
+  contacted: { label: "Contactado", className: "bg-[#F5D53F]/20 text-[#7A6A00] border-[#F5D53F]/40" },
+  negotiating: { label: "Negociando", className: "bg-[#D4420A]/10 text-[#D4420A] border-[#D4420A]/25" },
+  closed_won: { label: "Ganado", className: "bg-[#1A7A6E]/10 text-[#1A7A6E] border-[#1A7A6E]/25" },
+  closed_lost: { label: "Perdido", className: "bg-red-50 text-red-700 border-red-200" },
+};
+
+const sentimentConfig: Record<string, { label: string; className: string }> = {
+  positive: { label: "Positivo", className: "text-[#1A7A6E] bg-[#1A7A6E]/8 border-[#1A7A6E]/20" },
+  neutral: { label: "Neutral", className: "text-[#6B6B6B] bg-[#EDE8DF] border-[rgba(42,26,10,0.12)]" },
+  negative: { label: "Negativo", className: "text-[#C0392B] bg-red-50 border-red-200" },
+};
+
+
+export function LeadsTable({
+  leads,
+  loading,
+  leadSourceTypes = new Map(),
+}: {
+  leads: Lead[];
+  loading: boolean;
+  leadSourceTypes?: Map<string, string>;
+}) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="text-[10px] font-mono uppercase tracking-[0.2em]">Cargando leads...</span>
+      </div>
+    );
+  }
+
+  if (leads.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <PackageOpen className="h-8 w-8 text-muted-foreground/40" />
+        <p className="font-heading text-2xl tracking-wide text-muted-foreground">SIN LEADS</p>
+        <p className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
+          Los leads aparecen cuando el bot procesa conversaciones
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Mobile card view */}
+      <div className="md:hidden flex flex-col gap-3">
+        {leads.map((lead) => {
+          const status = statusConfig[lead.status] || statusConfig.new;
+          const sentiment = lead.sentiment ? sentimentConfig[lead.sentiment] : null;
+          return (
+            <Link
+              key={lead.id}
+              href={`/leads/${lead.id}`}
+              className="block rounded-lg border bg-card p-4 space-y-3 hover:bg-[#EDE8DF]/40 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-medium text-sm leading-tight">{lead.client_name || "Sin nombre"}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{lead.client_company || "—"}</p>
+                </div>
+                <span className={`text-[10px] font-mono uppercase tracking-wide px-2 py-0.5 rounded border shrink-0 ${status.className}`}>
+                  {status.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {lead.product_interest && (
+                  <span className="text-[10px] font-mono text-muted-foreground bg-muted rounded px-2 py-0.5">
+                    {lead.product_interest}
+                  </span>
+                )}
+                {sentiment && (
+                  <span className={`text-[10px] font-mono uppercase tracking-wide px-2 py-0.5 rounded border ${sentiment.className}`}>
+                    {sentiment.label}
+                  </span>
+                )}
+                <SourceBadge sourceType={leadSourceTypes.get(lead.id)} size="sm" />
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium">
+                  {lead.estimated_amount
+                    ? `${lead.currency || "$"} ${lead.estimated_amount.toLocaleString()}`
+                    : "Sin estimar"}
+                </span>
+                <span className="font-mono text-muted-foreground">{formatDate(lead.last_interaction)}</span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="hidden md:block rounded-lg border bg-card overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b hover:bg-transparent">
+              {["Cliente", "Empresa", "Vendedor", "Producto", "Monto", "Estado", "Sentimiento", "Canal", "Última Interacción"].map((h) => (
+                <TableHead key={h} className="text-[9px] font-mono font-semibold uppercase tracking-[0.18em] text-muted-foreground py-3">
+                  {h}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {leads.map((lead) => {
+              const status = statusConfig[lead.status] || statusConfig.new;
+              const sentiment = lead.sentiment ? sentimentConfig[lead.sentiment] : null;
+
+              return (
+                <TableRow
+                  key={lead.id}
+                  className="cursor-pointer hover:bg-[#EDE8DF]/40 transition-colors border-b border-border/50"
+                >
+                  <TableCell className="py-3">
+                    <Link
+                      href={`/leads/${lead.id}`}
+                      className="font-medium text-sm hover:text-[#D4420A] transition-colors"
+                    >
+                      {lead.client_name || "Sin nombre"}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground py-3">
+                    {lead.client_company || "—"}
+                  </TableCell>
+                  <TableCell className="text-sm py-3">{lead.sellers?.name || "—"}</TableCell>
+                  <TableCell className="text-sm py-3">{lead.product_interest || "—"}</TableCell>
+                  <TableCell className="text-sm font-medium py-3">
+                    {lead.estimated_amount
+                      ? `${lead.currency || "$"} ${lead.estimated_amount.toLocaleString()}`
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <span className={`text-[10px] font-mono uppercase tracking-wide px-2 py-0.5 rounded border ${status.className}`}>
+                      {status.label}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    {sentiment ? (
+                      <span className={`text-[10px] font-mono uppercase tracking-wide px-2 py-0.5 rounded border ${sentiment.className}`}>
+                        {sentiment.label}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <SourceBadge sourceType={leadSourceTypes.get(lead.id)} size="sm" />
+                  </TableCell>
+                  <TableCell className="text-xs font-mono text-muted-foreground py-3">
+                    {formatDate(lead.last_interaction)}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </>
+  );
+}

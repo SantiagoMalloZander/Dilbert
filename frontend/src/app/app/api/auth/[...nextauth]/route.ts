@@ -1,7 +1,7 @@
-import "@/lib/workspace-auth-env";
-import NextAuth from "next-auth";
-import { authOptions } from "@/lib/workspace-auth";
+import { NextResponse } from "next/server";
 
-const handler = NextAuth(authOptions);
+export function GET() {
+  return NextResponse.json({ error: "NextAuth ya no se usa en /app." }, { status: 410 });
+}
 
-export { handler as GET, handler as POST };
+export const POST = GET;

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthSession } from "@/lib/workspace-auth";
-import { addCompanyUser } from "@/lib/workspace-users";
+import { addCompanyUser } from "@/modules/users/actions";
 
 const addUserSchema = z.object({
   email: z.string().email("Ingresá un email válido."),
@@ -23,16 +23,6 @@ function mapUsersError(error: unknown) {
         status: 409,
         message:
           "Límite de vendedores alcanzado. Contactá a Dilbert para ampliar tu plan.",
-      };
-    case "RESEND_NOT_CONFIGURED":
-      return {
-        status: 500,
-        message: "El servicio de email no está configurado. Contactá a Dilbert.",
-      };
-    case "COLLABORATOR_AUTH_CREATION_FAILED":
-      return {
-        status: 500,
-        message: "No pude crear la cuenta del usuario. Probá de nuevo.",
       };
     default:
       return { status: 500, message: "No pude agregar el usuario." };

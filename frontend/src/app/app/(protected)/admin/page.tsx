@@ -1,7 +1,7 @@
 import { requireSuperAdmin } from "@/lib/workspace-auth";
 import { ErrorState } from "@/components/error-state";
 import { getFriendlyWorkspaceErrorMessage } from "@/lib/workspace-session-security";
-import { listAdminCompanies } from "@/lib/workspace-admin";
+import { listAdminCompanies } from "@/modules/admin/queries";
 import { AdminPanel } from "@/components/admin-panel";
 
 export default async function AdminPage() {

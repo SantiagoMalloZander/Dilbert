@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { ErrorState } from "@/components/error-state";
 import { requireOwner } from "@/lib/workspace-auth";
 import { getFriendlyWorkspaceErrorMessage } from "@/lib/workspace-session-security";
-import { getUsersCenterData } from "@/lib/workspace-users";
+import { getUsersCenterData } from "@/modules/users/queries";
 import { UsersCenter } from "@/components/users-center";
 
 export default async function UsersPage() {
@@ -31,7 +31,6 @@ export default async function UsersPage() {
       </div>
 
       <UsersCenter
-        companyId={data.companyId}
         vendorLimit={data.vendorLimit}
         activeVendors={data.activeVendors}
         inviteLink={data.inviteLink}

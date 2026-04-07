@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCompanyById } from "@/lib/workspace-admin";
+import { getCompanyById } from "@/modules/admin/queries";
 import { getAuthSession } from "@/lib/workspace-auth";
 import {
   IMPERSONATION_COOKIE,
@@ -64,6 +64,11 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE() {
+  const session = await getAuthSession();
+  if (!session?.user?.isSuperAdmin) {
+    return NextResponse.json({ error: "No autorizado." }, { status: 403 });
+  }
+
   const response = NextResponse.json({ ok: true });
   response.cookies.set(IMPERSONATION_COOKIE, "", {
     httpOnly: true,

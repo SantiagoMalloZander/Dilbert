@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthSession } from "@/lib/workspace-auth";
-import { revokeCompanyUserAccess } from "@/lib/workspace-users";
+import { revokeCompanyUserAccess } from "@/modules/users/actions";
 
 const revokeAccessSchema = z.object({
   email: z.string().email("Ingresá un email válido."),

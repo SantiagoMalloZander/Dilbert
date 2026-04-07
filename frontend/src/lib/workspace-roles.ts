@@ -7,7 +7,9 @@ export function normalizeEmail(email?: string | null) {
 }
 
 export function getAdminEmail() {
-  return normalizeEmail(process.env.DILBERT_ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL);
+  return normalizeEmail(
+    process.env.SUPER_ADMIN_EMAIL || process.env.DILBERT_ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL
+  );
 }
 
 export function isSuperAdminEmail(email?: string | null) {

@@ -38,12 +38,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No autorizado." }, { status: 403 });
   }
 
+  if (!session.user.companyId) {
+    return NextResponse.json({ error: "Tu cuenta no tiene empresa asignada." }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const payload = connectIntegrationSchema.parse(body);
 
     await connectVendorIntegration({
       userId: session.user.id,
+      companyId: session.user.companyId,
       channelType: payload.channelType,
       credentials: payload.credentials,
     });
@@ -72,12 +77,17 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "No autorizado." }, { status: 403 });
   }
 
+  if (!session.user.companyId) {
+    return NextResponse.json({ error: "Tu cuenta no tiene empresa asignada." }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const payload = disconnectIntegrationSchema.parse(body);
 
     await disconnectVendorIntegration({
       userId: session.user.id,
+      companyId: session.user.companyId,
       channelType: payload.channelType,
     });
 

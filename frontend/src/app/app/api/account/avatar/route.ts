@@ -36,6 +36,7 @@ export async function POST(request: Request) {
 
     const result = await uploadAccountAvatar({
       userId: session.user.id,
+      companyId: session.user.companyId,
       file: avatar,
     });
 

@@ -1,13 +1,14 @@
 import { randomUUID } from "crypto";
 import { createServerSupabaseAuthClient } from "@/lib/workspace-supabase";
 import { createAdminSupabaseClient } from "@/lib/workspace-supabase";
-import { getCompanyById } from "@/lib/workspace-admin";
 import { getRoleLabel, type AppRole } from "@/lib/workspace-roles";
 import {
   INTEGRATION_DEFINITIONS,
+  fromDatabaseChannelType,
   type IntegrationChannelType,
 } from "@/lib/workspace-integrations";
 import { revokeAuthSessionsByUserId } from "@/lib/workspace-session-security";
+import { getCompanyById } from "@/modules/admin/queries";
 
 const AVATAR_BUCKET = "avatars";
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
@@ -25,8 +26,10 @@ type UserRow = {
 };
 
 type ChannelCredentialRow = {
-  channel_type: string;
-  connected_at: string | null;
+  company_id: string;
+  channel: string;
+  updated_at: string;
+  last_sync_at: string | null;
   status?: "pending" | "connected" | null;
 };
 
@@ -194,21 +197,28 @@ export async function getAccountPageData(params: {
     params.companyId ? getCompanyById(params.companyId) : Promise.resolve(null),
   ]);
 
-  const { data: channelRows, error: channelError } = await supabase
-    .from("channel_credentials")
-    .select("channel_type, connected_at, status")
-    .eq("user_id", params.userId);
+  let channelRows: ChannelCredentialRow[] | null = [];
+  if (params.companyId) {
+    const { data, error: channelError } = await supabase
+      .from("channel_credentials")
+      .select("company_id, channel, updated_at, last_sync_at, status")
+      .eq("user_id", params.userId)
+      .eq("company_id", params.companyId);
 
-  if (channelError) {
-    throw channelError;
+    if (channelError) {
+      throw channelError;
+    }
+
+    channelRows = (data as ChannelCredentialRow[] | null) || [];
   }
 
   const providers = readProviders(authUser);
   const hasPassword = providers.includes("email");
   const channelMap = new Map(
-    (((channelRows as ChannelCredentialRow[] | null) || []).filter(Boolean) || []).map(
-      (channel) => [channel.channel_type, channel]
-    )
+    ((channelRows || []).flatMap((channel) => {
+      const channelType = fromDatabaseChannelType(channel.channel);
+      return channelType ? [[channelType, channel] as const] : [];
+    }) || [])
   );
 
   const channels = INTEGRATION_DEFINITIONS.map((channel) => {
@@ -216,8 +226,10 @@ export async function getAccountPageData(params: {
     return {
       type: channel.channelType,
       label: channel.name,
-      status: row ? "connected" : "disconnected",
-      connectedAt: row?.connected_at || null,
+      status: row && (row.status === "pending" || row.status === "connected")
+        ? "connected"
+        : "disconnected",
+      connectedAt: row?.last_sync_at || row?.updated_at || null,
     } satisfies AccountChannelRecord;
   });
 
@@ -243,14 +255,19 @@ export async function getAccountPageData(params: {
 
 export async function updateAccountProfile(params: {
   userId: string;
+  companyId?: string | null;
   fullName: string;
   phone: string | null;
 }) {
   const supabase = createAdminSupabaseClient();
-  const user = await getAccountUser(params.userId);
+  const user = await getAccountUser(params.userId, params.companyId);
 
   if (!user) {
     throw new Error("ACCOUNT_USER_NOT_FOUND");
+  }
+
+  if (!user.company_id) {
+    throw new Error("ACCOUNT_COMPANY_REQUIRED");
   }
 
   const fullName = params.fullName.trim();
@@ -266,7 +283,8 @@ export async function updateAccountProfile(params: {
       name: fullName,
       phone: normalizedPhone,
     })
-    .eq("id", params.userId);
+    .eq("id", params.userId)
+    .eq("company_id", user.company_id);
 
   if (error) {
     throw error;
@@ -286,6 +304,7 @@ export async function updateAccountProfile(params: {
 
 export async function uploadAccountAvatar(params: {
   userId: string;
+  companyId?: string | null;
   file: File;
 }) {
   if (!params.file.type.startsWith("image/")) {
@@ -297,10 +316,14 @@ export async function uploadAccountAvatar(params: {
   }
 
   const supabase = createAdminSupabaseClient();
-  const user = await getAccountUser(params.userId);
+  const user = await getAccountUser(params.userId, params.companyId);
 
   if (!user) {
     throw new Error("ACCOUNT_USER_NOT_FOUND");
+  }
+
+  if (!user.company_id) {
+    throw new Error("ACCOUNT_COMPANY_REQUIRED");
   }
 
   await ensureAvatarBucket();
@@ -333,7 +356,8 @@ export async function uploadAccountAvatar(params: {
     .update({
       avatar_url: publicUrl,
     })
-    .eq("id", params.userId);
+    .eq("id", params.userId)
+    .eq("company_id", user.company_id);
 
   if (updateError) {
     throw updateError;

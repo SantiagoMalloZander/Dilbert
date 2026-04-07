@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import {
   CheckCircle2,
   Loader2,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import type { AccountPageData } from "@/lib/workspace-account";
 import { emitGlobalToast } from "@/lib/global-toast";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { clearSessionTrackingCookies } from "@/lib/workspace-activity";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -100,7 +100,9 @@ export function AccountSettings({
   async function handleThisDeviceSignOut() {
     clearSessionTrackingCookies();
     await fetch(APP_ADMIN_IMPERSONATION_API, { method: "DELETE" }).catch(() => undefined);
-    await signOut({ callbackUrl: SIGN_OUT_CALLBACK_URL });
+    await createBrowserSupabaseClient().auth.signOut({ scope: "local" });
+    router.push(SIGN_OUT_CALLBACK_URL);
+    router.refresh();
   }
 
   async function handleAllDevicesSignOut() {
@@ -123,7 +125,9 @@ export function AccountSettings({
 
       clearSessionTrackingCookies();
       await fetch(APP_ADMIN_IMPERSONATION_API, { method: "DELETE" }).catch(() => undefined);
-      await signOut({ callbackUrl: SIGN_OUT_CALLBACK_URL });
+      await createBrowserSupabaseClient().auth.signOut({ scope: "local" });
+      router.push(SIGN_OUT_CALLBACK_URL);
+      router.refresh();
     } catch {
       emitGlobalToast({
         tone: "error",

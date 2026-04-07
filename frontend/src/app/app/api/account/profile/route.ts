@@ -36,6 +36,7 @@ export async function PATCH(request: Request) {
 
     const result = await updateAccountProfile({
       userId: session.user.id,
+      companyId: session.user.companyId,
       fullName: payload.fullName,
       phone: payload.phone || null,
     });
