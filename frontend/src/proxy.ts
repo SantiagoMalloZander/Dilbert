@@ -114,6 +114,12 @@ function continueWithPathname(request: NextRequest, pathname: string) {
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
+function redirectWorkspaceAuthenticated(request: NextRequest, destination: string) {
+  const resp = NextResponse.redirect(new URL(destination, request.url));
+  resp.cookies.set(BROWSER_SESSION_COOKIE, "1", { path: "/", sameSite: "lax" });
+  return resp;
+}
+
 async function fetchWorkspaceUserSnapshot(userId: string) {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
     return null;
@@ -218,6 +224,32 @@ export async function proxy(request: NextRequest) {
 
   if (isWorkspacePath(pathname)) {
     if (isWorkspacePublicPath(pathname)) {
+      const hasSupabaseCookieForPublic = request.cookies
+        .getAll()
+        .some(({ name }) => isSupabaseAuthCookieName(name));
+      if (hasSupabaseCookieForPublic) {
+        const tempResponse = continueWithPathname(request, pathname);
+        const supabase = createMiddlewareSupabaseClient(request, tempResponse);
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user?.email) {
+          const isSuperAdmin = canAccessAdmin(user.email.toLowerCase());
+          const workspaceUser = !isSuperAdmin
+            ? await fetchWorkspaceUserSnapshot(user.id)
+            : null;
+          let destination = isSuperAdmin
+            ? "/app/admin"
+            : workspaceUser?.company_id
+              ? "/app/crm"
+              : "/app/pending-access";
+          const redirectParam = request.nextUrl.searchParams.get("redirect");
+          if (redirectParam?.startsWith("/app/") && !redirectParam.startsWith("/app/?")) {
+            destination = redirectParam;
+          }
+          return redirectWorkspaceAuthenticated(request, destination);
+        }
+      }
       return continueWithPathname(request, pathname);
     }
 
@@ -228,13 +260,9 @@ export async function proxy(request: NextRequest) {
     const hasBrowserSession = Boolean(request.cookies.get(BROWSER_SESSION_COOKIE)?.value);
 
     // Fast-path: if neither remember nor browser-session cookie is present,
-    // skip Supabase and redirect immediately — no valid session possible.
-    // But if there IS a Supabase cookie, allow the getUser call to bootstrap.
-    const hasSupabaseCookie = request.cookies
-      .getAll()
-      .some(({ name }) => isSupabaseAuthCookieName(name));
-
-    if (!remember && !hasBrowserSession && !hasSupabaseCookie) {
+    // there is no valid session. Authenticated users always arrive here with
+    // BROWSER_SESSION_COOKIE already set (bootstrapped via the public-path branch).
+    if (!remember && !hasBrowserSession) {
       return redirectToWorkspaceSignIn(request);
     }
 
@@ -256,15 +284,6 @@ export async function proxy(request: NextRequest) {
 
     if (error || !user?.email) {
       return redirectToWorkspaceSignIn(request);
-    }
-
-    // Bootstrap session cookies if the user authenticated via Supabase but
-    // the browser-session tracking cookie got lost (e.g. after a redeploy).
-    if (!hasBrowserSession) {
-      response.cookies.set(BROWSER_SESSION_COOKIE, "1", {
-        path: "/",
-        sameSite: "lax",
-      });
     }
 
     const email = user.email.toLowerCase();
@@ -292,18 +311,18 @@ export async function proxy(request: NextRequest) {
 
     if (!companyId) {
       if (isSuperAdmin) {
-        return NextResponse.redirect(new URL("/app/admin", request.url));
+        return redirectWorkspaceAuthenticated(request, "/app/admin");
       }
 
       if (pathname !== "/app/pending-access") {
-        return NextResponse.redirect(new URL("/app/pending-access", request.url));
+        return redirectWorkspaceAuthenticated(request, "/app/pending-access");
       }
 
       return response;
     }
 
     if (pathname === "/app/pending-access") {
-      return NextResponse.redirect(new URL("/app/crm", request.url));
+      return redirectWorkspaceAuthenticated(request, "/app/crm");
     }
 
     if (
@@ -314,7 +333,7 @@ export async function proxy(request: NextRequest) {
         isAuthenticated: true,
       })
     ) {
-      return NextResponse.redirect(new URL("/app/crm", request.url));
+      return redirectWorkspaceAuthenticated(request, "/app/crm");
     }
 
     return response;
