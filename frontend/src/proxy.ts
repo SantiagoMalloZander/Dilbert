@@ -250,7 +250,10 @@ export async function proxy(request: NextRequest) {
           return redirectWorkspaceAuthenticated(request, destination);
         }
       }
-      return NextResponse.next();
+      // No cookies — let the auth page render without middleware intervention
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set("x-pathname", pathname);
+      return NextResponse.next({ request: { headers: requestHeaders } });
     }
 
     const response = continueWithPathname(request, pathname);
