@@ -311,7 +311,10 @@ export async function proxy(request: NextRequest) {
 
     if (!companyId) {
       if (isSuperAdmin) {
-        return redirectWorkspaceAuthenticated(request, "/app/admin");
+        if (!pathname.startsWith("/app/admin")) {
+          return redirectWorkspaceAuthenticated(request, "/app/admin");
+        }
+        return response;
       }
 
       if (pathname !== "/app/pending-access") {
