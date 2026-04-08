@@ -190,12 +190,25 @@ export async function getAccountPageData(params: {
   email?: string | null;
   role?: AppRole;
 }) {
+  console.log("[getAccountPageData] Starting with params:", {
+    userId: params.userId,
+    companyId: params.companyId,
+    email: params.email,
+    role: params.role,
+  });
+
   const supabase = await createServerSupabaseClient();
   const [userRow, authUser, company] = await Promise.all([
     getAccountUser(params.userId, params.companyId),
     getAuthUserById(params.userId),
     params.companyId ? getCompanyById(params.companyId) : Promise.resolve(null),
   ]);
+
+  console.log("[getAccountPageData] Fetched data:", {
+    userRow: !!userRow,
+    authUser: !!authUser,
+    company: !!company,
+  });
 
   let channelRows: ChannelCredentialRow[] | null = [];
   if (params.companyId) {
