@@ -41,7 +41,7 @@ export function PipelineStage({
               {stage.leadCount} leads
             </p>
           </div>
-          <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 px-3 py-2 text-right">
+          <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] px-3 py-2 text-right">
             <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Valor</p>
             <p className="mt-1 text-sm font-semibold text-foreground">
               {formatCurrency(stage.totalValue)}

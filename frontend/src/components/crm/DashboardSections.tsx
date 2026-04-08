@@ -63,7 +63,7 @@ export function KpiCardsSection({ data }: { data: DashboardKpiData }) {
         return (
           <Card
             key={metric.label}
-            className="border-[#2A1A0A]/15 bg-background text-white shadow-[0_22px_60px_rgba(2,6,23,0.22)]"
+            className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard"
           >
             <CardHeader>
               <div className="mb-4 flex items-start justify-between gap-4">
@@ -72,11 +72,11 @@ export function KpiCardsSection({ data }: { data: DashboardKpiData }) {
                 </div>
                 <span className="text-3xl font-semibold tracking-tight">{metric.formattedValue}</span>
               </div>
-              <CardTitle className="text-lg text-white">{metric.label}</CardTitle>
+              <CardTitle className="text-lg text-foreground">{metric.label}</CardTitle>
               <CardDescription className="text-muted-foreground">{metric.description}</CardDescription>
             </CardHeader>
             {metric.benchmark ? (
-              <CardContent className="pt-0 text-xs text-[#9fe9d5]">
+              <CardContent className="pt-0 text-xs text-foreground">
                 {metric.benchmark.label}: {metric.benchmark.formattedValue}
               </CardContent>
             ) : null}
@@ -89,17 +89,17 @@ export function KpiCardsSection({ data }: { data: DashboardKpiData }) {
 
 export function LeadsByStageSection({ data }: { data: LeadsByStageMetric[] }) {
   return (
-    <Card className="border-[#2A1A0A]/15 bg-background text-white shadow-[0_22px_60px_rgba(2,6,23,0.22)]">
+    <Card className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle className="text-white">Leads por etapa</CardTitle>
+          <CardTitle className="text-foreground">Leads por etapa</CardTitle>
           <CardDescription className="text-muted-foreground">
             Hacé click en una barra para abrir el kanban filtrado por esa etapa.
           </CardDescription>
         </div>
         <Button
           variant="outline"
-          className="border-[#2A1A0A]/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+          className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground hover:bg-[#F5F0E8] hover:text-foreground"
           render={<Link href="/app/crm/leads" />}
         >
           Ver pipeline
@@ -114,9 +114,9 @@ export function LeadsByStageSection({ data }: { data: LeadsByStageMetric[] }) {
 
 export function LeadsBySourceSection({ data }: { data: LeadsBySourceMetric[] }) {
   return (
-    <Card className="border-[#2A1A0A]/15 bg-background text-white shadow-[0_22px_60px_rgba(2,6,23,0.22)]">
+    <Card className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
       <CardHeader>
-        <CardTitle className="text-white">Leads por fuente</CardTitle>
+        <CardTitle className="text-foreground">Leads por fuente</CardTitle>
         <CardDescription className="text-muted-foreground">
           Distribución del ingreso de oportunidades por canal o carga manual.
         </CardDescription>
@@ -130,9 +130,9 @@ export function LeadsBySourceSection({ data }: { data: LeadsBySourceMetric[] }) 
 
 export function RecentActivitySection({ data, isVendor }: { data: RecentActivityRecord[]; isVendor: boolean }) {
   return (
-    <Card className="border-[#2A1A0A]/15 bg-background text-white shadow-[0_22px_60px_rgba(2,6,23,0.22)]">
+    <Card className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
       <CardHeader>
-        <CardTitle className="text-white">
+        <CardTitle className="text-foreground">
           {isVendor ? "Tu actividad reciente" : "Actividad reciente"}
         </CardTitle>
         <CardDescription className="text-muted-foreground">
@@ -161,11 +161,11 @@ export function RecentActivitySection({ data, isVendor }: { data: RecentActivity
               data.map((activity) => (
                 <tr key={activity.id} className="border-b border-[#2A1A0A]/10">
                   <td className="py-3">
-                    <Badge className="border border-[#2A1A0A]/15 bg-white/5 text-[#d8e4f2]">
+                    <Badge className="border border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground">
                       {activity.type}
                     </Badge>
                   </td>
-                  <td className="py-3 text-[#d8e4f2]">{activity.description}</td>
+                  <td className="py-3 text-foreground">{activity.description}</td>
                   <td className="py-3 text-muted-foreground">{activity.relatedLabel}</td>
                   <td className="py-3 text-muted-foreground">{activity.userName}</td>
                   <td className="py-3 text-right text-muted-foreground">
@@ -183,17 +183,17 @@ export function RecentActivitySection({ data, isVendor }: { data: RecentActivity
 
 export function UpcomingLeadsSection({ data }: { data: UpcomingLeadRecord[] }) {
   return (
-    <Card className="border-[#2A1A0A]/15 bg-background text-white shadow-[0_22px_60px_rgba(2,6,23,0.22)]">
+    <Card className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle className="text-white">Leads próximos a vencer</CardTitle>
+          <CardTitle className="text-foreground">Leads próximos a vencer</CardTitle>
           <CardDescription className="text-muted-foreground">
             Oportunidades con cierre esperado dentro de los próximos 7 días.
           </CardDescription>
         </div>
         <Button
           variant="outline"
-          className="border-[#2A1A0A]/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+          className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground hover:bg-[#F5F0E8] hover:text-foreground"
           render={<Link href="/app/crm/leads" />}
         >
           Abrir kanban
@@ -208,10 +208,10 @@ export function UpcomingLeadsSection({ data }: { data: UpcomingLeadRecord[] }) {
           data.map((lead) => (
             <div
               key={lead.id}
-              className="flex flex-col gap-3 rounded-2xl border border-[#2A1A0A]/10 bg-white/5 px-4 py-4 md:flex-row md:items-center md:justify-between"
+              className="flex flex-col gap-3 rounded-2xl border border-[#2A1A0A]/10 bg-[#F5F0E8] px-4 py-4 md:flex-row md:items-center md:justify-between"
             >
               <div>
-                <p className="font-medium text-white">{lead.title}</p>
+                <p className="font-medium text-foreground">{lead.title}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {lead.contactName}
                   {lead.stageName ? ` · ${lead.stageName}` : ""}
@@ -232,7 +232,7 @@ export function UpcomingLeadsSection({ data }: { data: UpcomingLeadRecord[] }) {
                       ? "Vence hoy"
                       : `${lead.daysUntilClose} días`}
                 </Badge>
-                <span className="text-sm text-[#d8e4f2]">{formatCurrency(lead.value || 0)}</span>
+                <span className="text-sm text-foreground">{formatCurrency(lead.value || 0)}</span>
               </div>
             </div>
           ))
@@ -244,9 +244,9 @@ export function UpcomingLeadsSection({ data }: { data: UpcomingLeadRecord[] }) {
 
 export function SellerPerformanceSection({ data }: { data: SellerPerformanceRecord[] }) {
   return (
-    <Card className="border-[#2A1A0A]/15 bg-background text-white shadow-[0_22px_60px_rgba(2,6,23,0.22)]">
+    <Card className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
       <CardHeader>
-        <CardTitle className="text-white">Rendimiento por vendedor</CardTitle>
+        <CardTitle className="text-foreground">Rendimiento por vendedor</CardTitle>
         <CardDescription className="text-muted-foreground">
           Comparativa operativa del equipo comercial en el mes actual.
         </CardDescription>
@@ -271,10 +271,10 @@ export function SellerPerformanceSection({ data }: { data: SellerPerformanceReco
             ) : (
               data.map((seller) => (
                 <tr key={seller.userId} className="border-b border-[#2A1A0A]/10">
-                  <td className="py-3 font-medium text-white">{seller.name}</td>
-                  <td className="py-3 text-[#d8e4f2]">{seller.activeLeads}</td>
-                  <td className="py-3 text-[#d8e4f2]">{seller.wonThisMonth}</td>
-                  <td className="py-3 text-right text-[#d8e4f2]">
+                  <td className="py-3 font-medium text-foreground">{seller.name}</td>
+                  <td className="py-3 text-foreground">{seller.activeLeads}</td>
+                  <td className="py-3 text-foreground">{seller.wonThisMonth}</td>
+                  <td className="py-3 text-right text-foreground">
                     {formatCurrency(seller.closedValueThisMonth)}
                   </td>
                 </tr>
@@ -296,11 +296,11 @@ export function DashboardSectionSkeleton({
 }) {
   return (
     <div className={cn("rounded-[28px] border border-[#2A1A0A]/15 bg-background p-6", className)}>
-      <div className="h-7 w-44 animate-pulse rounded-full bg-white/8" />
-      <div className="mt-3 h-4 w-72 animate-pulse rounded-full bg-white/8" />
+      <div className="h-7 w-44 animate-pulse rounded-full bg-[#F5F0E8]/8" />
+      <div className="mt-3 h-4 w-72 animate-pulse rounded-full bg-[#F5F0E8]/8" />
       <div className="mt-6 space-y-3">
         {Array.from({ length: rows }).map((_, index) => (
-          <div key={index} className="h-16 animate-pulse rounded-2xl bg-white/8" />
+          <div key={index} className="h-16 animate-pulse rounded-2xl bg-[#F5F0E8]/8" />
         ))}
       </div>
     </div>

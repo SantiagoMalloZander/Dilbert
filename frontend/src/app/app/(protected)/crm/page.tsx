@@ -95,10 +95,10 @@ export default async function CrmPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[32px] border border-[#2A1A0A]/15 bg-background px-6 py-7 text-white shadow-[0_28px_80px_rgba(2,6,23,0.32)]">
+      <section className="rounded-[32px] border border-[#2A1A0A]/15 bg-background px-6 py-7 text-foreground shadow-hard">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <Badge className="border border-[#D4420A]/20 bg-[#D4420A]/10 text-[#9fe9d5]">
+            <Badge className="border border-[#D4420A]/20 bg-[#D4420A]/10 text-foreground">
               {getRoleLabel(session.user.role)}
             </Badge>
             <div className="space-y-2">
@@ -114,7 +114,7 @@ export default async function CrmPage() {
           <div className="flex flex-wrap gap-3">
             <Button
               variant="outline"
-              className="border-[#2A1A0A]/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+              className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground hover:bg-[#F5F0E8] hover:text-foreground"
               render={<Link href="/app/crm/contacts" />}
             >
               <BriefcaseBusiness className="mr-2 h-4 w-4" />
@@ -122,7 +122,7 @@ export default async function CrmPage() {
             </Button>
             <Button
               variant="outline"
-              className="border-[#2A1A0A]/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+              className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground hover:bg-[#F5F0E8] hover:text-foreground"
               render={<Link href="/app/crm/leads" />}
             >
               <Filter className="mr-2 h-4 w-4" />
@@ -166,7 +166,7 @@ export default async function CrmPage() {
           <SellerPerformanceBlock promise={sellerPerformancePromise} />
         </Suspense>
       ) : (
-        <section className="rounded-[28px] border border-[#2A1A0A]/15 bg-background px-6 py-5 text-white shadow-[0_22px_60px_rgba(2,6,23,0.22)]">
+        <section className="rounded-[28px] border border-[#2A1A0A]/15 bg-background px-6 py-5 text-foreground shadow-hard">
           <div className="flex items-start gap-3">
             <div className="rounded-2xl bg-[#D4420A]/10 p-3 text-[#D4420A]">
               <Sparkles className="h-5 w-5" />

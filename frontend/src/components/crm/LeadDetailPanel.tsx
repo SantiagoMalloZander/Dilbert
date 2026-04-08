@@ -79,7 +79,7 @@ function formatCurrency(value: number | null, currency: string) {
 
 function getStageTone(stage: LeadStageOption | null) {
   if (!stage) {
-    return "border-[#2A1A0A]/15 bg-white/5 text-[#d8e4f2]";
+    return "border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground";
   }
 
   if (stage.isWonStage) {
@@ -90,7 +90,7 @@ function getStageTone(stage: LeadStageOption | null) {
     return "border-red-400/30 bg-red-500/10 text-red-100";
   }
 
-  return "border-[#2A1A0A]/15 bg-white/5 text-[#d8e4f2]";
+  return "border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground";
 }
 
 export function LeadDetailPanel({
@@ -253,7 +253,7 @@ export function LeadDetailPanel({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-[#030712]/45 backdrop-blur-[2px]" onClick={closePanel} />
-      <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[560px] flex-col border-l border-[#2A1A0A]/15 bg-background text-foreground shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_30px_80px_rgba(2,6,23,0.55)]">
+      <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[560px] flex-col border-l border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
         <div className="border-b border-[#2A1A0A]/10 px-6 py-5">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-3">
@@ -269,17 +269,17 @@ export function LeadDetailPanel({
                 </button>
               </div>
             </div>
-            <Button variant="ghost" size="icon-sm" className="text-white" onClick={closePanel}>
+            <Button variant="ghost" size="icon-sm" className="text-foreground" onClick={closePanel}>
               <X className="h-4 w-4" />
             </Button>
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-3">
+            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-3">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Valor</p>
               <p className="mt-2 text-lg font-semibold">{formatCurrency(lead.value, lead.currency)}</p>
             </div>
-            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-3">
+            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-3">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Probabilidad</p>
               <p className="mt-2 text-lg font-semibold">{lead.probability}%</p>
             </div>
@@ -295,7 +295,7 @@ export function LeadDetailPanel({
             <div className="grid gap-3 sm:grid-cols-2">
               <button
                 onClick={() => router.push(`/app/crm/contacts?contact=${lead.contact.id}`)}
-                className="group rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
+                className="group rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
               >
                 <p className="text-xs text-muted-foreground">Contacto</p>
                 <p className="mt-2 font-medium flex items-center gap-1.5 text-foreground group-hover:text-[#D4420A]">
@@ -304,18 +304,18 @@ export function LeadDetailPanel({
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">{lead.contact.companyName || "Sin empresa"}</p>
               </button>
-              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
                 <p className="text-xs text-muted-foreground">Cierre esperado</p>
                 <p className="mt-2 font-medium">
                   {lead.expectedCloseDate ? formatDate(lead.expectedCloseDate) : "Sin fecha"}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">Fuente: {lead.source}</p>
               </div>
-              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
                 <p className="text-xs text-muted-foreground">Vendedor asignado</p>
                 <p className="mt-2 font-medium">{lead.assignedUser?.name || "Sin asignar"}</p>
               </div>
-              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
                 <p className="text-xs text-muted-foreground">Estado</p>
                 <p className="mt-2 font-medium capitalize">{lead.status}</p>
                 {lead.lostReason ? (
@@ -335,7 +335,7 @@ export function LeadDetailPanel({
                 variant="outline"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsNoteOpen(true)}
-                className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
+                className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground"
               >
                 <NotebookPen className="mr-2 h-4 w-4" />
                 Añadir nota
@@ -344,7 +344,7 @@ export function LeadDetailPanel({
                 variant="outline"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsActivityOpen(true)}
-                className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
+                className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground"
               >
                 <MessageSquarePlus className="mr-2 h-4 w-4" />
                 Añadir actividad
@@ -353,7 +353,7 @@ export function LeadDetailPanel({
                 variant="outline"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsStageOpen(true)}
-                className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
+                className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground"
               >
                 <Milestone className="mr-2 h-4 w-4" />
                 Cambiar stage
@@ -393,7 +393,7 @@ export function LeadDetailPanel({
                 </div>
               ) : (
                 lead.timeline.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+                  <div key={item.id} className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="font-medium">{item.title}</p>
@@ -401,7 +401,7 @@ export function LeadDetailPanel({
                           {item.type} · {item.user?.name || "Usuario"} · {formatDate(item.createdAt)}
                         </p>
                       </div>
-                      <Badge className="border border-[#2A1A0A]/15 bg-transparent text-[#d8e4f2]">
+                      <Badge className="border border-[#2A1A0A]/15 bg-transparent text-foreground">
                         {item.source}
                       </Badge>
                     </div>
@@ -431,12 +431,12 @@ export function LeadDetailPanel({
                 </div>
               ) : (
                 lead.notes.map((note) => (
-                  <div key={note.id} className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+                  <div key={note.id} className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                         {note.user?.name || "Usuario"} · {formatDate(note.createdAt)}
                       </p>
-                      <Badge className="border border-[#2A1A0A]/15 bg-transparent text-[#d8e4f2]">
+                      <Badge className="border border-[#2A1A0A]/15 bg-transparent text-foreground">
                         {note.source}
                       </Badge>
                     </div>
@@ -515,7 +515,7 @@ export function LeadDetailPanel({
                     setEditForm((current) => ({ ...current, source: value as CrmSource }))
                   }
                 >
-                  <SelectTrigger className="w-full bg-white">
+                  <SelectTrigger className="w-full bg-[#F5F0E8]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -553,7 +553,7 @@ export function LeadDetailPanel({
               id="lead-note"
               value={noteContent}
               onChange={(event) => setNoteContent(event.target.value)}
-              className="min-h-36 w-full rounded-lg border border-input bg-white px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+              className="min-h-36 w-full rounded-lg border border-input bg-[#F5F0E8] px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
             />
           </div>
           <DialogFooter>
@@ -583,7 +583,7 @@ export function LeadDetailPanel({
                   setActivityForm((current) => ({ ...current, type: value as ActivityType }))
                 }
               >
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full bg-[#F5F0E8]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -616,7 +616,7 @@ export function LeadDetailPanel({
                     description: event.target.value,
                   }))
                 }
-                className="min-h-28 w-full rounded-lg border border-input bg-white px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+                className="min-h-28 w-full rounded-lg border border-input bg-[#F5F0E8] px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
               />
             </div>
             <div className="space-y-2">
@@ -655,7 +655,7 @@ export function LeadDetailPanel({
           <div className="space-y-2">
             <Label>Etapa</Label>
             <Select value={stageId} onValueChange={(value) => setStageId(value || stageId)}>
-              <SelectTrigger className="w-full bg-white">
+              <SelectTrigger className="w-full bg-[#F5F0E8]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -691,7 +691,7 @@ export function LeadDetailPanel({
               id="lost-reason"
               value={lostReason}
               onChange={(event) => setLostReason(event.target.value)}
-              className="min-h-28 w-full rounded-lg border border-input bg-white px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+              className="min-h-28 w-full rounded-lg border border-input bg-[#F5F0E8] px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
             />
           </div>
           <DialogFooter>
@@ -701,7 +701,7 @@ export function LeadDetailPanel({
             <Button
               disabled={isPending || !lostReason.trim()}
               onClick={handleMarkLost}
-              className="bg-red-500 text-white hover:bg-red-400"
+              className="bg-red-500 text-foreground hover:bg-red-400"
             >
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Confirmar pérdida

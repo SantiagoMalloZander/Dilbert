@@ -31,7 +31,7 @@ function QuickActionCard({
           {icon}
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-white">{title}</h3>
+          <h3 className="font-semibold text-foreground">{title}</h3>
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
@@ -114,7 +114,7 @@ export function QuickActionsSection({
   }
 
   return (
-    <section className="rounded-[32px] border border-[#2A1A0A]/15 bg-background px-6 py-7 text-white shadow-[0_28px_80px_rgba(2,6,23,0.32)]">
+    <section className="rounded-[32px] border border-[#2A1A0A]/15 bg-background px-6 py-7 text-foreground shadow-hard">
       <div className="mb-5 space-y-1">
         <h2 className="text-lg font-semibold">Acciones rápidas</h2>
         <p className="text-sm text-muted-foreground">

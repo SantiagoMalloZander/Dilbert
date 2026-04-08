@@ -429,7 +429,7 @@ function LeadFormDialog({
               </div>
 
               {createInlineContact ? (
-                <div className="grid gap-3 rounded-2xl border border-[#2A1A0A]/10 bg-white/70 p-4 sm:grid-cols-2">
+                <div className="grid gap-3 rounded-2xl border border-[#2A1A0A]/10 bg-[#F5F0E8]/70 p-4 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Input
                       placeholder="Nombre"
@@ -513,7 +513,7 @@ function LeadFormDialog({
                   />
                 </div>
               ) : (
-                <div className="space-y-3 rounded-2xl border border-[#2A1A0A]/10 bg-white/70 p-4">
+                <div className="space-y-3 rounded-2xl border border-[#2A1A0A]/10 bg-[#F5F0E8]/70 p-4">
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -543,7 +543,7 @@ function LeadFormDialog({
                           "w-full rounded-xl border px-3 py-2 text-left transition-colors",
                           selectedContact?.id === contact.id
                             ? "border-[#D4420A] bg-[#D4420A]/10"
-                            : "border-[#2A1A0A]/10 bg-white hover:bg-[#F5F0E8]"
+                            : "border-[#2A1A0A]/10 bg-[#F5F0E8] hover:bg-[#F5F0E8]"
                         )}
                       >
                         <p className="font-medium">{contact.fullName}</p>
@@ -579,7 +579,7 @@ function LeadFormDialog({
                   setForm((current) => ({ ...current, currency: value || "ARS" }))
                 }
               >
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full bg-[#F5F0E8]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -626,7 +626,7 @@ function LeadFormDialog({
             <div className="space-y-2">
               <Label>Pipeline</Label>
               <Select value={form.pipelineId} onValueChange={handlePipelineChange}>
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full bg-[#F5F0E8]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -646,7 +646,7 @@ function LeadFormDialog({
                   setForm((current) => ({ ...current, stageId: value || current.stageId }))
                 }
               >
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full bg-[#F5F0E8]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -667,7 +667,7 @@ function LeadFormDialog({
                     setForm((current) => ({ ...current, assignedTo: value || current.assignedTo }))
                   }
                 >
-                  <SelectTrigger className="w-full bg-white">
+                  <SelectTrigger className="w-full bg-[#F5F0E8]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -757,10 +757,10 @@ export function ContactTable({ data }: { data: ContactPageData }) {
         <Breadcrumbs items={[{ label: "Contactos", href: "/app/crm/contacts" }]} />
       </div>
       <div className="space-y-6">
-        <div className="rounded-[30px] border border-[#2A1A0A]/15 bg-background p-6 text-foreground shadow-[0_22px_60px_rgba(2,6,23,0.3)]">
+        <div className="rounded-[30px] border border-[#2A1A0A]/15 bg-background p-6 text-foreground shadow-hard">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#D4420A]/20 bg-[#D4420A]/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[#9fe9d5]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#D4420A]/20 bg-[#D4420A]/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-foreground">
                 <Sparkles className="h-3.5 w-3.5" />
                 Contactos CRM
               </div>
@@ -789,7 +789,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                   value={queryValue}
                   onChange={(event) => setQueryValue(event.target.value)}
                   placeholder="Nombre, email o empresa"
-                  className="border-[#2A1A0A]/15 bg-white/5 pl-9 text-foreground"
+                  className="border-[#2A1A0A]/15 bg-[#F5F0E8] pl-9 text-foreground"
                 />
               </div>
             </div>
@@ -799,7 +799,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 value={data.filters.source || "all"}
                 onValueChange={(value) => updateParam("source", value)}
               >
-                <SelectTrigger className="w-full border-[#2A1A0A]/15 bg-white/5 text-foreground">
+                <SelectTrigger className="w-full border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -813,7 +813,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
               </Select>
             </div>
             <div className="flex items-end">
-              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 px-4 py-3 text-right">
+              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] px-4 py-3 text-right">
                 <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Contactos</p>
                 <p className="mt-1 text-2xl font-semibold">{data.total}</p>
               </div>
@@ -821,7 +821,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-[#2A1A0A]/15 bg-background p-4 text-foreground shadow-[0_22px_60px_rgba(2,6,23,0.24)]">
+        <div className="rounded-[28px] border border-[#2A1A0A]/15 bg-background p-4 text-foreground shadow-hard">
           <Table>
             <TableHeader>
               <TableRow className="border-[#2A1A0A]/10 hover:bg-transparent">
@@ -845,7 +845,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 data.contacts.map((contact) => (
                   <TableRow
                     key={contact.id}
-                    className="cursor-pointer border-[#2A1A0A]/10 text-foreground hover:bg-white/5"
+                    className="cursor-pointer border-[#2A1A0A]/10 text-foreground hover:bg-[#F5F0E8]"
                     onClick={() => openContact(contact.id)}
                   >
                     <TableCell className="font-medium">{contact.fullName}</TableCell>
@@ -854,7 +854,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                     <TableCell>{contact.phone || "Sin teléfono"}</TableCell>
                     <TableCell>{contact.activeLeadCount}</TableCell>
                     <TableCell>
-                      <Badge className="border border-[#2A1A0A]/15 bg-white/5 text-[#d8e4f2]">
+                      <Badge className="border border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground">
                         {getSourceLabel(contact.source)}
                       </Badge>
                     </TableCell>
@@ -874,7 +874,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 variant="outline"
                 size="sm"
                 disabled={isPending || data.pagination.page <= 1}
-                className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
+                className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground"
                 onClick={() => updateParam("page", String(data.pagination.page - 1))}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -884,7 +884,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 variant="outline"
                 size="sm"
                 disabled={isPending || data.pagination.page >= totalPages}
-                className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
+                className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground"
                 onClick={() => updateParam("page", String(data.pagination.page + 1))}
               >
                 Siguiente
@@ -934,24 +934,24 @@ export function ContactTableSkeleton() {
       <div className="rounded-[30px] border border-[#2A1A0A]/15 bg-background p-6">
         <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
           <div className="space-y-3">
-            <div className="h-6 w-32 animate-pulse rounded-full bg-white/8" />
-            <div className="h-10 w-72 animate-pulse rounded-2xl bg-white/8" />
-            <div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-white/8" />
+            <div className="h-6 w-32 animate-pulse rounded-full bg-[#F5F0E8]/8" />
+            <div className="h-10 w-72 animate-pulse rounded-2xl bg-[#F5F0E8]/8" />
+            <div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-[#F5F0E8]/8" />
           </div>
           <div className="flex items-end justify-end">
-            <div className="h-10 w-40 animate-pulse rounded-full bg-white/8" />
+            <div className="h-10 w-40 animate-pulse rounded-full bg-[#F5F0E8]/8" />
           </div>
         </div>
         <div className="mt-6 grid gap-4 lg:grid-cols-[1.5fr_0.8fr_auto]">
-          <div className="h-12 animate-pulse rounded-2xl bg-white/8" />
-          <div className="h-12 animate-pulse rounded-2xl bg-white/8" />
-          <div className="h-12 animate-pulse rounded-2xl bg-white/8" />
+          <div className="h-12 animate-pulse rounded-2xl bg-[#F5F0E8]/8" />
+          <div className="h-12 animate-pulse rounded-2xl bg-[#F5F0E8]/8" />
+          <div className="h-12 animate-pulse rounded-2xl bg-[#F5F0E8]/8" />
         </div>
       </div>
       <div className="rounded-[28px] border border-[#2A1A0A]/15 bg-background p-4">
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="h-14 animate-pulse rounded-2xl bg-white/8" />
+            <div key={index} className="h-14 animate-pulse rounded-2xl bg-[#F5F0E8]/8" />
           ))}
         </div>
       </div>

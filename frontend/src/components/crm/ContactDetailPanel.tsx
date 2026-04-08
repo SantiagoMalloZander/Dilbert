@@ -75,17 +75,17 @@ export function ContactDetailPanel({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-[#030712]/45 backdrop-blur-[2px]" onClick={onClose} />
-      <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[540px] flex-col border-l border-[#2A1A0A]/15 bg-background text-foreground shadow-[0_30px_80px_rgba(2,6,23,0.55)]">
+      <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[540px] flex-col border-l border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
         <div className="border-b border-[#2A1A0A]/10 px-6 py-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Badge className="border border-[#2A1A0A]/15 bg-white/5 text-[#d8e4f2]">
+              <Badge className="border border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground">
                 {getSourceLabel(contact.source)}
               </Badge>
               <h2 className="mt-3 text-2xl font-semibold">{contact.fullName}</h2>
               <p className="mt-1 text-sm text-muted-foreground">{contact.companyName || "Sin empresa"}</p>
             </div>
-            <Button variant="ghost" size="icon-sm" className="text-white" onClick={onClose}>
+            <Button variant="ghost" size="icon-sm" className="text-foreground" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -100,7 +100,7 @@ export function ContactDetailPanel({
             {canCreateLead ? (
               <Button
                 variant="outline"
-                className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
+                className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground"
                 onClick={() =>
                   onCreateLead({
                     id: contact.id,
@@ -119,25 +119,25 @@ export function ContactDetailPanel({
 
         <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
           <section className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
               <p className="text-xs text-muted-foreground">Email</p>
               <p className="mt-2 flex items-center gap-2 text-sm">
                 <Mail className="h-4 w-4 text-[#D4420A]" />
                 {contact.email || "Sin email"}
               </p>
             </div>
-            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
               <p className="text-xs text-muted-foreground">Teléfono</p>
               <p className="mt-2 flex items-center gap-2 text-sm">
                 <Phone className="h-4 w-4 text-[#D4420A]" />
                 {contact.phone || "Sin teléfono"}
               </p>
             </div>
-            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
               <p className="text-xs text-muted-foreground">Cargo</p>
               <p className="mt-2 text-sm">{contact.position || "Sin cargo"}</p>
             </div>
-            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
               <p className="text-xs text-muted-foreground">Creado</p>
               <p className="mt-2 flex items-center gap-2 text-sm">
                 <CalendarClock className="h-4 w-4 text-[#D4420A]" />
@@ -161,7 +161,7 @@ export function ContactDetailPanel({
                   <button
                     key={lead.id}
                     onClick={() => router.push(`/app/crm/leads?lead=${lead.id}`)}
-                    className="group w-full rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
+                    className="group w-full rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1">
@@ -171,7 +171,7 @@ export function ContactDetailPanel({
                         </p>
                       </div>
                       {lead.stage ? (
-                        <Badge className="border border-[#2A1A0A]/15 bg-transparent text-[#d8e4f2]">
+                        <Badge className="border border-[#2A1A0A]/15 bg-transparent text-foreground">
                           {lead.stage.name}
                         </Badge>
                       ) : null}
@@ -194,10 +194,10 @@ export function ContactDetailPanel({
                 </div>
               ) : (
                 contact.activities.map((activity) => (
-                  <div key={activity.id} className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+                  <div key={activity.id} className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-medium">{activity.title}</p>
-                      <Badge className="border border-[#2A1A0A]/15 bg-transparent text-[#d8e4f2]">
+                      <Badge className="border border-[#2A1A0A]/15 bg-transparent text-foreground">
                         {activity.type}
                       </Badge>
                     </div>
