@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   CircleOff,
   Clock3,
+  ExternalLink,
   FilePenLine,
   Loader2,
   MessageSquarePlus,
@@ -259,7 +260,13 @@ export function LeadDetailPanel({
               <Badge className={getStageTone(lead.stage)}>{lead.stage?.name || "Sin etapa"}</Badge>
               <div>
                 <h2 className="text-2xl font-semibold leading-tight">{lead.title}</h2>
-                <p className="mt-1 text-sm text-[#9fb0c8]">{lead.contact.name}</p>
+                <button
+                  onClick={() => router.push(`/app/crm/contacts?contactId=${lead.contact.id}`)}
+                  className="mt-1 flex items-center gap-1.5 text-sm text-[#35d6ae] hover:text-[#35d6ae]/80 transition-colors"
+                >
+                  {lead.contact.name}
+                  <ExternalLink className="h-3 w-3" />
+                </button>
               </div>
             </div>
             <Button variant="ghost" size="icon-sm" className="text-white" onClick={closePanel}>
@@ -286,11 +293,17 @@ export function LeadDetailPanel({
               Datos del lead
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <button
+                onClick={() => router.push(`/app/crm/contacts?contactId=${lead.contact.id}`)}
+                className="group rounded-2xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-[#35d6ae]/30 hover:bg-[#35d6ae]/5"
+              >
                 <p className="text-xs text-[#6f85a3]">Contacto</p>
-                <p className="mt-2 font-medium">{lead.contact.name}</p>
+                <p className="mt-2 font-medium flex items-center gap-1.5 text-[#f8fafc] group-hover:text-[#35d6ae]">
+                  {lead.contact.name}
+                  <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100" />
+                </p>
                 <p className="mt-1 text-sm text-[#9fb0c8]">{lead.contact.companyName || "Sin empresa"}</p>
-              </div>
+              </button>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-xs text-[#6f85a3]">Cierre esperado</p>
                 <p className="mt-2 font-medium">

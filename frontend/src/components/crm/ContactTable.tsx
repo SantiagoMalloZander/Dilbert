@@ -21,6 +21,7 @@ import type {
 } from "@/modules/crm/contacts/types";
 import { createLead } from "@/modules/crm/leads/actions";
 import { Badge } from "@/components/ui/badge";
+import { Breadcrumbs } from "@/components/crm/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -752,6 +753,9 @@ export function ContactTable({ data }: { data: ContactPageData }) {
 
   return (
     <>
+      <div className="mb-6">
+        <Breadcrumbs items={[{ label: "Contactos", href: "/app/crm/contacts" }]} />
+      </div>
       <div className="space-y-6">
         <div className="rounded-[30px] border border-white/10 bg-[#07101b] p-6 text-[#f8fafc] shadow-[0_22px_60px_rgba(2,6,23,0.3)]">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">

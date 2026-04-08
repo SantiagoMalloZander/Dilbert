@@ -6,6 +6,7 @@ import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { FilterX, Loader2, Sparkles } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PipelineStage } from "@/components/crm/PipelineStage";
+import { Breadcrumbs } from "@/components/crm/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,6 +65,17 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
     const totalValue = stages.reduce((sum, stage) => sum + stage.totalValue, 0);
     return { leadCount, totalValue };
   }, [stages]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (data.filters.assignedTo) count++;
+    if (data.filters.source) count++;
+    if (data.filters.createdFrom) count++;
+    if (data.filters.createdTo) count++;
+    if (data.filters.stageId) count++;
+    return count;
+  }, [data.filters]);
+
   const activeStage = data.filters.stageId
     ? stages.find((stage) => stage.id === data.filters.stageId) || null
     : null;
@@ -150,6 +162,9 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
 
   return (
     <>
+      <div className="mb-6">
+        <Breadcrumbs items={[{ label: "Pipeline", href: "/app/crm/leads" }]} />
+      </div>
       <div className="space-y-6">
         <div className="rounded-[30px] border border-white/10 bg-[#07101b] p-6 text-[#f8fafc] shadow-[0_22px_60px_rgba(2,6,23,0.3)]">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
@@ -183,10 +198,21 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-[1.3fr_1fr_1fr_auto]">
-            {data.currentUser.canManageAssigneeFilter ? (
-              <div className="space-y-2">
-                <Label className="text-[#9fb0c8]">Vendedor</Label>
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-[#f8fafc]">Filtros</h3>
+                {activeFilterCount > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#35d6ae]/30 bg-[#35d6ae]/10 px-2.5 py-0.5 text-xs font-medium text-[#35d6ae]">
+                    {activeFilterCount} activo{activeFilterCount !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr_1fr_auto]">
+              {data.currentUser.canManageAssigneeFilter ? (
+                <div className="space-y-2">
+                  <Label className="text-[#9fb0c8]">Vendedor</Label>
                 <Select
                   value={data.filters.assignedTo || "all"}
                   onValueChange={(value) => updateSearchParam("assignedTo", value)}
@@ -247,17 +273,18 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
               </div>
             </div>
 
-            <div className="flex items-end">
-              <Button
-                variant="outline"
-                onClick={handleClearFilters}
-                className="w-full border-white/10 bg-white/5 text-[#f8fafc] hover:border-[#35d6ae] hover:bg-[#35d6ae]/10 hover:text-[#f8fafc]"
-              >
-                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FilterX className="mr-2 h-4 w-4" />}
-                Limpiar
-              </Button>
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={handleClearFilters}
+                  className="w-full border-white/10 bg-white/5 text-[#f8fafc] hover:border-[#35d6ae] hover:bg-[#35d6ae]/10 hover:text-[#f8fafc]"
+                >
+                  {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FilterX className="mr-2 h-4 w-4" />}
+                  Limpiar
+                </Button>
+              </div>
             </div>
-          </div>
+            </div>
         </div>
 
         <DragDropContext onDragEnd={handleDragEnd}>
