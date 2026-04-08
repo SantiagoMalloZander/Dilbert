@@ -4,8 +4,8 @@ import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
-  ArrowLeft,
-  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Loader2,
   Plus,
   Search,
