@@ -79,7 +79,7 @@ function formatCurrency(value: number | null, currency: string) {
 
 function getStageTone(stage: LeadStageOption | null) {
   if (!stage) {
-    return "border-white/10 bg-white/5 text-[#d8e4f2]";
+    return "border-[#2A1A0A]/15 bg-white/5 text-[#d8e4f2]";
   }
 
   if (stage.isWonStage) {
@@ -90,7 +90,7 @@ function getStageTone(stage: LeadStageOption | null) {
     return "border-red-400/30 bg-red-500/10 text-red-100";
   }
 
-  return "border-white/10 bg-white/5 text-[#d8e4f2]";
+  return "border-[#2A1A0A]/15 bg-white/5 text-[#d8e4f2]";
 }
 
 export function LeadDetailPanel({
@@ -253,8 +253,8 @@ export function LeadDetailPanel({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-[#030712]/45 backdrop-blur-[2px]" onClick={closePanel} />
-      <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[560px] flex-col border-l border-white/10 bg-[#07101b] text-[#f8fafc] shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_30px_80px_rgba(2,6,23,0.55)]">
-        <div className="border-b border-white/8 px-6 py-5">
+      <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[560px] flex-col border-l border-[#2A1A0A]/15 bg-background text-foreground shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_30px_80px_rgba(2,6,23,0.55)]">
+        <div className="border-b border-[#2A1A0A]/10 px-6 py-5">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-3">
               <Badge className={getStageTone(lead.stage)}>{lead.stage?.name || "Sin etapa"}</Badge>
@@ -262,7 +262,7 @@ export function LeadDetailPanel({
                 <h2 className="text-2xl font-semibold leading-tight">{lead.title}</h2>
                 <button
                   onClick={() => router.push(`/app/crm/contacts?contactId=${lead.contact.id}`)}
-                  className="mt-1 flex items-center gap-1.5 text-sm text-[#35d6ae] hover:text-[#35d6ae]/80 transition-colors"
+                  className="mt-1 flex items-center gap-1.5 text-sm text-[#D4420A] hover:text-[#D4420A]/80 transition-colors"
                 >
                   {lead.contact.name}
                   <ExternalLink className="h-3 w-3" />
@@ -275,12 +275,12 @@ export function LeadDetailPanel({
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-[#6f85a3]">Valor</p>
+            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-3">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Valor</p>
               <p className="mt-2 text-lg font-semibold">{formatCurrency(lead.value, lead.currency)}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-[#6f85a3]">Probabilidad</p>
+            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-3">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Probabilidad</p>
               <p className="mt-2 text-lg font-semibold">{lead.probability}%</p>
             </div>
           </div>
@@ -288,35 +288,35 @@ export function LeadDetailPanel({
 
         <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
           <section className="space-y-3">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-[#6f85a3]">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <CalendarClock className="h-3.5 w-3.5" />
               Datos del lead
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <button
                 onClick={() => router.push(`/app/crm/contacts?contactId=${lead.contact.id}`)}
-                className="group rounded-2xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-[#35d6ae]/30 hover:bg-[#35d6ae]/5"
+                className="group rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
               >
-                <p className="text-xs text-[#6f85a3]">Contacto</p>
-                <p className="mt-2 font-medium flex items-center gap-1.5 text-[#f8fafc] group-hover:text-[#35d6ae]">
+                <p className="text-xs text-muted-foreground">Contacto</p>
+                <p className="mt-2 font-medium flex items-center gap-1.5 text-foreground group-hover:text-[#D4420A]">
                   {lead.contact.name}
                   <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100" />
                 </p>
-                <p className="mt-1 text-sm text-[#9fb0c8]">{lead.contact.companyName || "Sin empresa"}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{lead.contact.companyName || "Sin empresa"}</p>
               </button>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-[#6f85a3]">Cierre esperado</p>
+              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+                <p className="text-xs text-muted-foreground">Cierre esperado</p>
                 <p className="mt-2 font-medium">
                   {lead.expectedCloseDate ? formatDate(lead.expectedCloseDate) : "Sin fecha"}
                 </p>
-                <p className="mt-1 text-sm text-[#9fb0c8]">Fuente: {lead.source}</p>
+                <p className="mt-1 text-sm text-muted-foreground">Fuente: {lead.source}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-[#6f85a3]">Vendedor asignado</p>
+              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+                <p className="text-xs text-muted-foreground">Vendedor asignado</p>
                 <p className="mt-2 font-medium">{lead.assignedUser?.name || "Sin asignar"}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-[#6f85a3]">Estado</p>
+              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+                <p className="text-xs text-muted-foreground">Estado</p>
                 <p className="mt-2 font-medium capitalize">{lead.status}</p>
                 {lead.lostReason ? (
                   <p className="mt-1 text-sm text-[#f8b4b4]">{lead.lostReason}</p>
@@ -335,7 +335,7 @@ export function LeadDetailPanel({
                 variant="outline"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsNoteOpen(true)}
-                className="border-white/10 bg-white/5 text-[#f8fafc]"
+                className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
               >
                 <NotebookPen className="mr-2 h-4 w-4" />
                 Añadir nota
@@ -344,7 +344,7 @@ export function LeadDetailPanel({
                 variant="outline"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsActivityOpen(true)}
-                className="border-white/10 bg-white/5 text-[#f8fafc]"
+                className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
               >
                 <MessageSquarePlus className="mr-2 h-4 w-4" />
                 Añadir actividad
@@ -353,7 +353,7 @@ export function LeadDetailPanel({
                 variant="outline"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsStageOpen(true)}
-                className="border-white/10 bg-white/5 text-[#f8fafc]"
+                className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
               >
                 <Milestone className="mr-2 h-4 w-4" />
                 Cambiar stage
@@ -382,26 +382,26 @@ export function LeadDetailPanel({
           </section>
 
           <section className="space-y-3">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-[#6f85a3]">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <Clock3 className="h-3.5 w-3.5" />
               Timeline
             </div>
             <div className="space-y-3">
               {lead.timeline.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-sm text-[#6f85a3]">
+                <div className="rounded-2xl border border-dashed border-[#2A1A0A]/15 px-4 py-5 text-sm text-muted-foreground">
                   Todavía no hay actividades registradas.
                 </div>
               ) : (
                 lead.timeline.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div key={item.id} className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="font-medium">{item.title}</p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[#6f85a3]">
+                        <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
                           {item.type} · {item.user?.name || "Usuario"} · {formatDate(item.createdAt)}
                         </p>
                       </div>
-                      <Badge className="border border-white/10 bg-transparent text-[#d8e4f2]">
+                      <Badge className="border border-[#2A1A0A]/15 bg-transparent text-[#d8e4f2]">
                         {item.source}
                       </Badge>
                     </div>
@@ -409,7 +409,7 @@ export function LeadDetailPanel({
                       <p className="mt-3 text-sm text-[#c3d3e8]">{item.description}</p>
                     ) : null}
                     {item.scheduledAt ? (
-                      <p className="mt-3 text-xs text-[#6f85a3]">
+                      <p className="mt-3 text-xs text-muted-foreground">
                         Programada para {formatDate(item.scheduledAt)}
                       </p>
                     ) : null}
@@ -420,23 +420,23 @@ export function LeadDetailPanel({
           </section>
 
           <section className="space-y-3 pb-4">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-[#6f85a3]">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <NotebookPen className="h-3.5 w-3.5" />
               Notas
             </div>
             <div className="space-y-3">
               {lead.notes.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-sm text-[#6f85a3]">
+                <div className="rounded-2xl border border-dashed border-[#2A1A0A]/15 px-4 py-5 text-sm text-muted-foreground">
                   Todavía no hay notas asociadas.
                 </div>
               ) : (
                 lead.notes.map((note) => (
-                  <div key={note.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div key={note.id} className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs uppercase tracking-[0.16em] text-[#6f85a3]">
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                         {note.user?.name || "Usuario"} · {formatDate(note.createdAt)}
                       </p>
-                      <Badge className="border border-white/10 bg-transparent text-[#d8e4f2]">
+                      <Badge className="border border-[#2A1A0A]/15 bg-transparent text-[#d8e4f2]">
                         {note.source}
                       </Badge>
                     </div>

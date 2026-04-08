@@ -123,18 +123,18 @@ export function LeadCard({
       type="button"
       onClick={() => onOpen(lead.id)}
       className={cn(
-        "group w-full rounded-[22px] border border-white/10 bg-[#0f1724] p-4 text-left shadow-[0_18px_45px_rgba(2,8,23,0.25)] transition duration-200",
-        "hover:border-[#35d6ae]/40 hover:bg-[#122033]",
+        "group w-full rounded-[22px] border border-[#2A1A0A]/15 bg-card p-4 text-left shadow-[0_18px_45px_rgba(2,8,23,0.25)] transition duration-200",
+        "hover:border-[#D4420A]/40 hover:bg-[#122033]",
         disabled && "cursor-default",
-        isDragging && "rotate-[1deg] border-[#35d6ae]/50 shadow-[0_20px_60px_rgba(53,214,174,0.2)]"
+        isDragging && "rotate-[1deg] border-[#D4420A]/50 shadow-[0_20px_60px_rgba(53,214,174,0.2)]"
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="line-clamp-2 text-sm font-semibold text-[#f8fafc]">{lead.title}</p>
-          <p className="mt-1 text-xs text-[#9fb0c8]">{lead.contact.name}</p>
+          <p className="line-clamp-2 text-sm font-semibold text-foreground">{lead.title}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{lead.contact.name}</p>
         </div>
-        <Avatar className="h-9 w-9 border border-white/10 bg-[#111b2a]">
+        <Avatar className="h-9 w-9 border border-[#2A1A0A]/15 bg-[#111b2a]">
           <AvatarImage src={lead.assignedUser?.avatarUrl} alt={lead.assignedUser?.name || "Vendedor"} />
           <AvatarFallback className="bg-[#16304a] text-[10px] text-[#d8e4f2]">
             {getInitials(lead.assignedUser?.name)}
@@ -143,8 +143,8 @@ export function LeadCard({
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-2 text-sm font-medium text-[#f8fafc]">
-          <CircleDollarSign className="h-4 w-4 text-[#35d6ae]" />
+        <div className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
+          <CircleDollarSign className="h-4 w-4 text-[#D4420A]" />
           {formatCurrency(lead.value, lead.currency)}
         </div>
         {dueState ? (
@@ -156,11 +156,11 @@ export function LeadCard({
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-2">
-        <Badge className="border border-white/10 bg-white/5 text-[#d8e4f2]">
+        <Badge className="border border-[#2A1A0A]/15 bg-white/5 text-[#d8e4f2]">
           <SourceIcon className="h-3 w-3" />
           {sourceMeta.label}
         </Badge>
-        <span className="text-[11px] uppercase tracking-[0.18em] text-[#6f85a3]">
+        <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
           {lead.assignedUser?.name || "Sin vendedor"}
         </span>
       </div>

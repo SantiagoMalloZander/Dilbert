@@ -166,16 +166,16 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
         <Breadcrumbs items={[{ label: "Pipeline", href: "/app/crm/leads" }]} />
       </div>
       <div className="space-y-6">
-        <div className="rounded-[30px] border border-white/10 bg-[#07101b] p-6 text-[#f8fafc] shadow-[0_22px_60px_rgba(2,6,23,0.3)]">
+        <div className="rounded-[30px] border border-[#2A1A0A]/15 bg-background p-6 text-foreground shadow-[0_22px_60px_rgba(2,6,23,0.3)]">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#35d6ae]/20 bg-[#35d6ae]/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[#9fe9d5]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#D4420A]/20 bg-[#D4420A]/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[#9fe9d5]">
                 <Sparkles className="h-3.5 w-3.5" />
                 Pipeline activo
               </div>
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight">{data.pipeline.name}</h1>
-                <p className="mt-2 max-w-2xl text-sm text-[#9fb0c8]">
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                   Mové oportunidades entre etapas, abrí el detalle lateral y actualizá el estado sin salir del board.
                 </p>
                 {activeStage ? (
@@ -187,12 +187,12 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[360px]">
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-[#6f85a3]">Leads visibles</p>
+              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Leads visibles</p>
                 <p className="mt-2 text-2xl font-semibold">{summary.leadCount}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-[#6f85a3]">Valor total</p>
+              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Valor total</p>
                 <p className="mt-2 text-2xl font-semibold">{formatCurrency(summary.totalValue)}</p>
               </div>
             </div>
@@ -201,9 +201,9 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
           <div className="mt-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-[#f8fafc]">Filtros</h3>
+                <h3 className="font-semibold text-foreground">Filtros</h3>
                 {activeFilterCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#35d6ae]/30 bg-[#35d6ae]/10 px-2.5 py-0.5 text-xs font-medium text-[#35d6ae]">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D4420A]/30 bg-[#D4420A]/10 px-2.5 py-0.5 text-xs font-medium text-[#D4420A]">
                     {activeFilterCount} activo{activeFilterCount !== 1 ? "s" : ""}
                   </span>
                 )}
@@ -212,12 +212,12 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
             <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr_1fr_auto]">
               {data.currentUser.canManageAssigneeFilter ? (
                 <div className="space-y-2">
-                  <Label className="text-[#9fb0c8]">Vendedor</Label>
+                  <Label className="text-muted-foreground">Vendedor</Label>
                 <Select
                   value={data.filters.assignedTo || "all"}
                   onValueChange={(value) => updateSearchParam("assignedTo", value)}
                 >
-                  <SelectTrigger className="w-full border-white/10 bg-white/5 text-[#f8fafc]">
+                  <SelectTrigger className="w-full border-[#2A1A0A]/15 bg-white/5 text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -233,12 +233,12 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
             ) : null}
 
             <div className="space-y-2">
-              <Label className="text-[#9fb0c8]">Fuente</Label>
+              <Label className="text-muted-foreground">Fuente</Label>
               <Select
                 value={data.filters.source || "all"}
                 onValueChange={(value) => updateSearchParam("source", value)}
               >
-                <SelectTrigger className="w-full border-white/10 bg-white/5 text-[#f8fafc]">
+                <SelectTrigger className="w-full border-[#2A1A0A]/15 bg-white/5 text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -254,21 +254,21 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-[#9fb0c8]">Desde</Label>
+                <Label className="text-muted-foreground">Desde</Label>
                 <Input
                   type="date"
                   value={data.filters.createdFrom || ""}
                   onChange={(event) => updateSearchParam("createdFrom", event.target.value || null)}
-                  className="border-white/10 bg-white/5 text-[#f8fafc]"
+                  className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[#9fb0c8]">Hasta</Label>
+                <Label className="text-muted-foreground">Hasta</Label>
                 <Input
                   type="date"
                   value={data.filters.createdTo || ""}
                   onChange={(event) => updateSearchParam("createdTo", event.target.value || null)}
-                  className="border-white/10 bg-white/5 text-[#f8fafc]"
+                  className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
                 />
               </div>
             </div>
@@ -277,7 +277,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
                 <Button
                   variant="outline"
                   onClick={handleClearFilters}
-                  className="w-full border-white/10 bg-white/5 text-[#f8fafc] hover:border-[#35d6ae] hover:bg-[#35d6ae]/10 hover:text-[#f8fafc]"
+                  className="w-full border-[#2A1A0A]/15 bg-white/5 text-foreground hover:border-[#D4420A] hover:bg-[#D4420A]/10 hover:text-foreground"
                 >
                   {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FilterX className="mr-2 h-4 w-4" />}
                   Limpiar
@@ -314,7 +314,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
 export function KanbanBoardSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="rounded-[30px] border border-white/10 bg-[#07101b] p-6">
+      <div className="rounded-[30px] border border-[#2A1A0A]/15 bg-background p-6">
         <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
           <div className="space-y-3">
             <div className="h-6 w-28 animate-pulse rounded-full bg-white/8" />
@@ -338,7 +338,7 @@ export function KanbanBoardSkeleton() {
           {Array.from({ length: 4 }).map((_, stageIndex) => (
             <div
               key={stageIndex}
-              className="flex min-h-[70vh] w-[320px] shrink-0 flex-col rounded-[28px] border border-white/10 bg-[#08111d] p-4"
+              className="flex min-h-[70vh] w-[320px] shrink-0 flex-col rounded-[28px] border border-[#2A1A0A]/15 bg-background p-4"
             >
               <div className="h-6 w-32 animate-pulse rounded-full bg-white/8" />
               <div className="mt-2 h-4 w-20 animate-pulse rounded-full bg-white/8" />

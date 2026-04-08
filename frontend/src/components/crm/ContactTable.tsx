@@ -757,16 +757,16 @@ export function ContactTable({ data }: { data: ContactPageData }) {
         <Breadcrumbs items={[{ label: "Contactos", href: "/app/crm/contacts" }]} />
       </div>
       <div className="space-y-6">
-        <div className="rounded-[30px] border border-white/10 bg-[#07101b] p-6 text-[#f8fafc] shadow-[0_22px_60px_rgba(2,6,23,0.3)]">
+        <div className="rounded-[30px] border border-[#2A1A0A]/15 bg-background p-6 text-foreground shadow-[0_22px_60px_rgba(2,6,23,0.3)]">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#35d6ae]/20 bg-[#35d6ae]/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[#9fe9d5]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#D4420A]/20 bg-[#D4420A]/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[#9fe9d5]">
                 <Sparkles className="h-3.5 w-3.5" />
                 Contactos CRM
               </div>
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight">Base de contactos</h1>
-                <p className="mt-2 max-w-2xl text-sm text-[#9fb0c8]">
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                   Buscá, filtrá y abrí el detalle de cada contacto sin salir del flujo comercial.
                 </p>
               </div>
@@ -782,24 +782,24 @@ export function ContactTable({ data }: { data: ContactPageData }) {
 
           <div className="mt-6 grid gap-4 lg:grid-cols-[1.5fr_0.8fr_auto]">
             <div className="space-y-2">
-              <Label className="text-[#9fb0c8]">Buscar</Label>
+              <Label className="text-muted-foreground">Buscar</Label>
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6f85a3]" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={queryValue}
                   onChange={(event) => setQueryValue(event.target.value)}
                   placeholder="Nombre, email o empresa"
-                  className="border-white/10 bg-white/5 pl-9 text-[#f8fafc]"
+                  className="border-[#2A1A0A]/15 bg-white/5 pl-9 text-foreground"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[#9fb0c8]">Fuente</Label>
+              <Label className="text-muted-foreground">Fuente</Label>
               <Select
                 value={data.filters.source || "all"}
                 onValueChange={(value) => updateParam("source", value)}
               >
-                <SelectTrigger className="w-full border-white/10 bg-white/5 text-[#f8fafc]">
+                <SelectTrigger className="w-full border-[#2A1A0A]/15 bg-white/5 text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -813,31 +813,31 @@ export function ContactTable({ data }: { data: ContactPageData }) {
               </Select>
             </div>
             <div className="flex items-end">
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-right">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-[#6f85a3]">Contactos</p>
+              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 px-4 py-3 text-right">
+                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Contactos</p>
                 <p className="mt-1 text-2xl font-semibold">{data.total}</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-white/10 bg-[#07101b] p-4 text-[#f8fafc] shadow-[0_22px_60px_rgba(2,6,23,0.24)]">
+        <div className="rounded-[28px] border border-[#2A1A0A]/15 bg-background p-4 text-foreground shadow-[0_22px_60px_rgba(2,6,23,0.24)]">
           <Table>
             <TableHeader>
-              <TableRow className="border-white/8 hover:bg-transparent">
-                <TableHead className="text-[#9fb0c8]">Nombre</TableHead>
-                <TableHead className="text-[#9fb0c8]">Empresa</TableHead>
-                <TableHead className="text-[#9fb0c8]">Email</TableHead>
-                <TableHead className="text-[#9fb0c8]">Teléfono</TableHead>
-                <TableHead className="text-[#9fb0c8]">Leads activos</TableHead>
-                <TableHead className="text-[#9fb0c8]">Source</TableHead>
-                <TableHead className="text-[#9fb0c8]">Fecha de creación</TableHead>
+              <TableRow className="border-[#2A1A0A]/10 hover:bg-transparent">
+                <TableHead className="text-muted-foreground">Nombre</TableHead>
+                <TableHead className="text-muted-foreground">Empresa</TableHead>
+                <TableHead className="text-muted-foreground">Email</TableHead>
+                <TableHead className="text-muted-foreground">Teléfono</TableHead>
+                <TableHead className="text-muted-foreground">Leads activos</TableHead>
+                <TableHead className="text-muted-foreground">Source</TableHead>
+                <TableHead className="text-muted-foreground">Fecha de creación</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.contacts.length === 0 ? (
-                <TableRow className="border-white/8">
-                  <TableCell colSpan={7} className="py-10 text-center text-sm text-[#6f85a3]">
+                <TableRow className="border-[#2A1A0A]/10">
+                  <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
                     No encontramos contactos con esos filtros.
                   </TableCell>
                 </TableRow>
@@ -845,7 +845,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 data.contacts.map((contact) => (
                   <TableRow
                     key={contact.id}
-                    className="cursor-pointer border-white/8 text-[#f8fafc] hover:bg-white/5"
+                    className="cursor-pointer border-[#2A1A0A]/10 text-foreground hover:bg-white/5"
                     onClick={() => openContact(contact.id)}
                   >
                     <TableCell className="font-medium">{contact.fullName}</TableCell>
@@ -854,7 +854,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                     <TableCell>{contact.phone || "Sin teléfono"}</TableCell>
                     <TableCell>{contact.activeLeadCount}</TableCell>
                     <TableCell>
-                      <Badge className="border border-white/10 bg-white/5 text-[#d8e4f2]">
+                      <Badge className="border border-[#2A1A0A]/15 bg-white/5 text-[#d8e4f2]">
                         {getSourceLabel(contact.source)}
                       </Badge>
                     </TableCell>
@@ -866,7 +866,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
           </Table>
 
           <div className="mt-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-[#9fb0c8]">
+            <p className="text-sm text-muted-foreground">
               Página {data.pagination.page} de {totalPages}
             </p>
             <div className="flex items-center gap-2">
@@ -874,7 +874,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 variant="outline"
                 size="sm"
                 disabled={isPending || data.pagination.page <= 1}
-                className="border-white/10 bg-white/5 text-[#f8fafc]"
+                className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
                 onClick={() => updateParam("page", String(data.pagination.page - 1))}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -884,7 +884,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 variant="outline"
                 size="sm"
                 disabled={isPending || data.pagination.page >= totalPages}
-                className="border-white/10 bg-white/5 text-[#f8fafc]"
+                className="border-[#2A1A0A]/15 bg-white/5 text-foreground"
                 onClick={() => updateParam("page", String(data.pagination.page + 1))}
               >
                 Siguiente
@@ -931,7 +931,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
 export function ContactTableSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="rounded-[30px] border border-white/10 bg-[#07101b] p-6">
+      <div className="rounded-[30px] border border-[#2A1A0A]/15 bg-background p-6">
         <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
           <div className="space-y-3">
             <div className="h-6 w-32 animate-pulse rounded-full bg-white/8" />
@@ -948,7 +948,7 @@ export function ContactTableSkeleton() {
           <div className="h-12 animate-pulse rounded-2xl bg-white/8" />
         </div>
       </div>
-      <div className="rounded-[28px] border border-white/10 bg-[#07101b] p-4">
+      <div className="rounded-[28px] border border-[#2A1A0A]/15 bg-background p-4">
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <div key={index} className="h-14 animate-pulse rounded-2xl bg-white/8" />

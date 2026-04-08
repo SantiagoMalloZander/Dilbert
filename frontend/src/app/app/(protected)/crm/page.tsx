@@ -95,17 +95,17 @@ export default async function CrmPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[32px] border border-white/10 bg-[#07101b] px-6 py-7 text-white shadow-[0_28px_80px_rgba(2,6,23,0.32)]">
+      <section className="rounded-[32px] border border-[#2A1A0A]/15 bg-background px-6 py-7 text-white shadow-[0_28px_80px_rgba(2,6,23,0.32)]">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <Badge className="border border-[#35d6ae]/20 bg-[#35d6ae]/10 text-[#9fe9d5]">
+            <Badge className="border border-[#D4420A]/20 bg-[#D4420A]/10 text-[#9fe9d5]">
               {getRoleLabel(session.user.role)}
             </Badge>
             <div className="space-y-2">
               <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
                 Bienvenido, {(session.user.name || "equipo").split(" ")[0]}.
               </h1>
-              <p className="max-w-3xl text-sm text-[#9fb0c8] md:text-base">
+              <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
                 Este es tu centro operativo. Acá ves salud del pipeline, distribución de leads y la actividad comercial más reciente sin salir del CRM.
               </p>
             </div>
@@ -114,7 +114,7 @@ export default async function CrmPage() {
           <div className="flex flex-wrap gap-3">
             <Button
               variant="outline"
-              className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+              className="border-[#2A1A0A]/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
               render={<Link href="/app/crm/contacts" />}
             >
               <BriefcaseBusiness className="mr-2 h-4 w-4" />
@@ -122,7 +122,7 @@ export default async function CrmPage() {
             </Button>
             <Button
               variant="outline"
-              className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+              className="border-[#2A1A0A]/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
               render={<Link href="/app/crm/leads" />}
             >
               <Filter className="mr-2 h-4 w-4" />
@@ -166,14 +166,14 @@ export default async function CrmPage() {
           <SellerPerformanceBlock promise={sellerPerformancePromise} />
         </Suspense>
       ) : (
-        <section className="rounded-[28px] border border-white/10 bg-[#07101b] px-6 py-5 text-white shadow-[0_22px_60px_rgba(2,6,23,0.22)]">
+        <section className="rounded-[28px] border border-[#2A1A0A]/15 bg-background px-6 py-5 text-white shadow-[0_22px_60px_rgba(2,6,23,0.22)]">
           <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-[#35d6ae]/10 p-3 text-[#35d6ae]">
+            <div className="rounded-2xl bg-[#D4420A]/10 p-3 text-[#D4420A]">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-lg font-semibold">Benchmark del equipo</h2>
-              <p className="mt-1 text-sm text-[#9fb0c8]">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Tus cards de KPI ya muestran la referencia del equipo para que compares tu volumen y conversión sin perder foco en tus propias oportunidades.
               </p>
             </div>

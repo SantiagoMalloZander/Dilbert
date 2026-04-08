@@ -24,26 +24,26 @@ export function PipelineStage({
   canDrag: boolean;
 }) {
   return (
-    <div className="flex min-h-[72vh] w-[320px] shrink-0 flex-col rounded-[28px] border border-white/10 bg-[#08111d]">
-      <div className="border-b border-white/8 px-5 py-4">
+    <div className="flex min-h-[72vh] w-[320px] shrink-0 flex-col rounded-[28px] border border-[#2A1A0A]/15 bg-background">
+      <div className="border-b border-[#2A1A0A]/10 px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-3">
               <span
-                className="h-3 w-3 rounded-full border border-white/10"
+                className="h-3 w-3 rounded-full border border-[#2A1A0A]/15"
                 style={{ backgroundColor: stage.color }}
               />
-              <h3 className="truncate text-sm font-semibold tracking-wide text-[#f8fafc]">
+              <h3 className="truncate text-sm font-semibold tracking-wide text-foreground">
                 {stage.name}
               </h3>
             </div>
-            <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-[#6f85a3]">
+            <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
               {stage.leadCount} leads
             </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-right">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-[#6f85a3]">Valor</p>
-            <p className="mt-1 text-sm font-semibold text-[#f8fafc]">
+          <div className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 px-3 py-2 text-right">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Valor</p>
+            <p className="mt-1 text-sm font-semibold text-foreground">
               {formatCurrency(stage.totalValue)}
             </p>
           </div>
@@ -86,7 +86,7 @@ export function PipelineStage({
             {provided.placeholder}
 
             {stage.cards.length === 0 ? (
-              <div className="flex flex-1 items-center justify-center rounded-[22px] border border-dashed border-white/10 px-4 py-10 text-center text-sm text-[#6f85a3]">
+              <div className="flex flex-1 items-center justify-center rounded-[22px] border border-dashed border-[#2A1A0A]/15 px-4 py-10 text-center text-sm text-muted-foreground">
                 <div>
                   <p>No hay leads en esta etapa.</p>
                   <p className="mt-1 inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.16em]">
