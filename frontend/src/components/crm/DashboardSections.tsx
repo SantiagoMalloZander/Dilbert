@@ -63,11 +63,11 @@ export function KpiCardsSection({ data }: { data: DashboardKpiData }) {
         return (
           <Card
             key={metric.label}
-            className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard"
+            className="bg-card/90"
           >
             <CardHeader>
               <div className="mb-4 flex items-start justify-between gap-4">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#D4420A]/12 text-[#D4420A]">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <Icon className="h-5 w-5" />
                 </div>
                 <span className="text-3xl font-semibold tracking-tight">{metric.formattedValue}</span>
@@ -89,7 +89,7 @@ export function KpiCardsSection({ data }: { data: DashboardKpiData }) {
 
 export function LeadsByStageSection({ data }: { data: LeadsByStageMetric[] }) {
   return (
-    <Card className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
+    <Card className="bg-card/90">
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div>
           <CardTitle className="text-foreground">Leads por etapa</CardTitle>
@@ -114,7 +114,7 @@ export function LeadsByStageSection({ data }: { data: LeadsByStageMetric[] }) {
 
 export function LeadsBySourceSection({ data }: { data: LeadsBySourceMetric[] }) {
   return (
-    <Card className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
+    <Card className="bg-card/90">
       <CardHeader>
         <CardTitle className="text-foreground">Leads por fuente</CardTitle>
         <CardDescription className="text-muted-foreground">
@@ -130,7 +130,7 @@ export function LeadsBySourceSection({ data }: { data: LeadsBySourceMetric[] }) 
 
 export function RecentActivitySection({ data, isVendor }: { data: RecentActivityRecord[]; isVendor: boolean }) {
   return (
-    <Card className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
+    <Card className="bg-card/90">
       <CardHeader>
         <CardTitle className="text-foreground">
           {isVendor ? "Tu actividad reciente" : "Actividad reciente"}
@@ -142,7 +142,7 @@ export function RecentActivitySection({ data, isVendor }: { data: RecentActivity
       <CardContent className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="border-b border-[#2A1A0A]/10 text-left text-muted-foreground">
+            <tr className="border-b border-white/10 text-left text-muted-foreground">
               <th className="py-2 font-medium">Tipo</th>
               <th className="py-2 font-medium">Descripción</th>
               <th className="py-2 font-medium">Lead/Contacto</th>
@@ -159,9 +159,9 @@ export function RecentActivitySection({ data, isVendor }: { data: RecentActivity
               </tr>
             ) : (
               data.map((activity) => (
-                <tr key={activity.id} className="border-b border-[#2A1A0A]/10">
+                <tr key={activity.id} className="border-b border-white/10">
                   <td className="py-3">
-                    <Badge className="border border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground">
+                    <Badge className="border border-white/10 bg-background/50 text-foreground">
                       {activity.type}
                     </Badge>
                   </td>
@@ -183,7 +183,7 @@ export function RecentActivitySection({ data, isVendor }: { data: RecentActivity
 
 export function UpcomingLeadsSection({ data }: { data: UpcomingLeadRecord[] }) {
   return (
-    <Card className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
+    <Card className="bg-card/90">
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div>
           <CardTitle className="text-foreground">Leads próximos a vencer</CardTitle>
@@ -208,7 +208,7 @@ export function UpcomingLeadsSection({ data }: { data: UpcomingLeadRecord[] }) {
           data.map((lead) => (
             <div
               key={lead.id}
-              className="flex flex-col gap-3 rounded-2xl border border-[#2A1A0A]/10 bg-[#F5F0E8] px-4 py-4 md:flex-row md:items-center md:justify-between"
+              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-background/50 px-4 py-4 md:flex-row md:items-center md:justify-between"
             >
               <div>
                 <p className="font-medium text-foreground">{lead.title}</p>
@@ -244,7 +244,7 @@ export function UpcomingLeadsSection({ data }: { data: UpcomingLeadRecord[] }) {
 
 export function SellerPerformanceSection({ data }: { data: SellerPerformanceRecord[] }) {
   return (
-    <Card className="border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
+    <Card className="bg-card/90">
       <CardHeader>
         <CardTitle className="text-foreground">Rendimiento por vendedor</CardTitle>
         <CardDescription className="text-muted-foreground">
@@ -254,7 +254,7 @@ export function SellerPerformanceSection({ data }: { data: SellerPerformanceReco
       <CardContent className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-sm">
           <thead>
-            <tr className="border-b border-[#2A1A0A]/10 text-left text-muted-foreground">
+            <tr className="border-b border-white/10 text-left text-muted-foreground">
               <th className="py-2 font-medium">Vendedor</th>
               <th className="py-2 font-medium">Leads activos</th>
               <th className="py-2 font-medium">Ganados (mes)</th>
@@ -270,7 +270,7 @@ export function SellerPerformanceSection({ data }: { data: SellerPerformanceReco
               </tr>
             ) : (
               data.map((seller) => (
-                <tr key={seller.userId} className="border-b border-[#2A1A0A]/10">
+                <tr key={seller.userId} className="border-b border-white/10">
                   <td className="py-3 font-medium text-foreground">{seller.name}</td>
                   <td className="py-3 text-foreground">{seller.activeLeads}</td>
                   <td className="py-3 text-foreground">{seller.wonThisMonth}</td>
@@ -295,12 +295,12 @@ export function DashboardSectionSkeleton({
   rows?: number;
 }) {
   return (
-    <div className={cn("rounded-[28px] border border-[#2A1A0A]/15 bg-background p-6", className)}>
-      <div className="h-7 w-44 animate-pulse rounded-full bg-[#F5F0E8]/8" />
-      <div className="mt-3 h-4 w-72 animate-pulse rounded-full bg-[#F5F0E8]/8" />
+    <div className={cn("rounded-[28px] border border-white/10 bg-card/90 p-6", className)}>
+      <div className="h-7 w-44 animate-pulse rounded-full bg-card/10" />
+      <div className="mt-3 h-4 w-72 animate-pulse rounded-full bg-card/10" />
       <div className="mt-6 space-y-3">
         {Array.from({ length: rows }).map((_, index) => (
-          <div key={index} className="h-16 animate-pulse rounded-2xl bg-[#F5F0E8]/8" />
+          <div key={index} className="h-16 animate-pulse rounded-2xl bg-card/10" />
         ))}
       </div>
     </div>

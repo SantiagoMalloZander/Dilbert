@@ -12,6 +12,7 @@ import {
 } from "@/components/crm/DashboardSections";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { requireSession } from "@/lib/workspace-auth";
 import { getRoleLabel } from "@/lib/workspace-roles";
 import { getRecentActivities } from "@/modules/crm/activities/queries";
@@ -95,46 +96,46 @@ export default async function CrmPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[32px] border border-[#2A1A0A]/15 bg-background px-6 py-7 text-foreground shadow-hard">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <Badge className="border border-[#D4420A]/20 bg-[#D4420A]/10 text-foreground">
-              {getRoleLabel(session.user.role)}
-            </Badge>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                Bienvenido, {(session.user.name || "equipo").split(" ")[0]}.
-              </h1>
-              <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
-                Este es tu centro operativo. Acá ves salud del pipeline, distribución de leads y la actividad comercial más reciente sin salir del CRM.
-              </p>
+      <Card className="bg-card/90">
+        <CardContent className="pt-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-3">
+              <Badge className="border border-primary/20 bg-primary/10 text-foreground">
+                {getRoleLabel(session.user.role)}
+              </Badge>
+              <div className="space-y-2">
+                <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                  Bienvenido, {(session.user.name || "equipo").split(" ")[0]}.
+                </h1>
+                <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
+                  Este es tu centro operativo. Acá ves salud del pipeline, distribución de leads y la actividad comercial más reciente sin salir del CRM.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="outline"
+                render={<Link href="/app/crm/contacts" />}
+              >
+                <BriefcaseBusiness className="mr-2 h-4 w-4" />
+                Contactos
+              </Button>
+              <Button
+                variant="outline"
+                render={<Link href="/app/crm/leads" />}
+              >
+                <Filter className="mr-2 h-4 w-4" />
+                Pipeline
+              </Button>
+              <Button render={<Link href="/app/crm/leads" />}>
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Abrir kanban
+              </Button>
             </div>
           </div>
-
-          <div className="flex flex-wrap gap-3">
-            <Button
-              variant="outline"
-              className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground hover:bg-[#F5F0E8] hover:text-foreground"
-              render={<Link href="/app/crm/contacts" />}
-            >
-              <BriefcaseBusiness className="mr-2 h-4 w-4" />
-              Contactos
-            </Button>
-            <Button
-              variant="outline"
-              className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground hover:bg-[#F5F0E8] hover:text-foreground"
-              render={<Link href="/app/crm/leads" />}
-            >
-              <Filter className="mr-2 h-4 w-4" />
-              Pipeline
-            </Button>
-            <Button render={<Link href="/app/crm/leads" />}>
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Abrir kanban
-            </Button>
-          </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       <Suspense fallback={<DashboardSectionSkeleton rows={4} />}>
         <KpiSection promise={kpiPromise} />
@@ -166,19 +167,21 @@ export default async function CrmPage() {
           <SellerPerformanceBlock promise={sellerPerformancePromise} />
         </Suspense>
       ) : (
-        <section className="rounded-[28px] border border-[#2A1A0A]/15 bg-background px-6 py-5 text-foreground shadow-hard">
-          <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-[#D4420A]/10 p-3 text-[#D4420A]">
-              <Sparkles className="h-5 w-5" />
+        <Card className="bg-card/90">
+          <CardContent className="pt-5">
+            <div className="flex items-start gap-3">
+              <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">Benchmark del equipo</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Tus cards de KPI ya muestran la referencia del equipo para que compares tu volumen y conversión sin perder foco en tus propias oportunidades.
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-lg font-semibold">Benchmark del equipo</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Tus cards de KPI ya muestran la referencia del equipo para que compares tu volumen y conversión sin perder foco en tus propias oportunidades.
-              </p>
-            </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

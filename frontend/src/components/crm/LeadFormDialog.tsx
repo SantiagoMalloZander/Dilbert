@@ -223,7 +223,7 @@ export function LeadFormDialog({
               </div>
 
               {createInlineContact ? (
-                <div className="grid gap-3 rounded-2xl border border-[#2A1A0A]/10 bg-card p-4 sm:grid-cols-2">
+                <div className="grid gap-3 rounded-2xl border border-white/10 bg-background/50 p-4 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Input
                       placeholder="Nombre"
@@ -337,7 +337,7 @@ export function LeadFormDialog({
                           "w-full rounded-xl border px-3 py-2 text-left transition-colors",
                           selectedContact?.id === contact.id
                             ? "border-primary bg-primary/10"
-                            : "border-[#2A1A0A]/10 bg-white hover:bg-background"
+                            : "border-white/10 bg-background/50 hover:bg-background/70"
                         )}
                       >
                         <p className="font-medium">{contact.fullName}</p>
@@ -373,7 +373,7 @@ export function LeadFormDialog({
                   setForm((current) => ({ ...current, currency: value || "ARS" }))
                 }
               >
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -420,7 +420,7 @@ export function LeadFormDialog({
             <div className="space-y-2">
               <Label>Pipeline</Label>
               <Select value={form.pipelineId} onValueChange={handlePipelineChange}>
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -440,7 +440,7 @@ export function LeadFormDialog({
                   setForm((current) => ({ ...current, stageId: value || current.stageId }))
                 }
               >
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -461,7 +461,7 @@ export function LeadFormDialog({
                     setForm((current) => ({ ...current, assignedTo: value || current.assignedTo }))
                   }
                 >
-                  <SelectTrigger className="w-full bg-white">
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
