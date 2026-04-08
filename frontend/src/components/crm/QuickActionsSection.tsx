@@ -95,7 +95,7 @@ export function QuickActionsSection({
     },
     {
       show: canViewPipeline,
-      icon: <Zap className="h-5 w-5" />,
+      icon: <Sparkles className="h-5 w-5" />,
       title: "Ver Pipeline",
       description: "Kanban de oportunidades",
       onClick: handleViewPipeline,

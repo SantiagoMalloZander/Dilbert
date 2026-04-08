@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useMemo, useState, useTransition } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
-import { FilterX, Loader2, Plus, Sparkles } from "lucide-react";
+import { ArrowPathIcon, FunnelIcon, PlusIcon, Sparkles } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PipelineStage } from "@/components/crm/PipelineStage";
 import { Breadcrumbs } from "@/components/crm/Breadcrumbs";
@@ -291,7 +291,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
                   onClick={handleClearFilters}
                   className="w-full border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground hover:border-[#D4420A] hover:bg-[#D4420A]/10 hover:text-foreground"
                 >
-                  {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FilterX className="mr-2 h-4 w-4" />}
+                  {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Filter className="mr-2 h-4 w-4" />}
                   Limpiar
                 </Button>
               </div>

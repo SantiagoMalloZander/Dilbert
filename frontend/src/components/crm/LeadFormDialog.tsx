@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Search } from "lucide-react";
+import { ArrowPathIcon, Search } from "lucide-react";
 import { createContact, searchContactsAction } from "@/modules/crm/contacts/actions";
 import type { ContactFormInput, ContactSearchResult } from "@/modules/crm/contacts/types";
 import { createLead } from "@/modules/crm/leads/actions";
