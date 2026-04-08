@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
-import { createServerSupabaseAuthClient } from "@/lib/workspace-supabase";
-import { createAdminSupabaseClient } from "@/lib/workspace-supabase";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/ssr";
 import { getRoleLabel, type AppRole } from "@/lib/workspace-roles";
 import {
   INTEGRATION_DEFINITIONS,
@@ -190,7 +190,7 @@ export async function getAccountPageData(params: {
   email?: string | null;
   role?: AppRole;
 }) {
-  const supabase = createAdminSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const [userRow, authUser, company] = await Promise.all([
     getAccountUser(params.userId, params.companyId),
     getAuthUserById(params.userId),
