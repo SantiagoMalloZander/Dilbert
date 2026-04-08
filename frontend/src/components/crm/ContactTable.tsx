@@ -877,7 +877,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground"
                 onClick={() => updateParam("page", String(data.pagination.page - 1))}
               >
-                <ChevronLeftIcon className="mr-2 h-4 w-4" />
+                <ChevronLeft className="mr-2 h-4 w-4" />
                 Anterior
               </Button>
               <Button
