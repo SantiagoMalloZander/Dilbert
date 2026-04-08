@@ -231,11 +231,21 @@ export async function getAccountPageData(params: {
   });
 
   const supabase = await createServerSupabaseClient();
-  const [userRow, authUser, company] = await Promise.all([
+  const [userRow, company] = await Promise.all([
     getAccountUser(params.userId, params.companyId),
-    getAuthUserById(params.userId),
     params.companyId ? getCompanyById(params.companyId) : Promise.resolve(null),
   ]);
+
+  // Try to fetch auth user, but it's optional — we have enough data from userRow
+  let authUser = null;
+  try {
+    authUser = await getAuthUserById(params.userId);
+  } catch (error) {
+    console.warn("[getAccountPageData] Could not fetch auth user, will use userRow data:", {
+      userId: params.userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   console.log("[getAccountPageData] Fetched data:", {
     userRow: !!userRow,
@@ -258,7 +268,7 @@ export async function getAccountPageData(params: {
     channelRows = (data as ChannelCredentialRow[] | null) || [];
   }
 
-  const providers = readProviders(authUser);
+  const providers = authUser ? readProviders(authUser) : [];
   const hasPassword = providers.includes("email");
   const channelMap = new Map(
     ((channelRows || []).flatMap((channel) => {
@@ -282,17 +292,17 @@ export async function getAccountPageData(params: {
   return {
     name:
       userRow?.name ||
-      String(authUser.user_metadata?.full_name || "").trim() ||
+      (authUser ? String(authUser.user_metadata?.full_name || "").trim() : "") ||
       params.email ||
       "Usuario Dilbert",
-    email: userRow?.email || authUser.email || params.email || "",
+    email: userRow?.email || (authUser?.email) || params.email || "",
     avatarUrl:
-      userRow?.avatar_url || String(authUser.user_metadata?.avatar_url || "") || null,
+      userRow?.avatar_url || (authUser ? String(authUser.user_metadata?.avatar_url || "") : "") || null,
     phone: userRow?.phone || null,
     companyName: company?.name || "Sin empresa asignada",
     role: (userRow?.role || params.role || "analyst") as AppRole,
     roleLabel: getRoleLabel((userRow?.role || params.role || "analyst") as AppRole),
-    createdAt: userRow?.created_at || authUser.created_at || new Date().toISOString(),
+    createdAt: userRow?.created_at || (authUser?.created_at) || new Date().toISOString(),
     hasPassword,
     oauthOnly: !hasPassword,
     channels,
