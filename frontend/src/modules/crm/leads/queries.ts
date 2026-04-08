@@ -468,7 +468,9 @@ export function parseLeadBoardFilters(
 export async function getLeadBoardData(filters: LeadBoardFilters): Promise<LeadBoardData> {
   const { user, company_id } = await requireAuth();
   const pipeline = await getActivePipeline(company_id);
-  const [stages, assignees, leads] = await Promise.all([
+  const supabase = await createServerSupabaseClient();
+
+  const [stages, assignees, leads, pipelinesResult] = await Promise.all([
     getPipelineStages(company_id, pipeline.id),
     getAssignees(company_id),
     getLeadsForBoard({
@@ -478,6 +480,7 @@ export async function getLeadBoardData(filters: LeadBoardFilters): Promise<LeadB
       role: user.role,
       filters,
     }),
+    supabase.from("pipelines").select("id, name, pipeline_stages(id, name)").eq("company_id", company_id),
   ]);
 
   const contactsById = await getContactsMap(
@@ -508,6 +511,12 @@ export async function getLeadBoardData(filters: LeadBoardFilters): Promise<LeadB
         })
       : null;
 
+  const pipelines = (pipelinesResult.data || []).map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    stages: (p.pipeline_stages || []).map((s: any) => ({ id: s.id, name: s.name })),
+  }));
+
   return {
     currentUser: {
       id: user.id,
@@ -523,6 +532,10 @@ export async function getLeadBoardData(filters: LeadBoardFilters): Promise<LeadB
     assignees,
     sources: ["manual", "whatsapp", "gmail", "instagram", "zoom", "meet", "import"],
     selectedLead,
+    leadForm: {
+      pipelines,
+      canCreate: user.role !== "vendor",
+    },
     stages: stages.map((stage) => {
       const cards = cardsByStage.get(stage.id) || [];
 

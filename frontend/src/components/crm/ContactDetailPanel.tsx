@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   BriefcaseBusiness,
   CalendarClock,
@@ -65,6 +66,8 @@ export function ContactDetailPanel({
   canEdit: boolean;
   canCreateLead: boolean;
 }) {
+  const router = useRouter();
+
   if (!contact) {
     return null;
   }
@@ -155,10 +158,14 @@ export function ContactDetailPanel({
                 </div>
               ) : (
                 contact.leads.map((lead) => (
-                  <div key={lead.id} className="rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4">
+                  <button
+                    key={lead.id}
+                    onClick={() => router.push(`/app/crm/leads?lead=${lead.id}`)}
+                    className="group w-full rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
+                  >
                     <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-medium">{lead.title}</p>
+                      <div className="flex-1">
+                        <p className="font-medium group-hover:text-[#D4420A]">{lead.title}</p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {formatCurrency(lead.value, lead.currency)} · {lead.status}
                         </p>
@@ -169,7 +176,7 @@ export function ContactDetailPanel({
                         </Badge>
                       ) : null}
                     </div>
-                  </div>
+                  </button>
                 ))
               )}
             </div>

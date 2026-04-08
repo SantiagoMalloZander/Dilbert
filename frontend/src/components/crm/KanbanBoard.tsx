@@ -3,10 +3,11 @@
 import dynamic from "next/dynamic";
 import { useMemo, useState, useTransition } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
-import { FilterX, Loader2, Sparkles } from "lucide-react";
+import { FilterX, Loader2, Plus, Sparkles } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PipelineStage } from "@/components/crm/PipelineStage";
 import { Breadcrumbs } from "@/components/crm/Breadcrumbs";
+import { LeadFormDialog } from "@/components/crm/LeadFormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,6 +58,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [stages, setStages] = useState<PipelineStageRecord[]>(data.stages);
+  const [createLeadOpen, setCreateLeadOpen] = useState(false);
 
   const canDrag = data.currentUser.role === "owner" || data.currentUser.role === "vendor";
 
@@ -208,6 +210,16 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
                   </span>
                 )}
               </div>
+              {data.leadForm.canCreate && (
+                <Button
+                  size="sm"
+                  onClick={() => setCreateLeadOpen(true)}
+                  disabled={!data.leadForm.pipelines.length}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  CREAR LEAD
+                </Button>
+              )}
             </div>
             <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr_1fr_auto]">
               {data.currentUser.canManageAssigneeFilter ? (
@@ -306,6 +318,14 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
       <LeadDetailPanel
         key={data.selectedLead ? `${data.selectedLead.id}:${data.selectedLead.updatedAt}` : "lead-panel"}
         lead={data.selectedLead}
+      />
+
+      <LeadFormDialog
+        open={createLeadOpen}
+        onOpenChange={setCreateLeadOpen}
+        pipelines={data.leadForm.pipelines}
+        assignees={data.assignees}
+        isOwner={data.currentUser.role === "owner"}
       />
     </>
   );

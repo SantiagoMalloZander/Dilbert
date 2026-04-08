@@ -139,6 +139,10 @@ export type LeadBoardData = {
   assignees: LeadAssigneeOption[];
   sources: CrmSource[];
   selectedLead: LeadDetailRecord | null;
+  leadForm: {
+    pipelines: Array<{ id: string; name: string; stages: Array<{ id: string; name: string }> }>;
+    canCreate: boolean;
+  };
 };
 
 export type DashboardKpiMetric = {

@@ -261,7 +261,7 @@ export function LeadDetailPanel({
               <div>
                 <h2 className="text-2xl font-semibold leading-tight">{lead.title}</h2>
                 <button
-                  onClick={() => router.push(`/app/crm/contacts?contactId=${lead.contact.id}`)}
+                  onClick={() => router.push(`/app/crm/contacts?contact=${lead.contact.id}`)}
                   className="mt-1 flex items-center gap-1.5 text-sm text-[#D4420A] hover:text-[#D4420A]/80 transition-colors"
                 >
                   {lead.contact.name}
@@ -294,7 +294,7 @@ export function LeadDetailPanel({
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <button
-                onClick={() => router.push(`/app/crm/contacts?contactId=${lead.contact.id}`)}
+                onClick={() => router.push(`/app/crm/contacts?contact=${lead.contact.id}`)}
                 className="group rounded-2xl border border-[#2A1A0A]/15 bg-white/5 p-4 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
               >
                 <p className="text-xs text-muted-foreground">Contacto</p>
