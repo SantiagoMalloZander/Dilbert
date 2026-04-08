@@ -142,40 +142,22 @@ export async function listAdminCompanies() {
 }
 
 export const getCompanyById = cache(async function getCompanyById(companyId: string) {
-  try {
-    const supabase = createAdminSupabaseClient();
-    const { data, error } = await supabase
-      .from("companies")
-      .select("id, name, status")
-      .eq("id", companyId)
-      .maybeSingle();
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("companies")
+    .select("id, name, status")
+    .eq("id", companyId)
+    .maybeSingle();
 
-    if (error) {
-      console.error("[getCompanyById] Supabase query error:", {
-        companyId,
-        error: error.message,
-        code: error.code,
-      });
-      throw error;
-    }
-
-    console.log("[getCompanyById] Successfully fetched company:", {
-      companyId,
-      found: !!data,
-    });
-
-    return data as
-      | {
-          id: string;
-          name: string;
-          status: CompanyStatus;
-        }
-      | null;
-  } catch (error) {
-    console.error("[getCompanyById] Unexpected error:", {
-      companyId,
-      error: error instanceof Error ? error.message : String(error),
-    });
+  if (error) {
     throw error;
   }
+
+  return data as
+    | {
+        id: string;
+        name: string;
+        status: CompanyStatus;
+      }
+    | null;
 });

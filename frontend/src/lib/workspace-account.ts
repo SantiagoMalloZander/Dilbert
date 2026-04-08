@@ -108,67 +108,34 @@ function validatePasswordStrength(password: string) {
 }
 
 async function getAuthUserById(userId: string) {
-  try {
-    console.log("[getAuthUserById] Creating admin client for userId:", userId);
-    const supabase = createAdminSupabaseClient();
-    console.log("[getAuthUserById] Admin client created, calling auth.admin.getUserById");
-    const { data, error } = await supabase.auth.admin.getUserById(userId);
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase.auth.admin.getUserById(userId);
 
-    if (error) {
-      console.error("[getAuthUserById] Auth admin error:", {
-        userId,
-        error: error.message,
-        code: error.code,
-      });
-      throw error;
-    }
-
-    console.log("[getAuthUserById] Successfully fetched auth user");
-    return data.user;
-  } catch (error) {
-    console.error("[getAuthUserById] Unexpected error:", {
-      userId,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+  if (error) {
     throw error;
   }
+
+  return data.user;
 }
 
 async function getAccountUser(userId: string, companyId?: string | null) {
-  try {
-    console.log("[getAccountUser] Fetching user:", { userId, companyId });
-    const supabase = createAdminSupabaseClient();
-    let query = supabase
-      .from("users")
-      .select("id, company_id, email, name, avatar_url, role, phone, created_at")
-      .eq("id", userId);
+  const supabase = createAdminSupabaseClient();
+  let query = supabase
+    .from("users")
+    .select("id, company_id, email, name, avatar_url, role, phone, created_at")
+    .eq("id", userId);
 
-    if (companyId) {
-      query = query.eq("company_id", companyId);
-    }
+  if (companyId) {
+    query = query.eq("company_id", companyId);
+  }
 
-    const { data, error } = await query.maybeSingle();
+  const { data, error } = await query.maybeSingle();
 
-    if (error) {
-      console.error("[getAccountUser] Query error:", {
-        userId,
-        companyId,
-        error: error.message,
-        code: error.code,
-      });
-      throw error;
-    }
-
-    console.log("[getAccountUser] Successfully fetched user:", { found: !!data });
-    return (data as UserRow | null) ?? null;
-  } catch (error) {
-    console.error("[getAccountUser] Unexpected error:", {
-      userId,
-      error: error instanceof Error ? error.message : String(error),
-    });
+  if (error) {
     throw error;
   }
+
+  return (data as UserRow | null) ?? null;
 }
 
 async function ensureAvatarBucket() {
@@ -223,35 +190,19 @@ export async function getAccountPageData(params: {
   email?: string | null;
   role?: AppRole;
 }) {
-  console.log("[getAccountPageData] Starting with params:", {
-    userId: params.userId,
-    companyId: params.companyId,
-    email: params.email,
-    role: params.role,
-  });
-
   const supabase = await createServerSupabaseClient();
   const [userRow, company] = await Promise.all([
     getAccountUser(params.userId, params.companyId),
     params.companyId ? getCompanyById(params.companyId) : Promise.resolve(null),
   ]);
 
-  // Try to fetch auth user, but it's optional — we have enough data from userRow
+  // Try to fetch auth user for provider info — optional, userRow is enough fallback
   let authUser = null;
   try {
     authUser = await getAuthUserById(params.userId);
-  } catch (error) {
-    console.warn("[getAccountPageData] Could not fetch auth user, will use userRow data:", {
-      userId: params.userId,
-      error: error instanceof Error ? error.message : String(error),
-    });
+  } catch {
+    // auth.admin may fail in some contexts; fall back to userRow data
   }
-
-  console.log("[getAccountPageData] Fetched data:", {
-    userRow: !!userRow,
-    authUser: !!authUser,
-    company: !!company,
-  });
 
   let channelRows: ChannelCredentialRow[] | null = [];
   if (params.companyId) {
