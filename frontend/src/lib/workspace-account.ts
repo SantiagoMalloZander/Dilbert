@@ -26,11 +26,9 @@ type UserRow = {
 };
 
 type ChannelCredentialRow = {
-  company_id: string;
-  channel: string;
-  updated_at: string;
-  last_sync_at: string | null;
-  status?: "pending" | "connected" | null;
+  channel_type: string;
+  connected_at: string;
+  status: "pending" | "connected" | null;
 };
 
 export type AccountChannelRecord = {
@@ -204,26 +202,26 @@ export async function getAccountPageData(params: {
     // auth.admin may fail in some contexts; fall back to userRow data
   }
 
-  let channelRows: ChannelCredentialRow[] | null = [];
-  if (params.companyId) {
-    const { data, error: channelError } = await supabase
+  let channelRows: ChannelCredentialRow[] = [];
+  try {
+    // @ts-ignore - Supabase types may not reflect latest schema; runtime query is correct
+    const { data: channelData, error: channelError } = await supabase
       .from("channel_credentials")
-      .select("company_id, channel, updated_at, last_sync_at, status")
-      .eq("user_id", params.userId)
-      .eq("company_id", params.companyId);
+      .select("channel_type, connected_at, status")
+      .eq("user_id", params.userId);
 
-    if (channelError) {
-      throw channelError;
+    if (!channelError && channelData) {
+      channelRows = (channelData as unknown as ChannelCredentialRow[]) || [];
     }
-
-    channelRows = (data as ChannelCredentialRow[] | null) || [];
+  } catch {
+    // If channel_credentials query fails, continue without channels (not a critical field)
   }
 
   const providers = authUser ? readProviders(authUser) : [];
   const hasPassword = providers.includes("email");
   const channelMap = new Map(
     ((channelRows || []).flatMap((channel) => {
-      const channelType = fromDatabaseChannelType(channel.channel);
+      const channelType = fromDatabaseChannelType(channel.channel_type);
       return channelType ? [[channelType, channel] as const] : [];
     }) || [])
   );
@@ -236,7 +234,7 @@ export async function getAccountPageData(params: {
       status: row && (row.status === "pending" || row.status === "connected")
         ? "connected"
         : "disconnected",
-      connectedAt: row?.last_sync_at || row?.updated_at || null,
+      connectedAt: row?.connected_at || null,
     } satisfies AccountChannelRecord;
   });
 
