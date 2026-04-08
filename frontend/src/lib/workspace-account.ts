@@ -108,34 +108,67 @@ function validatePasswordStrength(password: string) {
 }
 
 async function getAuthUserById(userId: string) {
-  const supabase = createAdminSupabaseClient();
-  const { data, error } = await supabase.auth.admin.getUserById(userId);
+  try {
+    console.log("[getAuthUserById] Creating admin client for userId:", userId);
+    const supabase = createAdminSupabaseClient();
+    console.log("[getAuthUserById] Admin client created, calling auth.admin.getUserById");
+    const { data, error } = await supabase.auth.admin.getUserById(userId);
 
-  if (error) {
+    if (error) {
+      console.error("[getAuthUserById] Auth admin error:", {
+        userId,
+        error: error.message,
+        code: error.code,
+      });
+      throw error;
+    }
+
+    console.log("[getAuthUserById] Successfully fetched auth user");
+    return data.user;
+  } catch (error) {
+    console.error("[getAuthUserById] Unexpected error:", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw error;
   }
-
-  return data.user;
 }
 
 async function getAccountUser(userId: string, companyId?: string | null) {
-  const supabase = createAdminSupabaseClient();
-  let query = supabase
-    .from("users")
-    .select("id, company_id, email, name, avatar_url, role, phone, created_at")
-    .eq("id", userId);
+  try {
+    console.log("[getAccountUser] Fetching user:", { userId, companyId });
+    const supabase = createAdminSupabaseClient();
+    let query = supabase
+      .from("users")
+      .select("id, company_id, email, name, avatar_url, role, phone, created_at")
+      .eq("id", userId);
 
-  if (companyId) {
-    query = query.eq("company_id", companyId);
-  }
+    if (companyId) {
+      query = query.eq("company_id", companyId);
+    }
 
-  const { data, error } = await query.maybeSingle();
+    const { data, error } = await query.maybeSingle();
 
-  if (error) {
+    if (error) {
+      console.error("[getAccountUser] Query error:", {
+        userId,
+        companyId,
+        error: error.message,
+        code: error.code,
+      });
+      throw error;
+    }
+
+    console.log("[getAccountUser] Successfully fetched user:", { found: !!data });
+    return (data as UserRow | null) ?? null;
+  } catch (error) {
+    console.error("[getAccountUser] Unexpected error:", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error;
   }
-
-  return (data as UserRow | null) ?? null;
 }
 
 async function ensureAvatarBucket() {
