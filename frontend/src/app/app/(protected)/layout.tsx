@@ -13,11 +13,25 @@ export default async function ProtectedLayout({
   const session = await requireSession();
   let companyName: string | null = null;
 
+  console.log("[ProtectedLayout] Session loaded:", {
+    userId: session.user.id,
+    email: session.user.email,
+    companyId: session.user.companyId,
+    role: session.user.role,
+    isSuperAdmin: session.user.isSuperAdmin,
+  });
+
   if (session.user.companyId) {
     try {
       const company = await getCompanyById(session.user.companyId);
       companyName = company?.name || null;
+      console.log("[ProtectedLayout] Company loaded:", { companyName });
     } catch (error) {
+      console.error("[ProtectedLayout] Failed to load company:", {
+        companyId: session.user.companyId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return (
         <>
           <InactivityGuard />

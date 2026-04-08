@@ -1,6 +1,5 @@
 import { cache } from "react";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
-import { createServerSupabaseClient } from "@/lib/supabase/ssr";
 
 type CompanyStatus = "active" | "inactive" | "suspended";
 type CompanySettings = {
@@ -144,7 +143,7 @@ export async function listAdminCompanies() {
 
 export const getCompanyById = cache(async function getCompanyById(companyId: string) {
   try {
-    const supabase = await createServerSupabaseClient();
+    const supabase = createAdminSupabaseClient();
     const { data, error } = await supabase
       .from("companies")
       .select("id, name, status")
