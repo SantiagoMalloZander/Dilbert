@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useMemo, useState, useTransition } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
-import { ArrowPathIcon, FunnelIcon, PlusIcon, Sparkles } from "lucide-react";
+import { Loader2, Filter, Plus, Sparkles } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PipelineStage } from "@/components/crm/PipelineStage";
 import { Breadcrumbs } from "@/components/crm/Breadcrumbs";

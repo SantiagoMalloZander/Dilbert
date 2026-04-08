@@ -383,7 +383,7 @@ export function LeadDetailPanel({
 
           <section className="space-y-3">
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              <ClockIcon className="h-3.5 w-3.5" />
+              <Clock3 className="h-3.5 w-3.5" />
               Timeline
             </div>
             <div className="space-y-3">
