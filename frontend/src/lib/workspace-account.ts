@@ -395,7 +395,7 @@ export async function updateAccountPassword(params: {
       throw new Error("CURRENT_PASSWORD_REQUIRED");
     }
 
-    const authClient = createServerSupabaseAuthClient();
+    const authClient = await createServerSupabaseClient();
     const { error: signInError } = await authClient.auth.signInWithPassword({
       email: params.email,
       password: currentPassword,
