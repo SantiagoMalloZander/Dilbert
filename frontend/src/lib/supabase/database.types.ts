@@ -214,6 +214,7 @@ export type Database = {
           created_at: string
           credentials: Json
           id: string
+          instance_name: string | null
           last_sync_at: string | null
           status: Database["public"]["Enums"]["channel_connection_status"]
           updated_at: string
@@ -225,6 +226,7 @@ export type Database = {
           created_at?: string
           credentials?: Json
           id?: string
+          instance_name?: string | null
           last_sync_at?: string | null
           status?: Database["public"]["Enums"]["channel_connection_status"]
           updated_at?: string
@@ -236,6 +238,7 @@ export type Database = {
           created_at?: string
           credentials?: Json
           id?: string
+          instance_name?: string | null
           last_sync_at?: string | null
           status?: Database["public"]["Enums"]["channel_connection_status"]
           updated_at?: string
