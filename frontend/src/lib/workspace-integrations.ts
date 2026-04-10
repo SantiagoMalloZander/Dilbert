@@ -1,7 +1,6 @@
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 export type IntegrationChannelType =
-  | "whatsapp"
   | "whatsapp_personal"
   | "whatsapp_business"
   | "gmail"
@@ -98,23 +97,6 @@ export const INTEGRATION_DEFINITIONS: IntegrationDefinition[] = [
         key: "personalPhoneNumber",
         label: "Número personal",
         placeholder: "+54 11 XXXX XXXX",
-      },
-    ],
-  },
-  {
-    channelType: "whatsapp",
-    name: "WhatsApp Cloud API",
-    subtitle: "Meta Cloud API (Coming Soon)",
-    fields: [
-      {
-        key: "phoneNumberId",
-        label: "Phone Number ID",
-        placeholder: "109876543210987",
-      },
-      {
-        key: "permanentToken",
-        label: "Permanent Token",
-        placeholder: "EAAG...",
       },
     ],
   },
@@ -237,25 +219,21 @@ function getDefinition(channelType: string) {
 export function toDatabaseChannelType(
   channelType: IntegrationChannelType
 ): "whatsapp_business" | "whatsapp_personal" | "gmail" | "instagram" | "meet" | "zoom" | "teams" {
-  switch (channelType) {
-    case "whatsapp":
-      return "whatsapp_business";
-    default:
-      return channelType;
-  }
+  // Direct mapping - no conversion needed
+  return channelType as any;
 }
 
 export function fromDatabaseChannelType(channel: string): IntegrationChannelType | null {
+  // Direct mapping - no conversion needed
   switch (channel) {
     case "whatsapp_business":
-      return "whatsapp";
     case "whatsapp_personal":
     case "gmail":
     case "instagram":
     case "meet":
     case "zoom":
     case "teams":
-      return channel;
+      return channel as IntegrationChannelType;
     default:
       return null;
   }
