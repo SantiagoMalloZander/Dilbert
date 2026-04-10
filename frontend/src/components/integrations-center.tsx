@@ -353,17 +353,28 @@ export function IntegrationsCenter({
       ) : null}
 
       {role === "vendor" ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {(vendorChannels || []).map((channel) => (
-            <VendorChannelCard
-              key={channel.channelType}
-              channel={channel}
-              onConnect={openConnectDialog}
-              onDisconnect={handleDisconnect}
-              actionKey={actionKey}
-            />
-          ))}
-        </div>
+        <>
+          {(!vendorChannels || vendorChannels.length === 0) ? (
+            <Card className="bg-card/90">
+              <CardContent className="flex items-center gap-3 px-4 py-10 text-sm text-muted-foreground">
+                <CircleOff className="h-4 w-4" />
+                No hay canales disponibles para conectar.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {vendorChannels.map((channel) => (
+                <VendorChannelCard
+                  key={channel.channelType}
+                  channel={channel}
+                  onConnect={openConnectDialog}
+                  onDisconnect={handleDisconnect}
+                  actionKey={actionKey}
+                />
+              ))}
+            </div>
+          )}
+        </>
       ) : (
         <div className="space-y-4">
           {(ownerVendors || []).length > 0 ? (
