@@ -24,6 +24,9 @@ interface EvolutionInstanceResponse {
 }
 
 interface EvolutionQrResponse {
+  // /instance/connect/{name} returns { base64: "data:image/png;base64,..." }
+  base64?: string;
+  // older format fallback
   qrcode?: {
     base64: string;
   };
@@ -31,7 +34,9 @@ interface EvolutionQrResponse {
 
 interface EvolutionInfoResponse {
   instance?: {
+    instanceName?: string;
     status?: EvolutionInstanceStatus;
+    state?: string; // v1 uses "state" field: "open" | "close" | "connecting"
   };
 }
 
@@ -53,11 +58,9 @@ export async function createEvolutionInstance(params: {
   const body: Record<string, unknown> = {
     instanceName,
     businessAccount: params.isBusinessAccount,
-    webhook: {
-      url: params.webhookUrl,
-      enabled: true,
-      events: ["messages.upsert", "messages.update", "connection.update"],
-    },
+    webhook: params.webhookUrl,
+    webhookByEvents: true,
+    events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE"],
   };
 
   if (params.phoneNumber) {
@@ -83,11 +86,12 @@ export async function createEvolutionInstance(params: {
 }
 
 /**
- * Get QR code for WhatsApp Personal scanning
+ * Get QR code for WhatsApp scanning.
+ * Evolution API v1: GET /instance/connect/{name} returns { base64: "data:image/png;base64,..." }
  */
 export async function getInstanceQrCode(instanceName: string): Promise<string> {
   const response = await fetch(
-    `${EVOLUTION_URL}/instance/qrcode/${instanceName}`,
+    `${EVOLUTION_URL}/instance/connect/${instanceName}`,
     {
       headers: {
         apikey: EVOLUTION_KEY,
@@ -96,11 +100,11 @@ export async function getInstanceQrCode(instanceName: string): Promise<string> {
   );
 
   if (!response.ok) {
-    throw new Error("Failed to get QR code");
+    return "";
   }
 
   const data = (await response.json()) as EvolutionQrResponse;
-  return data.qrcode?.base64 || "";
+  return data.base64 || data.qrcode?.base64 || "";
 }
 
 /**
@@ -111,7 +115,7 @@ export async function getInstanceStatus(
 ): Promise<EvolutionInstanceStatus> {
   try {
     const response = await fetch(
-      `${EVOLUTION_URL}/instance/info/${instanceName}`,
+      `${EVOLUTION_URL}/instance/connectionState/${instanceName}`,
       {
         headers: {
           apikey: EVOLUTION_KEY,
@@ -122,12 +126,12 @@ export async function getInstanceStatus(
     if (!response.ok) return "error";
 
     const data = (await response.json()) as EvolutionInfoResponse;
-    const rawStatus = data.instance?.status as string | undefined;
-    // Evolution API v1 uses "open"/"close" as states
-    if (rawStatus === "open") return "connected";
-    if (rawStatus === "close" || rawStatus === "disconnected") return "disconnected";
-    if (rawStatus === "connecting") return "connecting";
-    return (rawStatus as EvolutionInstanceStatus) || "disconnected";
+    const rawState = data.instance?.state || data.instance?.status as string | undefined;
+    // Evolution API v1 uses "open"/"close"/"connecting" in state field
+    if (rawState === "open") return "connected";
+    if (rawState === "close" || rawState === "disconnected") return "disconnected";
+    if (rawState === "connecting") return "connecting";
+    return (rawState as EvolutionInstanceStatus) || "disconnected";
   } catch (error) {
     console.error("Failed to get instance status:", error);
     return "error";
