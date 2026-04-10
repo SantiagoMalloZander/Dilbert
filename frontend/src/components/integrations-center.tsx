@@ -47,6 +47,7 @@ import { Label } from "@/components/ui/label";
 const INTEGRATIONS_API = "/app/api/integrations";
 const CHANNEL_ICONS = {
   whatsapp: MessageCircleMore,
+  whatsapp_business: MessageCircleMore,
   whatsapp_personal: PhoneCall,
   gmail: Mail,
   instagram: Send,

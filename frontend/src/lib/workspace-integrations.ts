@@ -3,6 +3,7 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server";
 export type IntegrationChannelType =
   | "whatsapp"
   | "whatsapp_personal"
+  | "whatsapp_business"
   | "gmail"
   | "instagram"
   | "meet"
@@ -77,15 +78,34 @@ export type OwnerIntegrationsData = {
 
 export const INTEGRATION_DEFINITIONS: IntegrationDefinition[] = [
   {
-    channelType: "whatsapp",
+    channelType: "whatsapp_business",
     name: "WhatsApp Business",
-    subtitle: "Meta API",
+    subtitle: "Evolution API",
     fields: [
       {
-        key: "businessAccountId",
-        label: "Business Account ID",
-        placeholder: "123456789012345",
+        key: "businessPhoneNumber",
+        label: "Número comercial",
+        placeholder: "+54 11 XXXX XXXX",
       },
+    ],
+  },
+  {
+    channelType: "whatsapp_personal",
+    name: "WhatsApp Personal",
+    subtitle: "Evolution API",
+    fields: [
+      {
+        key: "personalPhoneNumber",
+        label: "Número personal",
+        placeholder: "+54 11 XXXX XXXX",
+      },
+    ],
+  },
+  {
+    channelType: "whatsapp",
+    name: "WhatsApp Cloud API",
+    subtitle: "Meta Cloud API (Coming Soon)",
+    fields: [
       {
         key: "phoneNumberId",
         label: "Phone Number ID",
@@ -95,28 +115,6 @@ export const INTEGRATION_DEFINITIONS: IntegrationDefinition[] = [
         key: "permanentToken",
         label: "Permanent Token",
         placeholder: "EAAG...",
-      },
-    ],
-  },
-  {
-    channelType: "whatsapp_personal",
-    name: "WhatsApp (Personal)",
-    subtitle: "Bridge personal",
-    fields: [
-      {
-        key: "deviceName",
-        label: "Nombre del dispositivo",
-        placeholder: "iPhone de Ventas",
-      },
-      {
-        key: "sessionToken",
-        label: "Token de sesión",
-        placeholder: "session_...",
-      },
-      {
-        key: "webhookSecret",
-        label: "Webhook Secret",
-        placeholder: "secret_...",
       },
     ],
   },
