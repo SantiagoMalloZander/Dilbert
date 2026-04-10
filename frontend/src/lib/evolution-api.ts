@@ -54,7 +54,7 @@ export async function createEvolutionInstance(params: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${EVOLUTION_KEY}`,
+      apikey: EVOLUTION_KEY,
     },
     body: JSON.stringify({
       instanceName,
@@ -85,7 +85,7 @@ export async function getInstanceQrCode(instanceName: string): Promise<string> {
     `${EVOLUTION_URL}/instance/qrcode/${instanceName}`,
     {
       headers: {
-        Authorization: `Bearer ${EVOLUTION_KEY}`,
+        apikey: EVOLUTION_KEY,
       },
     }
   );
@@ -109,7 +109,7 @@ export async function getInstanceStatus(
       `${EVOLUTION_URL}/instance/info/${instanceName}`,
       {
         headers: {
-          Authorization: `Bearer ${EVOLUTION_KEY}`,
+          apikey: EVOLUTION_KEY,
         },
       }
     );
@@ -135,7 +135,7 @@ export async function deleteEvolutionInstance(
     {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${EVOLUTION_KEY}`,
+        apikey: EVOLUTION_KEY,
       },
     }
   );
