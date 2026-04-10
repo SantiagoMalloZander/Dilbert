@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthSession } from "@/lib/workspace-auth";
-import {
-  createEvolutionInstance,
-  getInstanceQrCode,
-} from "@/lib/evolution-api";
+import { createEvolutionInstance } from "@/lib/evolution-api";
 
 const schema = z.object({
   channelType: z.enum(["whatsapp_business", "whatsapp_personal"]),
 });
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export async function POST(request: Request) {
   const session = await getAuthSession();
@@ -32,25 +25,15 @@ export async function POST(request: Request) {
       webhookUrl,
     });
 
-    // Wait for instance to initialize before requesting QR
-    await sleep(3000);
-
-    // Retry QR up to 4 times with 2s delay between attempts
-    let qrCode = "";
-    for (let attempt = 0; attempt < 4; attempt++) {
-      qrCode = await getInstanceQrCode(instanceName);
-      if (qrCode) break;
-      await sleep(2000);
-    }
-
-    return NextResponse.json({ instanceName, qrCode });
+    // Return instanceName immediately — client will poll /qr separately
+    return NextResponse.json({ instanceName });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
     }
     console.error("[whatsapp/connect]", error);
     return NextResponse.json(
-      { error: "No pude iniciar la conexión con WhatsApp." },
+      { error: "No pude crear la instancia de WhatsApp." },
       { status: 500 }
     );
   }

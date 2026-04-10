@@ -367,27 +367,54 @@ export function IntegrationsCenter({
     });
 
     try {
-      const response = await fetch("/app/api/integrations/whatsapp/connect", {
+      // Step 1: Create instance (fast, returns instanceName immediately)
+      const connectResponse = await fetch("/app/api/integrations/whatsapp/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ channelType }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
+      if (!connectResponse.ok) {
+        const data = await connectResponse.json();
         setWhatsappQr((prev) =>
           prev
-            ? {
-                ...prev,
-                step: "error",
-                errorMessage: data.error || "No pude iniciar la conexión.",
-              }
+            ? { ...prev, step: "error", errorMessage: data.error || "No pude crear la instancia." }
             : null
         );
         return;
       }
 
-      const { instanceName, qrCode } = await response.json();
+      const { instanceName } = await connectResponse.json();
+
+      // Step 2: Poll for QR code (instance needs ~3-5s to initialize)
+      let qrCode: string | null = null;
+      for (let attempt = 0; attempt < 10; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        try {
+          const qrResponse = await fetch(
+            `/app/api/integrations/whatsapp/qr?instance=${encodeURIComponent(instanceName)}`
+          );
+          if (qrResponse.ok) {
+            const data = await qrResponse.json();
+            if (data.qrCode) {
+              qrCode = data.qrCode;
+              break;
+            }
+          }
+        } catch {
+          // retry
+        }
+      }
+
+      if (!qrCode) {
+        setWhatsappQr((prev) =>
+          prev
+            ? { ...prev, step: "error", errorMessage: "No pude obtener el QR. Intentá de nuevo." }
+            : null
+        );
+        return;
+      }
+
       setWhatsappQr((prev) =>
         prev ? { ...prev, step: "qr", instanceName, qrCode } : null
       );
