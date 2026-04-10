@@ -9,6 +9,7 @@ import {
 const connectIntegrationSchema = z.object({
   channelType: z.enum([
     "whatsapp",
+    "whatsapp_business",
     "whatsapp_personal",
     "gmail",
     "instagram",
@@ -22,6 +23,7 @@ const connectIntegrationSchema = z.object({
 const disconnectIntegrationSchema = z.object({
   channelType: z.enum([
     "whatsapp",
+    "whatsapp_business",
     "whatsapp_personal",
     "gmail",
     "instagram",
