@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -59,6 +59,14 @@ type FlashMessage = {
   tone: "success" | "error";
   text: string;
 } | null;
+
+type WhatsAppQrState = {
+  channelType: "whatsapp_business" | "whatsapp_personal";
+  step: "loading" | "qr" | "connected" | "error";
+  instanceName: string | null;
+  qrCode: string | null;
+  errorMessage: string | null;
+};
 
 function getInitials(name: string, email: string) {
   const source = name || email;
@@ -206,6 +214,120 @@ function OwnerVendorCard({ vendor }: { vendor: OwnerVendorRecord }) {
   );
 }
 
+function WhatsAppQrDialog({
+  state,
+  onClose,
+  onConnected,
+}: {
+  state: WhatsAppQrState | null;
+  onClose: () => void;
+  onConnected: () => void;
+}) {
+  const router = useRouter();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (state?.step !== "qr" || !state.instanceName) return;
+
+    intervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `/app/api/integrations/whatsapp/status?instance=${state.instanceName}&channelType=${state.channelType}`
+        );
+        if (!res.ok) return;
+        const { status } = await res.json();
+        if (status === "connected") {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          onConnected();
+          startTransition(() => router.refresh());
+        }
+      } catch {
+        // ignore network errors during polling
+      }
+    }, 3000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [state?.step, state?.instanceName, state?.channelType, onConnected, router]);
+
+  const qrSrc =
+    state?.qrCode
+      ? state.qrCode.startsWith("data:")
+        ? state.qrCode
+        : `data:image/png;base64,${state.qrCode}`
+      : null;
+
+  const title =
+    state?.channelType === "whatsapp_business"
+      ? "Conectar WhatsApp Business"
+      : "Conectar WhatsApp Personal";
+
+  return (
+    <Dialog open={Boolean(state)} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-sm rounded-[28px] border border-white/10 bg-card/95 p-0 shadow-panel backdrop-blur">
+        <DialogHeader className="px-6 pt-6">
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {state?.step === "loading" && "Generando código QR..."}
+            {state?.step === "qr" && "Escaneá este código con tu WhatsApp para conectarlo."}
+            {state?.step === "connected" && "¡WhatsApp conectado exitosamente!"}
+            {state?.step === "error" && (state.errorMessage || "Ocurrió un error.")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col items-center gap-4 px-6 py-6">
+          {state?.step === "loading" && (
+            <div className="flex h-48 w-48 items-center justify-center">
+              <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {state?.step === "qr" && qrSrc && (
+            <>
+              <img
+                src={qrSrc}
+                alt="WhatsApp QR Code"
+                className="h-56 w-56 rounded-2xl border border-white/10"
+              />
+              <div className="space-y-1 text-center">
+                <p className="text-sm font-medium">Abrí WhatsApp en tu celular</p>
+                <p className="text-xs text-muted-foreground">
+                  Menú → Dispositivos vinculados → Vincular un dispositivo
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  El QR expira en ~60 segundos
+                </p>
+              </div>
+            </>
+          )}
+
+          {state?.step === "connected" && (
+            <div className="flex h-48 w-48 flex-col items-center justify-center gap-3">
+              <CheckCircle2 className="h-16 w-16 text-emerald-400" />
+              <p className="text-sm font-medium text-emerald-300">¡Conectado!</p>
+            </div>
+          )}
+
+          {state?.step === "error" && (
+            <div className="flex h-48 w-48 items-center justify-center">
+              <p className="text-center text-sm text-destructive">
+                {state.errorMessage || "No se pudo conectar. Intentá de nuevo."}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="rounded-b-[28px] px-6 pb-6">
+          <Button variant="outline" onClick={onClose}>
+            {state?.step === "connected" ? "Cerrar" : "Cancelar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function IntegrationsCenter({
   role,
   vendorChannels,
@@ -221,6 +343,7 @@ export function IntegrationsCenter({
   const [selectedChannelType, setSelectedChannelType] =
     useState<IntegrationChannelType | null>(null);
   const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [whatsappQr, setWhatsappQr] = useState<WhatsAppQrState | null>(null);
 
   const selectedDefinition = useMemo(
     () =>
@@ -232,10 +355,59 @@ export function IntegrationsCenter({
     [selectedChannelType]
   );
 
+  async function startWhatsAppQrFlow(
+    channelType: "whatsapp_business" | "whatsapp_personal"
+  ) {
+    setWhatsappQr({
+      channelType,
+      step: "loading",
+      instanceName: null,
+      qrCode: null,
+      errorMessage: null,
+    });
+
+    try {
+      const response = await fetch("/app/api/integrations/whatsapp/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelType }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setWhatsappQr((prev) =>
+          prev
+            ? {
+                ...prev,
+                step: "error",
+                errorMessage: data.error || "No pude iniciar la conexión.",
+              }
+            : null
+        );
+        return;
+      }
+
+      const { instanceName, qrCode } = await response.json();
+      setWhatsappQr((prev) =>
+        prev ? { ...prev, step: "qr", instanceName, qrCode } : null
+      );
+    } catch {
+      setWhatsappQr((prev) =>
+        prev
+          ? { ...prev, step: "error", errorMessage: "Error de red. Intentá de nuevo." }
+          : null
+      );
+    }
+  }
+
   function openConnectDialog(channelType: IntegrationChannelType) {
+    if (channelType === "whatsapp_business" || channelType === "whatsapp_personal") {
+      startWhatsAppQrFlow(channelType);
+      return;
+    }
+
     const definition =
       INTEGRATION_DEFINITIONS.find((channel) => channel.channelType === channelType) || null;
-
     setSelectedChannelType(channelType);
     setFormValues(
       Object.fromEntries((definition?.fields || []).map((field) => [field.key, ""]))
@@ -250,12 +422,8 @@ export function IntegrationsCenter({
     try {
       const response = await fetch(INTEGRATIONS_API, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          channelType,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelType }),
       });
       const data = await response.json();
 
@@ -267,20 +435,14 @@ export function IntegrationsCenter({
         return;
       }
 
-      setFlashMessage({
-        tone: "success",
-        text: "Canal desconectado.",
-      });
+      setFlashMessage({ tone: "success", text: "Canal desconectado." });
       startTransition(() => router.refresh());
     } catch {
       emitGlobalToast({
         tone: "error",
         text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
       });
-      setFlashMessage({
-        tone: "error",
-        text: "No pude desconectar el canal.",
-      });
+      setFlashMessage({ tone: "error", text: "No pude desconectar el canal." });
     } finally {
       setActionKey(null);
     }
@@ -288,10 +450,7 @@ export function IntegrationsCenter({
 
   async function handleConnectSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (!selectedDefinition) {
-      return;
-    }
+    if (!selectedDefinition) return;
 
     setFlashMessage(null);
     setActionKey(`connect:${selectedDefinition.channelType}`);
@@ -299,9 +458,7 @@ export function IntegrationsCenter({
     try {
       const response = await fetch(INTEGRATIONS_API, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           channelType: selectedDefinition.channelType,
           credentials: formValues,
@@ -354,7 +511,7 @@ export function IntegrationsCenter({
 
       {role === "vendor" ? (
         <>
-          {(!vendorChannels || vendorChannels.length === 0) ? (
+          {!vendorChannels || vendorChannels.length === 0 ? (
             <Card className="bg-card/90">
               <CardContent className="flex items-center gap-3 px-4 py-10 text-sm text-muted-foreground">
                 <CircleOff className="h-4 w-4" />
@@ -392,12 +549,20 @@ export function IntegrationsCenter({
         </div>
       )}
 
+      {/* WhatsApp QR Dialog */}
+      <WhatsAppQrDialog
+        state={whatsappQr}
+        onClose={() => setWhatsappQr(null)}
+        onConnected={() =>
+          setWhatsappQr((prev) => (prev ? { ...prev, step: "connected" } : null))
+        }
+      />
+
+      {/* Generic form dialog (for non-WhatsApp channels) */}
       <Dialog
         open={Boolean(selectedDefinition)}
         onOpenChange={(open) => {
-          if (!open) {
-            setSelectedChannelType(null);
-          }
+          if (!open) setSelectedChannelType(null);
         }}
       >
         <DialogContent className="max-w-lg rounded-[28px] border border-white/10 bg-card/95 p-0 shadow-panel backdrop-blur">
@@ -406,8 +571,7 @@ export function IntegrationsCenter({
               <DialogHeader className="px-6 pt-6">
                 <DialogTitle>Conectar {selectedDefinition.name}</DialogTitle>
                 <DialogDescription>
-                  Este formulario es placeholder. Guardamos la configuración en estado pendiente
-                  para implementar la verificación real después.
+                  Completá los datos para conectar este canal.
                 </DialogDescription>
               </DialogHeader>
 
@@ -445,7 +609,7 @@ export function IntegrationsCenter({
                   {actionKey === `connect:${selectedDefinition.channelType}` ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}
-                  Guardar y marcar pendiente
+                  Guardar
                 </Button>
               </DialogFooter>
             </form>

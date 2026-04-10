@@ -80,25 +80,13 @@ export const INTEGRATION_DEFINITIONS: IntegrationDefinition[] = [
     channelType: "whatsapp_business",
     name: "WhatsApp Business",
     subtitle: "Evolution API",
-    fields: [
-      {
-        key: "businessPhoneNumber",
-        label: "Número comercial",
-        placeholder: "+54 11 XXXX XXXX",
-      },
-    ],
+    fields: [],
   },
   {
     channelType: "whatsapp_personal",
     name: "WhatsApp Personal",
     subtitle: "Evolution API",
-    fields: [
-      {
-        key: "personalPhoneNumber",
-        label: "Número personal",
-        placeholder: "+54 11 XXXX XXXX",
-      },
-    ],
+    fields: [],
   },
   {
     channelType: "gmail",

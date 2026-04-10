@@ -42,7 +42,7 @@ const EVOLUTION_KEY = process.env.EVOLUTION_API_KEY || "";
  * Create a new WhatsApp instance in Evolution API
  */
 export async function createEvolutionInstance(params: {
-  phoneNumber: string;
+  phoneNumber?: string;
   isBusinessAccount: boolean;
   webhookUrl: string;
 }): Promise<{ instanceName: string }> {
@@ -50,22 +50,27 @@ export async function createEvolutionInstance(params: {
     params.isBusinessAccount ? "wpp-biz" : "wpp-personal"
   }-${Date.now()}`;
 
+  const body: Record<string, unknown> = {
+    instanceName,
+    businessAccount: params.isBusinessAccount,
+    webhook: {
+      url: params.webhookUrl,
+      enabled: true,
+      events: ["messages.upsert", "messages.update", "connection.update"],
+    },
+  };
+
+  if (params.phoneNumber) {
+    body.number = params.phoneNumber.replace(/\D/g, "");
+  }
+
   const response = await fetch(`${EVOLUTION_URL}/instance/create`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       apikey: EVOLUTION_KEY,
     },
-    body: JSON.stringify({
-      instanceName,
-      number: params.phoneNumber.replace(/\D/g, ""),
-      businessAccount: params.isBusinessAccount,
-      webhook: {
-        url: params.webhookUrl,
-        enabled: true,
-        events: ["messages.upsert", "messages.update", "connection.update"],
-      },
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
@@ -117,7 +122,12 @@ export async function getInstanceStatus(
     if (!response.ok) return "error";
 
     const data = (await response.json()) as EvolutionInfoResponse;
-    return data.instance?.status || "disconnected";
+    const rawStatus = data.instance?.status as string | undefined;
+    // Evolution API v1 uses "open"/"close" as states
+    if (rawStatus === "open") return "connected";
+    if (rawStatus === "close" || rawStatus === "disconnected") return "disconnected";
+    if (rawStatus === "connecting") return "connecting";
+    return (rawStatus as EvolutionInstanceStatus) || "disconnected";
   } catch (error) {
     console.error("Failed to get instance status:", error);
     return "error";
