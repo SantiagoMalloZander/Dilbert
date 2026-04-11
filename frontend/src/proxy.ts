@@ -200,6 +200,11 @@ function getSessionIssuedAt(accessToken?: string | null) {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Webhook endpoints are called by external services (no session cookies)
+  if (pathname.startsWith("/app/api/webhooks") || pathname.startsWith("/api/webhooks")) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/admin")) {
     const response = continueWithPathname(request, pathname);
     const supabase = createMiddlewareSupabaseClient(request, response);
