@@ -255,13 +255,18 @@ export async function connectVendorIntegration(params: {
     submitted_at: new Date().toISOString(),
   };
 
+  // Fathom is confirmed connected when the user completes the wizard —
+  // no async QR/callback step needed.
+  const initialStatus = params.channelType === "fathom" ? "connected" : "pending";
+
   const { error } = await supabase.from("channel_credentials").upsert(
     {
       company_id: params.companyId,
       user_id: params.userId,
       channel: toDatabaseChannelType(params.channelType),
       credentials: payload,
-      status: "pending",
+      status: initialStatus,
+      last_sync_at: initialStatus === "connected" ? new Date().toISOString() : undefined,
     },
     {
       onConflict: "user_id,channel",
