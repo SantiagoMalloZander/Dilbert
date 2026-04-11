@@ -2,6 +2,7 @@
 
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { WhatsAppOnboardingDialog } from "@/components/whatsapp-onboarding-dialog";
+import { FathomSetupDialog } from "@/components/fathom-setup-dialog";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -350,6 +351,7 @@ export function IntegrationsCenter({
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [whatsappQr, setWhatsappQr] = useState<WhatsAppQrState | null>(null);
   const [onboardingInstance, setOnboardingInstance] = useState<string | null>(null);
+  const [fathomOpen, setFathomOpen] = useState(false);
 
   const selectedDefinition = useMemo(
     () =>
@@ -439,6 +441,11 @@ export function IntegrationsCenter({
       return;
     }
 
+    if (channelType === "fathom") {
+      setFathomOpen(true);
+      return;
+    }
+
     const definition =
       INTEGRATION_DEFINITIONS.find((channel) => channel.channelType === channelType) || null;
     setSelectedChannelType(channelType);
@@ -446,6 +453,21 @@ export function IntegrationsCenter({
       Object.fromEntries((definition?.fields || []).map((field) => [field.key, ""]))
     );
     setFlashMessage(null);
+  }
+
+  async function handleFathomSave(apiKey: string) {
+    const response = await fetch(INTEGRATIONS_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        channelType: "fathom",
+        credentials: { fathomApiKey: apiKey },
+      }),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Error al guardar.");
+    }
   }
 
   async function handleDisconnect(channelType: IntegrationChannelType) {
@@ -604,6 +626,13 @@ export function IntegrationsCenter({
           setOnboardingInstance(null);
           startTransition(() => router.refresh());
         }}
+      />
+
+      {/* Fathom setup wizard */}
+      <FathomSetupDialog
+        open={fathomOpen}
+        onClose={() => setFathomOpen(false)}
+        onSave={handleFathomSave}
       />
 
       {/* Generic form dialog (for non-WhatsApp channels) */}
