@@ -52,6 +52,7 @@ export default async function IntegrationsPage() {
 
       <IntegrationsCenter
         role={isOwner ? "owner" : "vendor"}
+        userId={session.user.id}
         ownerVendors={ownerData?.vendors}
         vendorChannels={vendorData?.channels}
       />

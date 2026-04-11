@@ -330,10 +330,12 @@ function WhatsAppQrDialog({
 
 export function IntegrationsCenter({
   role,
+  userId,
   vendorChannels,
   ownerVendors,
 }: {
   role: "owner" | "vendor";
+  userId?: string;
   vendorChannels?: VendorIntegrationRecord[];
   ownerVendors?: OwnerVendorRecord[];
 }) {
@@ -625,6 +627,7 @@ export function IntegrationsCenter({
       {/* Fathom setup wizard */}
       <FathomSetupDialog
         open={fathomOpen}
+        userId={userId}
         onClose={() => setFathomOpen(false)}
         onSave={handleFathomSave}
       />

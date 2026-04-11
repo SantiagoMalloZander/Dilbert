@@ -24,7 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const WEBHOOK_URL = "https://dilvert.netlify.app/app/api/webhooks/fathom";
+const WEBHOOK_BASE_URL = "https://dilvert.netlify.app/app/api/webhooks/fathom";
 const FATHOM_API_URL = "https://fathom.video/settings/api";
 const FATHOM_WEBHOOK_URL = "https://fathom.video/settings/webhooks";
 
@@ -32,10 +32,12 @@ type Step = "intro" | "get_key" | "enter_key" | "webhook" | "saving" | "done";
 
 export function FathomSetupDialog({
   open,
+  userId,
   onClose,
   onSave,
 }: {
   open: boolean;
+  userId?: string;
   onClose: () => void;
   onSave: (apiKey: string) => Promise<void>;
 }) {
@@ -44,6 +46,10 @@ export function FathomSetupDialog({
   const [apiKey, setApiKey] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const webhookUrl = userId
+    ? `${WEBHOOK_BASE_URL}?token=${userId}`
+    : WEBHOOK_BASE_URL;
 
   function reset() {
     setStep("intro");
@@ -75,7 +81,7 @@ export function FathomSetupDialog({
   }
 
   async function copyWebhookUrl() {
-    await navigator.clipboard.writeText(WEBHOOK_URL);
+    await navigator.clipboard.writeText(webhookUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -252,7 +258,7 @@ export function FathomSetupDialog({
                 </li>
               </ol>
               <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
-                <code className="flex-1 break-all text-xs text-primary">{WEBHOOK_URL}</code>
+                <code className="flex-1 break-all text-xs text-primary">{webhookUrl}</code>
                 <button
                   onClick={copyWebhookUrl}
                   className="shrink-0 rounded-lg p-1.5 transition-colors hover:bg-white/10"
