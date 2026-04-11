@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
+import { WhatsAppOnboardingDialog } from "@/components/whatsapp-onboarding-dialog";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -344,6 +345,7 @@ export function IntegrationsCenter({
     useState<IntegrationChannelType | null>(null);
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [whatsappQr, setWhatsappQr] = useState<WhatsAppQrState | null>(null);
+  const [onboardingInstance, setOnboardingInstance] = useState<string | null>(null);
 
   const selectedDefinition = useMemo(
     () =>
@@ -580,9 +582,24 @@ export function IntegrationsCenter({
       <WhatsAppQrDialog
         state={whatsappQr}
         onClose={() => setWhatsappQr(null)}
-        onConnected={() =>
-          setWhatsappQr((prev) => (prev ? { ...prev, step: "connected" } : null))
-        }
+        onConnected={() => {
+          const instanceName = whatsappQr?.instanceName;
+          setWhatsappQr((prev) => (prev ? { ...prev, step: "connected" } : null));
+          // After 1.5s close QR dialog and open onboarding
+          setTimeout(() => {
+            setWhatsappQr(null);
+            if (instanceName) setOnboardingInstance(instanceName);
+          }, 1500);
+        }}
+      />
+
+      <WhatsAppOnboardingDialog
+        instanceName={onboardingInstance || ""}
+        open={Boolean(onboardingInstance)}
+        onClose={() => {
+          setOnboardingInstance(null);
+          startTransition(() => router.refresh());
+        }}
       />
 
       {/* Generic form dialog (for non-WhatsApp channels) */}
