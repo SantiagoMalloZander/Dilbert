@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { generateSmartQuestions } from "@/lib/meeting-questions";
+import { getContactContext } from "@/lib/contact-context";
 import crypto from "crypto";
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
@@ -94,7 +95,8 @@ async function analyzeTranscript(
   actionItems: string[],
   transcript: string,
   contactName: string,
-  vendorName: string
+  vendorName: string,
+  contactHistory: string
 ): Promise<MeetingAnalysis | null> {
   if (!OPENAI_KEY) return null;
 
@@ -102,9 +104,10 @@ async function analyzeTranscript(
     `Reunión: "${title}"`,
     `Vendedor: ${vendorName}`,
     `Cliente: ${contactName}`,
-    summary ? `\nResumen:\n${summary}` : "",
-    actionItems.length ? `\nAction items:\n${actionItems.map((a) => `• ${a}`).join("\n")}` : "",
-    transcript ? `\nTranscripción:\n${transcript.slice(0, 8000)}` : "",
+    contactHistory ? `\n${contactHistory}` : "",
+    summary ? `\nResumen de esta reunión:\n${summary}` : "",
+    actionItems.length ? `\nAction items de esta reunión:\n${actionItems.map((a) => `• ${a}`).join("\n")}` : "",
+    transcript ? `\nTranscripción:\n${transcript.slice(0, 7000)}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -236,17 +239,7 @@ export async function POST(request: Request) {
     const externalAttendee = externalInvitees[0] ?? null;
     const contactName = externalAttendee?.name ?? "Desconocido";
 
-    // Run AI analysis in parallel with contact lookup
-    const analysisPromise = analyzeTranscript(
-      meetingTitle,
-      summary,
-      actionItems,
-      transcript,
-      contactName,
-      vendorName
-    );
-
-    // Find or create contact
+    // Find or create contact first (needed for cross-channel history)
     let contactId: string | null = null;
     if (externalAttendee?.email) {
       const email = externalAttendee.email.toLowerCase();
@@ -279,7 +272,20 @@ export async function POST(request: Request) {
       }
     }
 
-    const analysis = await analysisPromise;
+    // Fetch cross-channel history, then run AI with full context
+    const contactHistory = contactId
+      ? await getContactContext(contactId, companyId)
+      : "";
+
+    const analysis = await analyzeTranscript(
+      meetingTitle,
+      summary,
+      actionItems,
+      transcript,
+      contactName,
+      vendorName,
+      contactHistory
+    );
     const meetingType = analysis?.meeting_type ?? "other";
 
     // Enrich contact with AI data

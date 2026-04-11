@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/workspace-auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { generateSmartQuestions } from "@/lib/meeting-questions";
+import { getContactContext } from "@/lib/contact-context";
 
 const FATHOM_API = "https://api.fathom.ai/external/v1";
 const WEBHOOK_BASE = "https://dilvert.netlify.app/api/webhooks/fathom";
@@ -30,16 +31,18 @@ async function analyzeTranscript(
   actionItems: string[],
   transcript: string,
   contactName: string,
-  vendorName: string
+  vendorName: string,
+  contactHistory: string
 ): Promise<MeetingAnalysis | null> {
   if (!OPENAI_KEY) return null;
   const content = [
     `Reunión: "${title}"`,
     `Vendedor: ${vendorName}`,
     `Cliente: ${contactName}`,
-    summary ? `\nResumen:\n${summary}` : "",
-    actionItems.length ? `\nAction items:\n${actionItems.map((a) => `• ${a}`).join("\n")}` : "",
-    transcript ? `\nTranscripción:\n${transcript.slice(0, 8000)}` : "",
+    contactHistory ? `\n${contactHistory}` : "",
+    summary ? `\nResumen de esta reunión:\n${summary}` : "",
+    actionItems.length ? `\nAction items de esta reunión:\n${actionItems.map((a) => `• ${a}`).join("\n")}` : "",
+    transcript ? `\nTranscripción:\n${transcript.slice(0, 7000)}` : "",
   ].filter(Boolean).join("\n");
 
   try {
@@ -164,10 +167,15 @@ async function processMeeting(
     }
   }
 
+  // Fetch cross-channel history for this contact (includes previously processed meetings)
+  const contactHistory = contactId
+    ? await getContactContext(contactId, companyId)
+    : "";
+
   // AI only if there's content
   const hasContent = !!(summary || transcript || actionItems.length);
   const analysis = hasContent
-    ? await analyzeTranscript(meetingTitle, summary, actionItems, transcript, contactName, vendorName)
+    ? await analyzeTranscript(meetingTitle, summary, actionItems, transcript, contactName, vendorName, contactHistory)
     : null;
 
   const meetingType = analysis?.meeting_type ?? "other";
