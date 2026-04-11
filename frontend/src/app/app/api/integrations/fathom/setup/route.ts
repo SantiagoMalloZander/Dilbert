@@ -4,7 +4,283 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 const FATHOM_API = "https://api.fathom.ai/external/v1";
 const WEBHOOK_BASE = "https://dilvert.netlify.app/api/webhooks/fathom";
+const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
 
+// ─── AI analysis (same as webhook handler) ───────────────────────────────────
+interface MeetingAnalysis {
+  contact_company?: string;
+  contact_position?: string;
+  has_deal_potential: boolean;
+  lead_title?: string;
+  lead_value?: number;
+  lead_probability?: number;
+  next_close_estimate?: string;
+  client_interest: "high" | "medium" | "low" | "none";
+  key_pain_points?: string[];
+  objections?: string[];
+  next_steps?: string[];
+  crm_note: string;
+}
+
+async function analyzeTranscript(
+  title: string,
+  summary: string,
+  actionItems: string[],
+  transcript: string,
+  contactName: string,
+  vendorName: string
+): Promise<MeetingAnalysis | null> {
+  if (!OPENAI_KEY) return null;
+  const content = [
+    `Reunión: "${title}"`,
+    `Vendedor: ${vendorName}`,
+    `Cliente: ${contactName}`,
+    summary ? `\nResumen:\n${summary}` : "",
+    actionItems.length ? `\nAction items:\n${actionItems.map((a) => `• ${a}`).join("\n")}` : "",
+    transcript ? `\nTranscripción:\n${transcript.slice(0, 8000)}` : "",
+  ].filter(Boolean).join("\n");
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_KEY}` },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        max_tokens: 800,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: `Sos un asistente de CRM que analiza reuniones de ventas. Devolvé JSON:
+{
+  "contact_company": "empresa del cliente o null",
+  "contact_position": "cargo del cliente o null",
+  "has_deal_potential": true/false,
+  "lead_title": "título del deal o null",
+  "lead_value": número en dólares o null,
+  "lead_probability": número 0-100 o null,
+  "next_close_estimate": "YYYY-MM-DD o null",
+  "client_interest": "high|medium|low|none",
+  "key_pain_points": [],
+  "objections": [],
+  "next_steps": [],
+  "crm_note": "Resumen ejecutivo en español de máximo 3 oraciones."
+}`,
+          },
+          { role: "user", content },
+        ],
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content;
+    return raw ? JSON.parse(raw) as MeetingAnalysis : null;
+  } catch { return null; }
+}
+
+// ─── Process a single historical meeting ─────────────────────────────────────
+interface FathomMeeting {
+  id: number;
+  title: string;
+  meeting_title?: string | null;
+  share_url?: string;
+  created_at: string;
+  default_summary?: { markdown_formatted?: string | null } | null;
+  action_items?: Array<{ description: string }> | null;
+  transcript?: Array<{ speaker: { display_name: string }; text: string }> | null;
+  calendar_invitees?: Array<{ name?: string | null; email?: string | null; is_external: boolean }> | null;
+}
+
+async function processMeeting(
+  meeting: FathomMeeting,
+  vendorId: string,
+  companyId: string,
+  vendorEmail: string,
+  vendorName: string
+) {
+  const supabase = createAdminSupabaseClient();
+  const marker = `<!-- fathom:${meeting.id} -->`;
+
+  // Dedup: skip if already imported
+  const { data: existing } = await supabase
+    .from("activities")
+    .select("id")
+    .eq("user_id", vendorId)
+    .eq("company_id", companyId)
+    .like("description", `%${marker}%`)
+    .maybeSingle();
+  if (existing) return "skipped";
+
+  const meetingTitle = meeting.meeting_title || meeting.title || "Reunión";
+  const summary = meeting.default_summary?.markdown_formatted ?? "";
+  const actionItems = (meeting.action_items ?? []).map((ai) => ai.description).filter(Boolean);
+  const transcript = (meeting.transcript ?? [])
+    .map((t) => `${t.speaker.display_name}: ${t.text}`).join("\n");
+  const shareUrl = meeting.share_url ?? "";
+
+  // Find external attendee
+  const externalAttendee = (meeting.calendar_invitees ?? []).find(
+    (ci) => ci.is_external && ci.email && ci.email.toLowerCase() !== vendorEmail
+  ) ?? null;
+  const contactName = externalAttendee?.name ?? "Desconocido";
+
+  // Find or create contact
+  let contactId: string | null = null;
+  if (externalAttendee?.email) {
+    const email = externalAttendee.email.toLowerCase();
+    const { data: found } = await supabase
+      .from("contacts").select("id")
+      .eq("company_id", companyId).eq("email", email).maybeSingle();
+
+    if (found) {
+      contactId = found.id;
+    } else {
+      const parts = contactName.trim().split(/\s+/);
+      const { data: created } = await supabase
+        .from("contacts").insert({
+          company_id: companyId,
+          created_by: vendorId,
+          assigned_to: vendorId,
+          first_name: parts[0] ?? "Desconocido",
+          last_name: parts.slice(1).join(" ") ?? "",
+          email,
+          source: "meet" as const,
+          tags: ["fathom"],
+        }).select("id").single();
+      if (created) contactId = created.id;
+    }
+  }
+
+  // AI only if there's content
+  const hasContent = !!(summary || transcript || actionItems.length);
+  const analysis = hasContent
+    ? await analyzeTranscript(meetingTitle, summary, actionItems, transcript, contactName, vendorName)
+    : null;
+
+  // Enrich contact
+  if (contactId && analysis) {
+    const updates: Record<string, string> = {};
+    if (analysis.contact_company) updates.company_name = analysis.contact_company;
+    if (analysis.contact_position) updates.position = analysis.contact_position;
+    if (Object.keys(updates).length) {
+      await supabase.from("contacts").update(updates)
+        .eq("id", contactId).eq("company_id", companyId);
+    }
+  }
+
+  // Build description
+  const descParts: string[] = [];
+  if (analysis?.crm_note) descParts.push(analysis.crm_note);
+  else if (summary) descParts.push(summary);
+  else descParts.push("Reunión importada desde el historial de Fathom.");
+
+  if (analysis?.client_interest) {
+    const label = { high: "Alto 🔥", medium: "Medio", low: "Bajo", none: "Sin interés" }[analysis.client_interest];
+    descParts.push(`**Nivel de interés:** ${label}`);
+  }
+  if (analysis?.key_pain_points?.length)
+    descParts.push(`**Problemas del cliente:**\n${analysis.key_pain_points.map((p) => `• ${p}`).join("\n")}`);
+  if (analysis?.objections?.length)
+    descParts.push(`**Objeciones:**\n${analysis.objections.map((o) => `• ${o}`).join("\n")}`);
+  const nextSteps = analysis?.next_steps?.length ? analysis.next_steps : actionItems;
+  if (nextSteps.length)
+    descParts.push(`**Próximos pasos:**\n${nextSteps.map((s) => `• ${s}`).join("\n")}`);
+  if (shareUrl) descParts.push(`[Ver en Fathom](${shareUrl})`);
+  descParts.push(marker);
+
+  await supabase.from("activities").insert({
+    company_id: companyId,
+    user_id: vendorId,
+    contact_id: contactId,
+    type: "meeting" as const,
+    source: "automatic" as const,
+    title: meetingTitle,
+    description: descParts.join("\n\n"),
+    completed_at: meeting.created_at,
+  });
+
+  // Create lead if potential detected
+  if (analysis?.has_deal_potential && contactId) {
+    const { data: pipeline } = await supabase
+      .from("pipelines").select("id")
+      .eq("company_id", companyId).eq("is_default", true).maybeSingle();
+
+    if (pipeline) {
+      const { data: stages } = await supabase
+        .from("pipeline_stages").select("id")
+        .eq("company_id", companyId).eq("pipeline_id", pipeline.id)
+        .eq("is_lost_stage", false).eq("is_won_stage", false)
+        .order("position", { ascending: true }).limit(1);
+
+      const firstStage = stages?.[0];
+      if (firstStage) {
+        const { data: existingLead } = await supabase
+          .from("leads").select("id")
+          .eq("company_id", companyId).eq("contact_id", contactId)
+          .eq("status", "open").maybeSingle();
+
+        if (!existingLead) {
+          await supabase.from("leads").insert({
+            company_id: companyId,
+            created_by: vendorId,
+            assigned_to: vendorId,
+            contact_id: contactId,
+            pipeline_id: pipeline.id,
+            stage_id: firstStage.id,
+            title: analysis.lead_title ?? meetingTitle,
+            value: analysis.lead_value ?? null,
+            probability: analysis.lead_probability ?? 20,
+            expected_close_date: analysis.next_close_estimate ?? null,
+            source: "meet" as const,
+            status: "open" as const,
+            metadata: { origin: "fathom_ai", client_interest: analysis.client_interest },
+          });
+        }
+      }
+    }
+  }
+
+  return "imported";
+}
+
+// ─── Import all historical meetings from Fathom API ──────────────────────────
+async function importHistoricalMeetings(
+  fathomApiKey: string,
+  vendorId: string,
+  companyId: string,
+  vendorEmail: string,
+  vendorName: string
+): Promise<{ imported: number; skipped: number }> {
+  let imported = 0;
+  let skipped = 0;
+  let cursor = "";
+  const MAX_MEETINGS = 50;
+  let total = 0;
+
+  while (total < MAX_MEETINGS) {
+    const url = `${FATHOM_API}/meetings${cursor ? `?cursor=${cursor}` : ""}`;
+    const res = await fetch(url, { headers: { "X-Api-Key": fathomApiKey } });
+    if (!res.ok) break;
+
+    const data = await res.json() as { items: FathomMeeting[]; next_cursor: string };
+    if (!data.items?.length) break;
+
+    for (const meeting of data.items) {
+      if (total >= MAX_MEETINGS) break;
+      const result = await processMeeting(meeting, vendorId, companyId, vendorEmail, vendorName);
+      if (result === "imported") imported++;
+      else skipped++;
+      total++;
+    }
+
+    if (!data.next_cursor) break;
+    cursor = data.next_cursor;
+  }
+
+  return { imported, skipped };
+}
+
+// ─── Setup route ─────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
   const session = await getAuthSession();
   if (!session?.user?.id || session.user.role !== "vendor" || !session.user.companyId) {
@@ -20,14 +296,12 @@ export async function POST(request: Request) {
   const companyId = session.user.companyId;
   const destinationUrl = `${WEBHOOK_BASE}?token=${userId}`;
 
-  // Delete any existing Fathom webhook for this user (stored webhookId)
   const supabase = createAdminSupabaseClient();
+
+  // Delete old Fathom webhook if stored
   const { data: existing } = await supabase
-    .from("channel_credentials")
-    .select("credentials")
-    .eq("user_id", userId)
-    .eq("channel", "fathom")
-    .maybeSingle();
+    .from("channel_credentials").select("credentials")
+    .eq("user_id", userId).eq("channel", "fathom").maybeSingle();
 
   const existingCreds = existing?.credentials as Record<string, string> | null;
   if (existingCreds?.webhookId) {
@@ -40,10 +314,7 @@ export async function POST(request: Request) {
   // Create new webhook in Fathom
   const webhookRes = await fetch(`${FATHOM_API}/webhooks`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Api-Key": apiKey.trim(),
-    },
+    headers: { "Content-Type": "application/json", "X-Api-Key": apiKey.trim() },
     body: JSON.stringify({
       destination_url: destinationUrl,
       triggered_for: ["my_recordings"],
@@ -54,8 +325,6 @@ export async function POST(request: Request) {
   });
 
   if (!webhookRes.ok) {
-    const err = await webhookRes.json().catch(() => ({}));
-    console.error("[fathom/setup] webhook creation failed:", err);
     return NextResponse.json(
       { error: "No pude crear el webhook en Fathom. Verificá que la API Key sea correcta." },
       { status: 400 }
@@ -65,7 +334,7 @@ export async function POST(request: Request) {
   const webhook = await webhookRes.json() as { id: string; secret: string };
 
   // Save credentials
-  const { error } = await supabase.from("channel_credentials").upsert(
+  await supabase.from("channel_credentials").upsert(
     {
       company_id: companyId,
       user_id: userId,
@@ -81,10 +350,19 @@ export async function POST(request: Request) {
     { onConflict: "user_id,channel" }
   );
 
-  if (error) {
-    console.error("[fathom/setup] db error:", error);
-    return NextResponse.json({ error: "Error al guardar configuración." }, { status: 500 });
-  }
+  // Load vendor info for import
+  const { data: vendorRow } = await supabase
+    .from("users").select("email, name")
+    .eq("id", userId).single();
 
-  return NextResponse.json({ ok: true });
+  // Auto-import historical meetings in background (don't block response)
+  const vendorEmail = vendorRow?.email?.toLowerCase() ?? "";
+  const vendorName = vendorRow?.name ?? "Vendedor";
+
+  // Run import (up to 50 meetings, sequential)
+  const importResult = await importHistoricalMeetings(
+    apiKey.trim(), userId, companyId, vendorEmail, vendorName
+  );
+
+  return NextResponse.json({ ok: true, imported: importResult.imported, skipped: importResult.skipped });
 }

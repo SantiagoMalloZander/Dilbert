@@ -12,7 +12,7 @@ import {
   CircleOff,
   DollarSign,
   Loader2,
-  Percent,
+  Mail,
   Phone,
   TrendingUp,
   User,
@@ -57,10 +57,7 @@ type Meeting = {
 };
 
 function formatDate(iso: string) {
-  return new Intl.DateTimeFormat("es-AR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(iso));
+  return new Intl.DateTimeFormat("es-AR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
 }
 
 function missingContactFields(c: Contact | null) {
@@ -95,17 +92,26 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
   const [expanded, setExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [wantsDeal, setWantsDeal] = useState(false);
 
   const missingContact = missingContactFields(meeting.contacts);
   const missingLead = missingLeadFields(meeting.leads);
-  const totalMissing = missingContact.length + missingLead.length;
+
+  // No contact at all → ask who the meeting was with
+  const noContact = !meeting.contacts;
+
+  // Count missing: contact fields + lead fields + no-contact flag + no-lead-but-wants-deal
+  const totalMissing = (noContact ? 1 : missingContact.length) + missingLead.length;
 
   const [contactValues, setContactValues] = useState<Record<string, string>>({});
   const [leadValues, setLeadValues] = useState<Record<string, string>>({});
+  const [newContact, setNewContact] = useState({ first_name: "", last_name: "", email: "" });
+  const [newLead, setNewLead] = useState({ title: "", value: "", expected_close_date: "" });
 
-  // Parse description sections
   const desc = meeting.description ?? "";
-  const lines = desc.split("\n");
+  // Strip hidden fathom marker before rendering
+  const cleanDesc = desc.replace(/<!--\s*fathom:\S+\s*-->/g, "").trim();
+  const lines = cleanDesc.split("\n");
 
   async function handleSave() {
     setSaving(true);
@@ -122,24 +128,36 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
         else leadPatch[k] = v.trim();
       }
 
-      const res = await fetch("/app/api/meetings", {
+      await fetch("/app/api/meetings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           activityId: meeting.id,
           contact: Object.keys(contactPatch).length ? contactPatch : undefined,
           lead: Object.keys(leadPatch).length ? leadPatch : undefined,
+          // New contact if no contact exists
+          ...(noContact && (newContact.first_name || newContact.email)
+            ? { newContact }
+            : {}),
+          // New lead if user wants to create one manually
+          ...(wantsDeal && newLead.title
+            ? { newLead }
+            : {}),
         }),
       });
 
-      if (res.ok) {
-        setSaved(true);
-        startTransition(() => router.refresh());
-      }
+      setSaved(true);
+      startTransition(() => router.refresh());
     } finally {
       setSaving(false);
     }
   }
+
+  const hasSomethingToSave =
+    Object.values(contactValues).some((v) => v.trim()) ||
+    Object.values(leadValues).some((v) => v.trim()) ||
+    (noContact && (newContact.first_name || newContact.email)) ||
+    (wantsDeal && newLead.title);
 
   return (
     <Card className="bg-card/90">
@@ -152,9 +170,7 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
             <div>
               <CardTitle className="text-base">{meeting.title}</CardTitle>
               {meeting.completed_at && (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {formatDate(meeting.completed_at)}
-                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{formatDate(meeting.completed_at)}</p>
               )}
             </div>
           </div>
@@ -162,8 +178,7 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
             {totalMissing > 0 && !saved && <MissingBadge count={totalMissing} />}
             {saved && (
               <Badge className="border-emerald-500/20 bg-emerald-500/10 text-emerald-300">
-                <CheckCircle2 className="mr-1 h-3 w-3" />
-                Guardado
+                <CheckCircle2 className="mr-1 h-3 w-3" /> Guardado
               </Badge>
             )}
             <button
@@ -177,7 +192,7 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
 
         {/* Contact + Lead pills */}
         <div className="flex flex-wrap gap-2 pt-2">
-          {meeting.contacts && (
+          {meeting.contacts ? (
             <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-background/50 px-3 py-1 text-xs">
               <User className="h-3 w-3 text-muted-foreground" />
               <span>{meeting.contacts.first_name} {meeting.contacts.last_name}</span>
@@ -185,17 +200,19 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
                 <span className="text-muted-foreground">· {meeting.contacts.company_name}</span>
               )}
             </div>
-          )}
-          {meeting.leads && (
-            <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-              <TrendingUp className="h-3 w-3" />
-              <span>Deal detectado</span>
-              {meeting.leads.value && (
-                <span>· ${meeting.leads.value.toLocaleString()}</span>
-              )}
+          ) : (
+            <div className="flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
+              <User className="h-3 w-3" />
+              Contacto desconocido
             </div>
           )}
-          {!meeting.leads && (
+          {meeting.leads ? (
+            <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
+              <TrendingUp className="h-3 w-3" />
+              Deal detectado
+              {meeting.leads.value && <span>· ${meeting.leads.value.toLocaleString()}</span>}
+            </div>
+          ) : (
             <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-background/50 px-3 py-1 text-xs text-muted-foreground">
               <CircleOff className="h-3 w-3" />
               Sin deal
@@ -207,41 +224,60 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
       {expanded && (
         <CardContent className="space-y-5 pt-0">
           {/* AI summary */}
-          {desc && (
+          {cleanDesc && (
             <div className="space-y-2">
               {lines.map((line, i) => {
                 if (!line.trim()) return null;
-                if (line.startsWith("**") && line.endsWith("**")) {
+                if (line.startsWith("**") && line.endsWith("**"))
                   return <p key={i} className="text-sm font-semibold text-foreground">{line.replace(/\*\*/g, "")}</p>;
-                }
-                if (line.startsWith("• ")) {
+                if (line.startsWith("• "))
                   return <p key={i} className="ml-3 text-sm text-muted-foreground">{line}</p>;
-                }
-                if (line.startsWith("[") && line.includes("](")) {
-                  const match = line.match(/\[(.+?)\]\((.+?)\)/);
-                  if (match) {
-                    return (
-                      <a key={i} href={match[2]} target="_blank" rel="noopener noreferrer"
-                        className="block text-sm text-primary underline underline-offset-4">
-                        {match[1]}
-                      </a>
-                    );
-                  }
-                }
+                const linkMatch = line.match(/\[(.+?)\]\((.+?)\)/);
+                if (linkMatch)
+                  return <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer"
+                    className="block text-sm text-primary underline underline-offset-4">{linkMatch[1]}</a>;
                 return <p key={i} className="text-sm text-muted-foreground">{line}</p>;
               })}
             </div>
           )}
 
           {/* Missing data forms */}
-          {totalMissing > 0 && !saved && (
+          {!saved && (totalMissing > 0 || wantsDeal) && (
             <div className="space-y-4 rounded-2xl border border-amber-500/15 bg-amber-500/5 p-4">
               <div className="flex items-center gap-2 text-sm font-medium text-amber-300">
                 <AlertCircle className="h-4 w-4" />
                 Completá los datos que faltan
               </div>
 
-              {missingContact.length > 0 && (
+              {/* No contact: ask who the meeting was with */}
+              {noContact && (
+                <div className="space-y-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">¿Con quién fue la reunión?</p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="space-y-1.5">
+                      <Label className="flex items-center gap-1.5 text-xs"><User className="h-3 w-3" />Nombre</Label>
+                      <Input className="h-8 text-sm" placeholder="Juan"
+                        value={newContact.first_name}
+                        onChange={(e) => setNewContact((p) => ({ ...p, first_name: e.target.value }))} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="flex items-center gap-1.5 text-xs"><User className="h-3 w-3" />Apellido</Label>
+                      <Input className="h-8 text-sm" placeholder="Pérez"
+                        value={newContact.last_name}
+                        onChange={(e) => setNewContact((p) => ({ ...p, last_name: e.target.value }))} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="flex items-center gap-1.5 text-xs"><Mail className="h-3 w-3" />Email</Label>
+                      <Input className="h-8 text-sm" placeholder="juan@empresa.com"
+                        value={newContact.email}
+                        onChange={(e) => setNewContact((p) => ({ ...p, email: e.target.value }))} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Missing contact fields */}
+              {!noContact && missingContact.length > 0 && (
                 <div className="space-y-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Sobre el contacto</p>
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -249,16 +285,11 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
                       const Icon = key === "company_name" ? Building2 : key === "phone" ? Phone : User;
                       return (
                         <div key={key} className="space-y-1.5">
-                          <Label className="flex items-center gap-1.5 text-xs">
-                            <Icon className="h-3 w-3" />
-                            {label}
-                          </Label>
-                          <Input
-                            className="h-8 text-sm"
+                          <Label className="flex items-center gap-1.5 text-xs"><Icon className="h-3 w-3" />{label}</Label>
+                          <Input className="h-8 text-sm"
                             placeholder={key === "phone" ? "+54 11 XXXX XXXX" : label}
                             value={contactValues[key] ?? ""}
-                            onChange={(e) => setContactValues((p) => ({ ...p, [key]: e.target.value }))}
-                          />
+                            onChange={(e) => setContactValues((p) => ({ ...p, [key]: e.target.value }))} />
                         </div>
                       );
                     })}
@@ -266,25 +297,21 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
                 </div>
               )}
 
+              {/* Missing lead fields */}
               {missingLead.length > 0 && meeting.leads && (
                 <div className="space-y-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Sobre el deal</p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {missingLead.map(({ key, label }) => {
-                      const Icon = key === "value" ? DollarSign : key === "probability" ? Percent : Calendar;
+                      const Icon = key === "value" ? DollarSign : Calendar;
                       return (
                         <div key={key} className="space-y-1.5">
-                          <Label className="flex items-center gap-1.5 text-xs">
-                            <Icon className="h-3 w-3" />
-                            {label}
-                          </Label>
-                          <Input
-                            className="h-8 text-sm"
-                            type={key === "value" || key === "probability" ? "number" : key === "expected_close_date" ? "date" : "text"}
-                            placeholder={key === "value" ? "10000" : key === "probability" ? "0-100" : ""}
+                          <Label className="flex items-center gap-1.5 text-xs"><Icon className="h-3 w-3" />{label}</Label>
+                          <Input className="h-8 text-sm"
+                            type={key === "value" ? "number" : key === "expected_close_date" ? "date" : "text"}
+                            placeholder={key === "value" ? "10000" : ""}
                             value={leadValues[key] ?? ""}
-                            onChange={(e) => setLeadValues((p) => ({ ...p, [key]: e.target.value }))}
-                          />
+                            onChange={(e) => setLeadValues((p) => ({ ...p, [key]: e.target.value }))} />
                         </div>
                       );
                     })}
@@ -292,20 +319,58 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
                 </div>
               )}
 
-              <Button
-                size="sm"
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full"
-              >
-                {saving ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                )}
-                Guardar datos
-              </Button>
+              {/* No lead: option to create one manually */}
+              {!meeting.leads && !wantsDeal && (
+                <button
+                  onClick={() => setWantsDeal(true)}
+                  className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                >
+                  + Crear deal manualmente para esta reunión
+                </button>
+              )}
+              {wantsDeal && !meeting.leads && (
+                <div className="space-y-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Nuevo deal</p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="space-y-1.5 sm:col-span-1">
+                      <Label className="flex items-center gap-1.5 text-xs"><TrendingUp className="h-3 w-3" />Nombre del deal</Label>
+                      <Input className="h-8 text-sm" placeholder="Propuesta mesas"
+                        value={newLead.title}
+                        onChange={(e) => setNewLead((p) => ({ ...p, title: e.target.value }))} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="flex items-center gap-1.5 text-xs"><DollarSign className="h-3 w-3" />Valor ($)</Label>
+                      <Input className="h-8 text-sm" type="number" placeholder="5000"
+                        value={newLead.value}
+                        onChange={(e) => setNewLead((p) => ({ ...p, value: e.target.value }))} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="flex items-center gap-1.5 text-xs"><Calendar className="h-3 w-3" />Cierre estimado</Label>
+                      <Input className="h-8 text-sm" type="date"
+                        value={newLead.expected_close_date}
+                        onChange={(e) => setNewLead((p) => ({ ...p, expected_close_date: e.target.value }))} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {hasSomethingToSave && (
+                <Button size="sm" onClick={handleSave} disabled={saving} className="w-full">
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                  Guardar datos
+                </Button>
+              )}
             </div>
+          )}
+
+          {/* Prompt to create deal for complete meetings with no deal */}
+          {!meeting.leads && !wantsDeal && totalMissing === 0 && !saved && (
+            <button
+              onClick={() => { setWantsDeal(true); setExpanded(true); }}
+              className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            >
+              + Crear deal para esta reunión
+            </button>
           )}
         </CardContent>
       )}
@@ -328,35 +393,31 @@ export function MeetingsInbox({ meetings }: { meetings: Meeting[] }) {
     );
   }
 
-  const withMissing = meetings.filter(
-    (m) => missingContactFields(m.contacts).length + missingLeadFields(m.leads).length > 0
-  );
-  const complete = meetings.filter(
-    (m) => missingContactFields(m.contacts).length + missingLeadFields(m.leads).length === 0
-  );
+  const needAttention = meetings.filter((m) => {
+    const mc = missingContactFields(m.contacts);
+    const ml = missingLeadFields(m.leads);
+    return !m.contacts || mc.length > 0 || ml.length > 0;
+  });
+  const complete = meetings.filter((m) => !needAttention.includes(m));
 
   return (
     <div className="space-y-6">
-      {withMissing.length > 0 && (
+      {needAttention.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-amber-300">
-            <AlertCircle className="h-4 w-4" />
-            Necesitan tu atención ({withMissing.length})
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-amber-400" />
+            <h2 className="text-sm font-medium text-amber-300">Necesitan tu atención ({needAttention.length})</h2>
           </div>
-          {withMissing.map((m) => (
-            <MeetingCard key={m.id} meeting={m} />
-          ))}
+          {needAttention.map((m) => <MeetingCard key={m.id} meeting={m} />)}
         </div>
       )}
-
       {complete.length > 0 && (
         <div className="space-y-3">
-          {withMissing.length > 0 && (
-            <p className="text-sm font-medium text-muted-foreground">Completas ({complete.length})</p>
-          )}
-          {complete.map((m) => (
-            <MeetingCard key={m.id} meeting={m} />
-          ))}
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <h2 className="text-sm font-medium text-muted-foreground">Completas ({complete.length})</h2>
+          </div>
+          {complete.map((m) => <MeetingCard key={m.id} meeting={m} />)}
         </div>
       )}
     </div>
