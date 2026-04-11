@@ -27,10 +27,6 @@ export async function GET(request: Request) {
     "whatsapp_business",
     "whatsapp_personal",
     "gmail",
-    "instagram",
-    "meet",
-    "zoom",
-    "teams",
     "fathom",
   ];
 

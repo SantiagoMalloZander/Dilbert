@@ -7,14 +7,11 @@ import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   CircleOff,
-  Clapperboard,
   Loader2,
   Mail,
   MessageCircleMore,
-  MessagesSquare,
   PhoneCall,
   PlugZap,
-  Send,
   Unplug,
   Video,
 } from "lucide-react";
@@ -51,10 +48,7 @@ const CHANNEL_ICONS = {
   whatsapp_business: MessageCircleMore,
   whatsapp_personal: PhoneCall,
   gmail: Mail,
-  instagram: Send,
   fathom: Video,
-  zoom: Clapperboard,
-  teams: MessagesSquare,
 } as const;
 
 const WEBHOOK_INSTRUCTIONS: Partial<Record<string, string>> = {

@@ -4,10 +4,7 @@ export type IntegrationChannelType =
   | "whatsapp_personal"
   | "whatsapp_business"
   | "gmail"
-  | "instagram"
-  | "fathom"
-  | "zoom"
-  | "teams";
+  | "fathom";
 
 export type IntegrationConnectionStatus =
   | "disconnected"
@@ -91,102 +88,20 @@ export const INTEGRATION_DEFINITIONS: IntegrationDefinition[] = [
   {
     channelType: "gmail",
     name: "Gmail",
-    subtitle: "Inbox comercial",
+    subtitle: "Emails comerciales",
     fields: [
       {
         key: "workspaceEmail",
         label: "Email de la cuenta",
         placeholder: "ventas@empresa.com",
       },
-      {
-        key: "clientId",
-        label: "Client ID",
-        placeholder: "google-client-id.apps.googleusercontent.com",
-      },
-      {
-        key: "refreshToken",
-        label: "Refresh Token",
-        placeholder: "1//0g...",
-      },
-    ],
-  },
-  {
-    channelType: "instagram",
-    name: "Instagram DMs",
-    subtitle: "Meta Messaging",
-    fields: [
-      {
-        key: "appId",
-        label: "App ID",
-        placeholder: "1234567890",
-      },
-      {
-        key: "appSecret",
-        label: "App Secret",
-        placeholder: "meta-secret",
-      },
-      {
-        key: "instagramAccountId",
-        label: "Instagram Account ID",
-        placeholder: "1784...",
-      },
     ],
   },
   {
     channelType: "fathom",
-    name: "Google Meet + Fathom",
-    subtitle: "Meetings y notas automáticas",
-    fields: [
-      {
-        key: "fathomApiKey",
-        label: "Fathom API Key",
-        placeholder: "fathom_...",
-      },
-    ],
-  },
-  {
-    channelType: "zoom",
-    name: "Zoom",
-    subtitle: "Video sales",
-    fields: [
-      {
-        key: "accountEmail",
-        label: "Email de la cuenta",
-        placeholder: "ventas@empresa.com",
-      },
-      {
-        key: "clientId",
-        label: "Client ID",
-        placeholder: "zoom-client-id",
-      },
-      {
-        key: "clientSecret",
-        label: "Client Secret",
-        placeholder: "zoom-client-secret",
-      },
-    ],
-  },
-  {
-    channelType: "teams",
-    name: "Microsoft Teams",
-    subtitle: "Meetings y mensajes",
-    fields: [
-      {
-        key: "tenantId",
-        label: "Tenant ID",
-        placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      },
-      {
-        key: "clientId",
-        label: "Client ID",
-        placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      },
-      {
-        key: "clientSecret",
-        label: "Client Secret",
-        placeholder: "teams-client-secret",
-      },
-    ],
+    name: "Videollamadas — Fathom",
+    subtitle: "Google Meet, Zoom y Teams",
+    fields: [],
   },
 ];
 
@@ -196,8 +111,8 @@ function getDefinition(channelType: string) {
 
 export function toDatabaseChannelType(
   channelType: IntegrationChannelType
-): "whatsapp_business" | "whatsapp_personal" | "gmail" | "instagram" | "fathom" | "zoom" | "teams" {
-  return channelType as any;
+): "whatsapp_business" | "whatsapp_personal" | "gmail" | "fathom" {
+  return channelType;
 }
 
 export function fromDatabaseChannelType(channel: string): IntegrationChannelType | null {
@@ -205,11 +120,8 @@ export function fromDatabaseChannelType(channel: string): IntegrationChannelType
     case "whatsapp_business":
     case "whatsapp_personal":
     case "gmail":
-    case "instagram":
     case "fathom":
-    case "zoom":
-    case "teams":
-      return channel as IntegrationChannelType;
+      return channel;
     default:
       return null;
   }

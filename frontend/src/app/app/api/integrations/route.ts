@@ -11,10 +11,7 @@ const connectIntegrationSchema = z.object({
     "whatsapp_business",
     "whatsapp_personal",
     "gmail",
-    "instagram",
     "fathom",
-    "zoom",
-    "teams",
   ]),
   credentials: z.record(z.string(), z.string()),
 });
@@ -24,10 +21,7 @@ const disconnectIntegrationSchema = z.object({
     "whatsapp_business",
     "whatsapp_personal",
     "gmail",
-    "instagram",
     "fathom",
-    "zoom",
-    "teams",
   ]),
 });
 
