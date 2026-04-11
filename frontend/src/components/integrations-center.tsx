@@ -51,10 +51,14 @@ const CHANNEL_ICONS = {
   whatsapp_personal: PhoneCall,
   gmail: Mail,
   instagram: Send,
-  meet: Video,
+  fathom: Video,
   zoom: Clapperboard,
   teams: MessagesSquare,
 } as const;
+
+const WEBHOOK_INSTRUCTIONS: Partial<Record<string, string>> = {
+  fathom: "https://dilvert.netlify.app/app/api/webhooks/fathom",
+};
 
 type FlashMessage = {
   tone: "success" | "error";
@@ -636,6 +640,15 @@ export function IntegrationsCenter({
                     />
                   </div>
                 ))}
+                {WEBHOOK_INSTRUCTIONS[selectedDefinition.channelType] ? (
+                  <div className="rounded-2xl border border-white/10 bg-background/50 px-4 py-3 text-xs text-muted-foreground">
+                    <p className="mb-1 font-medium text-foreground">Paso 2 — Configurá el webhook en Fathom</p>
+                    <p className="mb-2">Settings → Webhooks → Add webhook → pegá esta URL:</p>
+                    <code className="block break-all rounded bg-black/20 px-2 py-1 font-mono text-primary">
+                      {WEBHOOK_INSTRUCTIONS[selectedDefinition.channelType]}
+                    </code>
+                  </div>
+                ) : null}
               </div>
 
               <DialogFooter className="rounded-b-[28px]">

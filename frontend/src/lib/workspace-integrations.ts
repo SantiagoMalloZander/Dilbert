@@ -5,7 +5,7 @@ export type IntegrationChannelType =
   | "whatsapp_business"
   | "gmail"
   | "instagram"
-  | "meet"
+  | "fathom"
   | "zoom"
   | "teams";
 
@@ -133,20 +133,10 @@ export const INTEGRATION_DEFINITIONS: IntegrationDefinition[] = [
     ],
   },
   {
-    channelType: "meet",
+    channelType: "fathom",
     name: "Google Meet + Fathom",
-    subtitle: "Meetings y notas",
+    subtitle: "Meetings y notas automáticas",
     fields: [
-      {
-        key: "workspaceEmail",
-        label: "Email de Google Workspace",
-        placeholder: "reuniones@empresa.com",
-      },
-      {
-        key: "calendarId",
-        label: "Calendar ID",
-        placeholder: "primary",
-      },
       {
         key: "fathomApiKey",
         label: "Fathom API Key",
@@ -206,19 +196,17 @@ function getDefinition(channelType: string) {
 
 export function toDatabaseChannelType(
   channelType: IntegrationChannelType
-): "whatsapp_business" | "whatsapp_personal" | "gmail" | "instagram" | "meet" | "zoom" | "teams" {
-  // Direct mapping - no conversion needed
+): "whatsapp_business" | "whatsapp_personal" | "gmail" | "instagram" | "fathom" | "zoom" | "teams" {
   return channelType as any;
 }
 
 export function fromDatabaseChannelType(channel: string): IntegrationChannelType | null {
-  // Direct mapping - no conversion needed
   switch (channel) {
     case "whatsapp_business":
     case "whatsapp_personal":
     case "gmail":
     case "instagram":
-    case "meet":
+    case "fathom":
     case "zoom":
     case "teams":
       return channel as IntegrationChannelType;
