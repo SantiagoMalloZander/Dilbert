@@ -3,7 +3,7 @@
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { WhatsAppOnboardingDialog } from "@/components/whatsapp-onboarding-dialog";
 import { FathomSetupDialog } from "@/components/fathom-setup-dialog";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   CheckCircle2,
   CircleOff,
@@ -12,6 +12,7 @@ import {
   MessageCircleMore,
   PhoneCall,
   PlugZap,
+  RefreshCw,
   Unplug,
   Video,
 } from "lucide-react";
@@ -109,12 +110,16 @@ function VendorChannelCard({
   channel,
   onConnect,
   onDisconnect,
+  onSync,
   actionKey,
+  syncing,
 }: {
   channel: VendorIntegrationRecord;
   onConnect: (channelType: IntegrationChannelType) => void;
   onDisconnect: (channelType: IntegrationChannelType) => void;
+  onSync?: () => void;
   actionKey: string | null;
+  syncing?: boolean;
 }) {
   const Icon = CHANNEL_ICONS[channel.channelType] ?? PlugZap;
   const badge = getStatusBadge(channel.status);
@@ -145,18 +150,30 @@ function VendorChannelCard({
             Conectar
           </Button>
         ) : (
-          <Button
-            variant="outline"
-            onClick={() => onDisconnect(channel.channelType)}
-            disabled={isDisconnecting}
-          >
-            {isDisconnecting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Unplug className="mr-2 h-4 w-4" />
+          <div className="flex gap-2">
+            {onSync && (
+              <Button variant="outline" onClick={onSync} disabled={syncing}>
+                {syncing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                Sincronizar
+              </Button>
             )}
-            Desconectar
-          </Button>
+            <Button
+              variant="outline"
+              onClick={() => onDisconnect(channel.channelType)}
+              disabled={isDisconnecting}
+            >
+              {isDisconnecting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Unplug className="mr-2 h-4 w-4" />
+              )}
+              Desconectar
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -348,6 +365,18 @@ export function IntegrationsCenter({
   const [whatsappQr, setWhatsappQr] = useState<WhatsAppQrState | null>(null);
   const [onboardingInstance, setOnboardingInstance] = useState<string | null>(null);
   const [fathomOpen, setFathomOpen] = useState(false);
+  const [gmailSyncing, setGmailSyncing] = useState(false);
+  const searchParams = useSearchParams();
+
+  // Show feedback when returning from Gmail OAuth
+  useEffect(() => {
+    const gmail = searchParams.get("gmail");
+    if (gmail === "connected") {
+      setFlashMessage({ tone: "success", text: "Gmail conectado. Importando emails..." });
+    } else if (gmail === "error") {
+      setFlashMessage({ tone: "error", text: "No se pudo conectar Gmail. Intentá de nuevo." });
+    }
+  }, [searchParams]);
 
   const selectedDefinition = useMemo(
     () =>
@@ -431,6 +460,24 @@ export function IntegrationsCenter({
     }
   }
 
+  async function handleGmailSync() {
+    setGmailSyncing(true);
+    try {
+      const res = await fetch("/app/api/integrations/gmail/sync", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setFlashMessage({ tone: "success", text: `Gmail sincronizado. ${data.imported} emails nuevos importados.` });
+        startTransition(() => router.refresh());
+      } else {
+        setFlashMessage({ tone: "error", text: data.error || "Error al sincronizar Gmail." });
+      }
+    } catch {
+      setFlashMessage({ tone: "error", text: "Error de red al sincronizar." });
+    } finally {
+      setGmailSyncing(false);
+    }
+  }
+
   function openConnectDialog(channelType: IntegrationChannelType) {
     if (channelType === "whatsapp_business" || channelType === "whatsapp_personal") {
       startWhatsAppQrFlow(channelType);
@@ -439,6 +486,11 @@ export function IntegrationsCenter({
 
     if (channelType === "fathom") {
       setFathomOpen(true);
+      return;
+    }
+
+    if (channelType === "gmail") {
+      window.location.href = "/app/api/integrations/gmail/auth";
       return;
     }
 
@@ -574,7 +626,9 @@ export function IntegrationsCenter({
                   channel={channel}
                   onConnect={openConnectDialog}
                   onDisconnect={handleDisconnect}
+                  onSync={channel.channelType === "gmail" ? handleGmailSync : undefined}
                   actionKey={actionKey}
+                  syncing={channel.channelType === "gmail" ? gmailSyncing : false}
                 />
               ))}
             </div>

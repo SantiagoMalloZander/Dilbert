@@ -255,9 +255,12 @@ export async function connectVendorIntegration(params: {
     submitted_at: new Date().toISOString(),
   };
 
-  // Fathom is confirmed connected when the user completes the wizard —
-  // no async QR/callback step needed.
-  const initialStatus = params.channelType === "fathom" ? "connected" : "pending";
+  // Fathom and Gmail set their own status via their own routes —
+  // this generic path is only used for WhatsApp.
+  const initialStatus =
+    params.channelType === "fathom" || params.channelType === "gmail"
+      ? "connected"
+      : "pending";
 
   const { error } = await supabase.from("channel_credentials").upsert(
     {
