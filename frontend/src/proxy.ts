@@ -52,7 +52,8 @@ function isWorkspacePublicPath(pathname: string) {
     pathname === "/app" ||
     pathname === "/app/" ||
     pathname.startsWith("/app/api/auth") ||
-    pathname.startsWith("/app/auth/callback")
+    pathname.startsWith("/app/auth/callback") ||
+    pathname.startsWith("/app/api/webhooks")
   );
 }
 
