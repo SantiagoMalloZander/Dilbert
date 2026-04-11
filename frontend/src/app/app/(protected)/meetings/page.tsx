@@ -45,7 +45,7 @@ export default async function MeetingsPage() {
       <div>
         <h1 className="text-2xl font-bold">Reuniones</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Reuniones procesadas automáticamente desde Google Meet via Fathom.
+          Reuniones procesadas automáticamente desde Google Meet, Zoom y Teams via Fathom.
         </p>
       </div>
       <MeetingsInbox meetings={meetings as any} />

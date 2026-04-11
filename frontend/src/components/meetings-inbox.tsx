@@ -321,7 +321,7 @@ export function MeetingsInbox({ meetings }: { meetings: Meeting[] }) {
           <Video className="h-10 w-10 text-muted-foreground/40" />
           <p className="font-medium">Todavía no hay reuniones procesadas</p>
           <p className="text-sm text-muted-foreground">
-            Cuando termines una reunión en Google Meet, Fathom la va a procesar automáticamente y va a aparecer acá.
+            Cuando termines una reunión en Google Meet, Zoom o Teams, Fathom la va a procesar automáticamente y va a aparecer acá.
           </p>
         </CardContent>
       </Card>
