@@ -452,13 +452,10 @@ export function IntegrationsCenter({
   }
 
   async function handleFathomSave(apiKey: string) {
-    const response = await fetch(INTEGRATIONS_API, {
+    const response = await fetch("/app/api/integrations/fathom/setup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        channelType: "fathom",
-        credentials: { fathomApiKey: apiKey },
-      }),
+      body: JSON.stringify({ apiKey }),
     });
     if (!response.ok) {
       const data = await response.json();
@@ -627,7 +624,6 @@ export function IntegrationsCenter({
       {/* Fathom setup wizard */}
       <FathomSetupDialog
         open={fathomOpen}
-        userId={userId}
         onClose={() => setFathomOpen(false)}
         onSave={handleFathomSave}
       />

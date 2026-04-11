@@ -1,108 +1,73 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import crypto from "crypto";
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
 
-// ─── Fathom payload normalization ────────────────────────────────────────────
-// Fathom's actual webhook format (as of 2026):
-// {
-//   "call": { "id": "...", "name": "...", "created_at": "..." },
-//   "recording": {
-//     "id": "...", "share_url": "...",
-//     "summary": { "text": "..." } | "...",
-//     "action_items": [{ "text": "..." }] | ["..."],
-//     "transcript": "..." | [{ "speaker": "...", "text": "..." }],
-//     "participants": [{ "name": "...", "email": "..." }]
-//   }
-// }
-// We also accept a flat format in case they change it.
+// ─── Signature verification ───────────────────────────────────────────────────
+function verifyFathomSignature(
+  secret: string,
+  webhookId: string,
+  webhookTimestamp: string,
+  rawBody: string,
+  webhookSignature: string
+): boolean {
+  try {
+    const timestamp = parseInt(webhookTimestamp, 10);
+    if (Math.abs(Math.floor(Date.now() / 1000) - timestamp) > 300) return false;
 
-interface FathomParticipant {
-  name?: string;
-  email?: string;
+    const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody}`;
+    const secretBytes = Buffer.from(secret.replace("whsec_", ""), "base64");
+    const expected = crypto
+      .createHmac("sha256", secretBytes)
+      .update(signedContent)
+      .digest("base64");
+
+    const signatures = webhookSignature.split(" ").map((s) => {
+      const parts = s.split(",");
+      return parts.length > 1 ? parts[1] : parts[0];
+    });
+
+    return signatures.some((sig) => {
+      try {
+        return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig));
+      } catch {
+        return false;
+      }
+    });
+  } catch {
+    return false;
+  }
 }
 
-interface NormalizedMeeting {
+// ─── Fathom payload types ─────────────────────────────────────────────────────
+interface FathomTranscriptEntry {
+  speaker: { display_name: string; matched_calendar_invitee_email?: string | null };
+  text: string;
+  timestamp: string;
+}
+
+interface FathomActionItem {
+  description: string;
+  assignee?: { name: string; email: string } | null;
+}
+
+interface FathomCalendarInvitee {
+  name?: string | null;
+  email?: string | null;
+  is_external: boolean;
+}
+
+interface FathomPayload {
   title: string;
-  date: string;
-  participants: FathomParticipant[];
-  summary: string;
-  actionItems: string[];
-  transcript: string;
-  shareUrl: string;
-}
-
-function normalizeFathomPayload(raw: Record<string, unknown>): NormalizedMeeting {
-  // Try nested format first
-  const call = raw.call as Record<string, unknown> | undefined;
-  const recording = raw.recording as Record<string, unknown> | undefined;
-
-  const title =
-    (call?.name as string) ||
-    (raw.meeting_title as string) ||
-    (raw.title as string) ||
-    "Reunión";
-
-  const date =
-    (call?.created_at as string) ||
-    (raw.meeting_date as string) ||
-    (raw.started_at as string) ||
-    new Date().toISOString();
-
-  // Participants / attendees
-  const rawParticipants =
-    (recording?.participants as FathomParticipant[]) ||
-    (raw.attendees as FathomParticipant[]) ||
-    (raw.participants as FathomParticipant[]) ||
-    [];
-  const participants = Array.isArray(rawParticipants) ? rawParticipants : [];
-
-  // Summary — can be string or { text: string }
-  const rawSummary = recording?.summary ?? raw.summary;
-  const summary =
-    typeof rawSummary === "string"
-      ? rawSummary
-      : typeof rawSummary === "object" && rawSummary !== null
-      ? ((rawSummary as Record<string, unknown>).text as string) ?? ""
-      : "";
-
-  // Action items — can be string[] or { text: string }[]
-  const rawItems =
-    (recording?.action_items as unknown[]) ||
-    (raw.action_items as unknown[]) ||
-    [];
-  const actionItems = Array.isArray(rawItems)
-    ? rawItems.map((item) =>
-        typeof item === "string"
-          ? item
-          : typeof item === "object" && item !== null
-          ? ((item as Record<string, unknown>).text as string) ?? ""
-          : ""
-      ).filter(Boolean)
-    : [];
-
-  // Transcript — string or array of { speaker, text }
-  const rawTranscript = recording?.transcript ?? raw.transcript;
-  const transcript =
-    typeof rawTranscript === "string"
-      ? rawTranscript
-      : Array.isArray(rawTranscript)
-      ? rawTranscript
-          .map((t: unknown) =>
-            typeof t === "object" && t !== null
-              ? `${(t as Record<string, unknown>).speaker ?? ""}: ${(t as Record<string, unknown>).text ?? ""}`
-              : String(t)
-          )
-          .join("\n")
-      : "";
-
-  const shareUrl =
-    (recording?.share_url as string) ||
-    (raw.transcript_url as string) ||
-    (raw.share_url as string) ||
-    "";
-
-  return { title, date, participants, summary, actionItems, transcript, shareUrl };
+  meeting_title?: string | null;
+  share_url?: string;
+  created_at: string;
+  default_summary?: { markdown_formatted?: string | null };
+  action_items?: FathomActionItem[];
+  transcript?: FathomTranscriptEntry[];
+  calendar_invitees?: FathomCalendarInvitee[];
+  recorded_by?: { name: string; email: string };
 }
 
 // ─── AI analysis ─────────────────────────────────────────────────────────────
@@ -122,23 +87,22 @@ interface MeetingAnalysis {
 }
 
 async function analyzeTranscript(
-  meeting: NormalizedMeeting,
+  title: string,
+  summary: string,
+  actionItems: string[],
+  transcript: string,
   contactName: string,
   vendorName: string
 ): Promise<MeetingAnalysis | null> {
   if (!OPENAI_KEY) return null;
 
   const content = [
-    `Reunión: "${meeting.title}"`,
+    `Reunión: "${title}"`,
     `Vendedor: ${vendorName}`,
     `Cliente: ${contactName}`,
-    meeting.summary ? `\nResumen de Fathom:\n${meeting.summary}` : "",
-    meeting.actionItems.length
-      ? `\nAction items:\n${meeting.actionItems.map((a) => `• ${a}`).join("\n")}`
-      : "",
-    meeting.transcript
-      ? `\nTranscripción:\n${meeting.transcript.slice(0, 8000)}`
-      : "",
+    summary ? `\nResumen:\n${summary}` : "",
+    actionItems.length ? `\nAction items:\n${actionItems.map((a) => `• ${a}`).join("\n")}` : "",
+    transcript ? `\nTranscripción:\n${transcript.slice(0, 8000)}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -146,10 +110,7 @@ async function analyzeTranscript(
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_KEY}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_KEY}` },
       body: JSON.stringify({
         model: "gpt-4o-mini",
         max_tokens: 800,
@@ -160,26 +121,25 @@ async function analyzeTranscript(
             content: `Sos un asistente de CRM que analiza transcripciones de reuniones de ventas.
 Analizá la reunión y devolvé un JSON con esta estructura exacta:
 {
-  "contact_company": "empresa del cliente (string o null)",
-  "contact_position": "cargo del cliente (string o null)",
+  "contact_company": "empresa del cliente o null",
+  "contact_position": "cargo del cliente o null",
   "has_deal_potential": true/false,
-  "lead_title": "título del deal (string o null, solo si has_deal_potential=true)",
-  "lead_value": número en dólares estimado o null,
+  "lead_title": "título del deal o null",
+  "lead_value": número en dólares o null,
   "lead_probability": número 0-100 o null,
   "next_close_estimate": "YYYY-MM-DD o null",
   "client_interest": "high|medium|low|none",
-  "key_pain_points": ["dolor 1", "dolor 2"] o [],
-  "objections": ["objeción 1"] o [],
-  "next_steps": ["paso 1", "paso 2"] o [],
-  "crm_note": "Resumen ejecutivo en español de máximo 3 oraciones para el CRM."
+  "key_pain_points": [] ,
+  "objections": [],
+  "next_steps": [],
+  "crm_note": "Resumen ejecutivo en español de máximo 3 oraciones."
 }
-Respondé SOLO con el JSON, sin texto adicional.`,
+Respondé SOLO con el JSON.`,
           },
           { role: "user", content },
         ],
       }),
     });
-
     if (!res.ok) return null;
     const data = await res.json();
     const raw = data.choices?.[0]?.message?.content;
@@ -193,7 +153,6 @@ Respondé SOLO con el JSON, sin texto adicional.`,
 // ─── Webhook handler ──────────────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
-    // Auth via ?token=userId in the URL (Fathom doesn't support custom headers)
     const { searchParams } = new URL(request.url);
     const vendorId = searchParams.get("token");
 
@@ -201,12 +160,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing token" }, { status: 401 });
     }
 
-    const rawBody = await request.json() as Record<string, unknown>;
-    console.log("[webhook/fathom] raw payload:", JSON.stringify(rawBody).slice(0, 500));
+    const rawBody = await request.text();
+    const body = JSON.parse(rawBody) as FathomPayload;
+
+    console.log("[webhook/fathom] payload title:", body.title, "recorded_by:", body.recorded_by?.email);
 
     const supabase = createAdminSupabaseClient();
 
-    // Find vendor's company
+    // Load vendor
     const { data: vendorRow } = await supabase
       .from("users")
       .select("id, email, name, company_id")
@@ -221,27 +182,65 @@ export async function POST(request: Request) {
     const vendorEmail = vendorRow.email?.toLowerCase() ?? "";
     const vendorName = vendorRow.name ?? "Vendedor";
 
-    // Normalize Fathom's payload (handles all known formats)
-    const meeting = normalizeFathomPayload(rawBody);
+    // Verify signature if we have the webhook secret stored
+    const { data: credRow } = await supabase
+      .from("channel_credentials")
+      .select("credentials")
+      .eq("user_id", vendorId)
+      .eq("channel", "fathom")
+      .maybeSingle();
 
-    // Identify external attendee (not the vendor)
-    const externalAttendee = meeting.participants.find(
-      (p) => p.email && p.email.toLowerCase() !== vendorEmail
+    const webhookSecret = (credRow?.credentials as Record<string, string> | null)?.webhookSecret;
+    if (webhookSecret) {
+      const webhookId = request.headers.get("webhook-id") ?? "";
+      const webhookTimestamp = request.headers.get("webhook-timestamp") ?? "";
+      const webhookSignature = request.headers.get("webhook-signature") ?? "";
+
+      if (webhookId && webhookTimestamp && webhookSignature) {
+        const valid = verifyFathomSignature(webhookSecret, webhookId, webhookTimestamp, rawBody, webhookSignature);
+        if (!valid) {
+          console.warn("[webhook/fathom] invalid signature for vendor", vendorId);
+          return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+        }
+      }
+    }
+
+    // Parse meeting fields
+    const meetingTitle = body.meeting_title || body.title || "Reunión";
+    const meetingDate = body.created_at || new Date().toISOString();
+    const summary = body.default_summary?.markdown_formatted ?? "";
+    const actionItems = (body.action_items ?? []).map((ai) => ai.description).filter(Boolean);
+    const transcript = (body.transcript ?? [])
+      .map((t) => `${t.speaker.display_name}: ${t.text}`)
+      .join("\n");
+    const shareUrl = body.share_url ?? "";
+
+    // Find external attendee from calendar_invitees
+    const externalInvitees = (body.calendar_invitees ?? []).filter(
+      (ci) => ci.is_external && ci.email && ci.email.toLowerCase() !== vendorEmail
     );
+    const externalAttendee = externalInvitees[0] ?? null;
     const contactName = externalAttendee?.name ?? "Desconocido";
 
     // Run AI analysis in parallel
-    const analysisPromise = analyzeTranscript(meeting, contactName, vendorName);
+    const analysisPromise = analyzeTranscript(
+      meetingTitle,
+      summary,
+      actionItems,
+      transcript,
+      contactName,
+      vendorName
+    );
 
     // Find or create contact
     let contactId: string | null = null;
-
     if (externalAttendee?.email) {
+      const email = externalAttendee.email.toLowerCase();
       const { data: existing } = await supabase
         .from("contacts")
         .select("id")
         .eq("company_id", companyId)
-        .eq("email", externalAttendee.email.toLowerCase())
+        .eq("email", email)
         .maybeSingle();
 
       if (existing) {
@@ -256,58 +255,46 @@ export async function POST(request: Request) {
             assigned_to: vendorId,
             first_name: parts[0] ?? "Desconocido",
             last_name: parts.slice(1).join(" ") ?? "",
-            email: externalAttendee.email.toLowerCase(),
+            email,
             source: "meet" as const,
             tags: ["fathom"],
           })
           .select("id")
           .single();
-
         if (created) contactId = created.id;
       }
     }
 
     const analysis = await analysisPromise;
 
-    // Enrich contact
+    // Enrich contact with AI data
     if (contactId && analysis) {
       const updates: Record<string, string> = {};
       if (analysis.contact_company) updates.company_name = analysis.contact_company;
       if (analysis.contact_position) updates.position = analysis.contact_position;
       if (Object.keys(updates).length > 0) {
-        await supabase
-          .from("contacts")
-          .update(updates)
-          .eq("id", contactId)
-          .eq("company_id", companyId);
+        await supabase.from("contacts").update(updates).eq("id", contactId).eq("company_id", companyId);
       }
     }
 
     // Build activity description
     const descParts: string[] = [];
     if (analysis?.crm_note) descParts.push(analysis.crm_note);
-    else if (meeting.summary) descParts.push(meeting.summary);
+    else if (summary) descParts.push(summary);
 
     if (analysis?.client_interest) {
-      const label = { high: "Alto 🔥", medium: "Medio", low: "Bajo", none: "Sin interés" }[
-        analysis.client_interest
-      ];
+      const label = { high: "Alto 🔥", medium: "Medio", low: "Bajo", none: "Sin interés" }[analysis.client_interest];
       descParts.push(`**Nivel de interés:** ${label}`);
     }
     if (analysis?.key_pain_points?.length)
-      descParts.push(
-        `**Problemas del cliente:**\n${analysis.key_pain_points.map((p) => `• ${p}`).join("\n")}`
-      );
+      descParts.push(`**Problemas del cliente:**\n${analysis.key_pain_points.map((p) => `• ${p}`).join("\n")}`);
     if (analysis?.objections?.length)
-      descParts.push(
-        `**Objeciones:**\n${analysis.objections.map((o) => `• ${o}`).join("\n")}`
-      );
+      descParts.push(`**Objeciones:**\n${analysis.objections.map((o) => `• ${o}`).join("\n")}`);
 
-    const nextSteps = analysis?.next_steps?.length ? analysis.next_steps : meeting.actionItems;
+    const nextSteps = analysis?.next_steps?.length ? analysis.next_steps : actionItems;
     if (nextSteps.length)
       descParts.push(`**Próximos pasos:**\n${nextSteps.map((s) => `• ${s}`).join("\n")}`);
-    if (meeting.shareUrl)
-      descParts.push(`[Ver en Fathom](${meeting.shareUrl})`);
+    if (shareUrl) descParts.push(`[Ver en Fathom](${shareUrl})`);
 
     // Create activity
     await supabase.from("activities").insert({
@@ -316,9 +303,9 @@ export async function POST(request: Request) {
       contact_id: contactId,
       type: "meeting" as const,
       source: "automatic" as const,
-      title: meeting.title,
+      title: meetingTitle,
       description: descParts.join("\n\n") || null,
-      completed_at: meeting.date,
+      completed_at: meetingDate,
     });
 
     // Create lead if AI detected potential
@@ -359,7 +346,7 @@ export async function POST(request: Request) {
               contact_id: contactId,
               pipeline_id: pipeline.id,
               stage_id: firstStage.id,
-              title: analysis.lead_title ?? meeting.title,
+              title: analysis.lead_title ?? meetingTitle,
               value: analysis.lead_value ?? null,
               probability: analysis.lead_probability ?? 20,
               expected_close_date: analysis.next_close_estimate ?? null,
