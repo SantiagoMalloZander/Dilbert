@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import { generateSmartQuestions } from "@/lib/meeting-questions";
 import crypto from "crypto";
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
@@ -72,6 +73,7 @@ interface FathomPayload {
 
 // ─── AI analysis ─────────────────────────────────────────────────────────────
 interface MeetingAnalysis {
+  meeting_type: "first_contact" | "demo" | "follow_up" | "negotiation" | "closing" | "internal" | "error" | "other";
   contact_company?: string;
   contact_position?: string;
   has_deal_potential: boolean;
@@ -113,7 +115,7 @@ async function analyzeTranscript(
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_KEY}` },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        max_tokens: 800,
+        max_tokens: 900,
         response_format: { type: "json_object" },
         messages: [
           {
@@ -121,6 +123,7 @@ async function analyzeTranscript(
             content: `Sos un asistente de CRM que analiza transcripciones de reuniones de ventas.
 Analizá la reunión y devolvé un JSON con esta estructura exacta:
 {
+  "meeting_type": "first_contact|demo|follow_up|negotiation|closing|internal|error|other",
   "contact_company": "empresa del cliente o null",
   "contact_position": "cargo del cliente o null",
   "has_deal_potential": true/false,
@@ -129,11 +132,22 @@ Analizá la reunión y devolvé un JSON con esta estructura exacta:
   "lead_probability": número 0-100 o null,
   "next_close_estimate": "YYYY-MM-DD o null",
   "client_interest": "high|medium|low|none",
-  "key_pain_points": [] ,
+  "key_pain_points": [],
   "objections": [],
   "next_steps": [],
   "crm_note": "Resumen ejecutivo en español de máximo 3 oraciones."
 }
+
+Tipos de reunión:
+- first_contact: primera vez que hablan con este cliente
+- demo: demostración de producto o servicio
+- follow_up: seguimiento de conversación anterior
+- negotiation: discusión de precios o términos
+- closing: intento de cerrar la venta
+- internal: sin clientes externos (solo equipo)
+- error: sin contenido útil, test o accidental
+- other: cualquier otro tipo
+
 Respondé SOLO con el JSON.`,
           },
           { role: "user", content },
@@ -222,7 +236,7 @@ export async function POST(request: Request) {
     const externalAttendee = externalInvitees[0] ?? null;
     const contactName = externalAttendee?.name ?? "Desconocido";
 
-    // Run AI analysis in parallel
+    // Run AI analysis in parallel with contact lookup
     const analysisPromise = analyzeTranscript(
       meetingTitle,
       summary,
@@ -266,6 +280,7 @@ export async function POST(request: Request) {
     }
 
     const analysis = await analysisPromise;
+    const meetingType = analysis?.meeting_type ?? "other";
 
     // Enrich contact with AI data
     if (contactId && analysis) {
@@ -296,19 +311,8 @@ export async function POST(request: Request) {
       descParts.push(`**Próximos pasos:**\n${nextSteps.map((s) => `• ${s}`).join("\n")}`);
     if (shareUrl) descParts.push(`[Ver en Fathom](${shareUrl})`);
 
-    // Create activity
-    await supabase.from("activities").insert({
-      company_id: companyId,
-      user_id: vendorId,
-      contact_id: contactId,
-      type: "meeting" as const,
-      source: "automatic" as const,
-      title: meetingTitle,
-      description: descParts.join("\n\n") || null,
-      completed_at: meetingDate,
-    });
-
     // Create lead if AI detected potential
+    let leadId: string | null = null;
     if (analysis?.has_deal_potential && contactId) {
       const { data: pipeline } = await supabase
         .from("pipelines")
@@ -338,8 +342,10 @@ export async function POST(request: Request) {
             .eq("status", "open")
             .maybeSingle();
 
-          if (!existingLead) {
-            await supabase.from("leads").insert({
+          if (existingLead) {
+            leadId = existingLead.id;
+          } else {
+            const { data: createdLead } = await supabase.from("leads").insert({
               company_id: companyId,
               created_by: vendorId,
               assigned_to: vendorId,
@@ -357,11 +363,63 @@ export async function POST(request: Request) {
                 client_interest: analysis.client_interest,
                 key_pain_points: analysis.key_pain_points ?? [],
               },
-            });
+            }).select("id").single();
+            if (createdLead) leadId = createdLead.id;
           }
         }
       }
     }
+
+    // Fetch enriched contact for question generation
+    let contactData: { company_name?: string | null; position?: string | null } | null = null;
+    let leadData: { value?: number | null; expected_close_date?: string | null } | null = null;
+    if (contactId) {
+      const { data } = await supabase.from("contacts").select("company_name, position").eq("id", contactId).single();
+      contactData = data;
+    }
+    if (leadId) {
+      const { data } = await supabase.from("leads").select("value, expected_close_date").eq("id", leadId).single();
+      leadData = data;
+    }
+
+    // Generate smart questions
+    const questions = generateSmartQuestions({
+      meetingType,
+      contactId,
+      contact: contactData,
+      leadId,
+      lead: leadData,
+      hasDealPotential: analysis?.has_deal_potential ?? false,
+      analysisLeadValue: analysis?.lead_value,
+      analysisCloseEstimate: analysis?.next_close_estimate,
+    });
+
+    // Build metadata
+    const metadata = {
+      meeting_type: meetingType,
+      questions,
+      enrichment_complete: questions.length === 0,
+      origin: "fathom_ai",
+      client_interest: analysis?.client_interest,
+      key_pain_points: analysis?.key_pain_points ?? [],
+    };
+
+    // Create activity
+    const { data: activity } = await supabase.from("activities").insert({
+      company_id: companyId,
+      user_id: vendorId,
+      contact_id: contactId,
+      lead_id: leadId,
+      type: "meeting" as const,
+      source: "automatic" as const,
+      title: meetingTitle,
+      description: descParts.join("\n\n") || null,
+      completed_at: meetingDate,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      metadata: metadata as any,
+    }).select("id").single();
+
+    console.log("[webhook/fathom] created activity", activity?.id, "meeting_type:", meetingType, "questions:", questions.length);
 
     // Mark integration as active
     await supabase
@@ -371,7 +429,7 @@ export async function POST(request: Request) {
       .eq("user_id", vendorId)
       .eq("channel", "fathom");
 
-    return NextResponse.json({ ok: true, ai_analyzed: Boolean(analysis) });
+    return NextResponse.json({ ok: true, ai_analyzed: Boolean(analysis), meeting_type: meetingType, questions: questions.length });
   } catch (error) {
     console.error("[webhook/fathom]", error);
     return NextResponse.json({ error: "Failed to process webhook" }, { status: 500 });

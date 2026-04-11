@@ -9,7 +9,7 @@ async function getMeetings(companyId: string, userId: string, role: string) {
   const query = supabase
     .from("activities")
     .select(`
-      id, title, description, completed_at, created_at, contact_id, lead_id,
+      id, title, description, completed_at, created_at, contact_id, lead_id, metadata,
       contacts ( id, first_name, last_name, email, phone, company_name, position ),
       leads ( id, title, value, currency, probability, expected_close_date, status,
         pipeline_stages ( name ) )

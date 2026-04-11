@@ -43,6 +43,7 @@ export type Database = {
           description: string | null
           id: string
           lead_id: string | null
+          metadata: Json | null
           scheduled_at: string | null
           source: Database["public"]["Enums"]["entry_source"]
           title: string
@@ -58,6 +59,7 @@ export type Database = {
           description?: string | null
           id?: string
           lead_id?: string | null
+          metadata?: Json | null
           scheduled_at?: string | null
           source?: Database["public"]["Enums"]["entry_source"]
           title: string
@@ -73,6 +75,7 @@ export type Database = {
           description?: string | null
           id?: string
           lead_id?: string | null
+          metadata?: Json | null
           scheduled_at?: string | null
           source?: Database["public"]["Enums"]["entry_source"]
           title?: string
