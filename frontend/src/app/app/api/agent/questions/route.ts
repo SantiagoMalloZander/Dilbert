@@ -8,6 +8,9 @@ import { getAuthSession } from "@/lib/workspace-auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { confirmLink } from "@/lib/agent/identity-resolver";
 import { recordLearnedPreference } from "@/lib/agent/memory";
+import { runAgent } from "@/lib/agent/orchestrator";
+import type { DataSource } from "@/lib/agent/data-extractor";
+import type { Channel } from "@/lib/agent/identity-resolver";
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
@@ -110,67 +113,113 @@ export async function POST(request: Request) {
 
   // ── Apply structured actions from the context ────────────────────────────
 
-  if (action === "answer") {
-    // 1. Confirm channel identity link
-    if (linkToConfirm) {
-      await confirmLink(
-        session.user.companyId,
-        linkToConfirm.contactId,
-        linkToConfirm.channel,
-        linkToConfirm.identifier
-      );
-    }
+  if (action === "answer" && question.context) {
+    try {
+      const meta = JSON.parse(question.context) as {
+        type?: string;
+        // identity_unknown fields
+        source?: DataSource;
+        channel?: Channel;
+        channelIdentifier?: string | null;
+        rawText?: string;
+        occurredAt?: string;
+        senderName?: string | null;
+        // field_conflict fields
+        contactId?: string;
+        field?: string;
+        newValue?: string;
+      };
 
-    // 2. Handle field_conflict: apply contact update if vendor says "sí"
-    if (question.context) {
-      try {
-        const meta = JSON.parse(question.context) as {
-          type?: string;
-          contactId?: string;
-          field?: string;
-          newValue?: string;
-        };
+      // ── Case 1: vendor answered who the unknown contact is ─────────────────
+      if (meta.type === "identity_unknown" && answer?.trim()) {
+        // Search for the contact by name or email from the vendor's answer
+        const searchTerm = answer.trim();
+        const { data: contacts } = await supabase
+          .from("contacts")
+          .select("id, first_name, last_name, email, phone")
+          .eq("company_id", session.user.companyId)
+          .or(
+            `first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`
+          )
+          .limit(3);
 
-        if (
-          meta.type === "field_conflict" &&
-          meta.contactId &&
-          meta.field &&
-          meta.newValue
-        ) {
-          const userSaysYes = /^(s[íi]|yes|ok|actualiz|correcto|dale|anda|sip)/i.test(
-            (answer ?? "").trim()
-          );
-          const userSaysNo = /^(no|manten|dejar|está bien así)/i.test(
-            (answer ?? "").trim()
-          );
+        const contact = contacts?.[0] ?? null;
 
-          if (userSaysYes) {
-            // Apply the update the agent detected
-            await supabase
-              .from("contacts")
-              .update({ [meta.field]: meta.newValue })
-              .eq("id", meta.contactId)
-              .eq("company_id", session.user.companyId);
-          }
-
-          // Learn the preference either way (helps avoid future re-asks)
-          if (userSaysYes || userSaysNo) {
-            const preferenceKey = `field_${meta.field}_${meta.contactId.slice(0, 8)}`;
-            const preferenceValue = userSaysYes
-              ? `Para el campo "${meta.field}", el agente debe usar "${meta.newValue}" cuando lo detecte.`
-              : `Para el campo "${meta.field}", el vendedor prefiere mantener el valor actual aunque el agente detecte uno diferente.`;
-            await recordLearnedPreference(
-              session.user.id,
+        if (contact) {
+          // Register the channel link so the agent recognises this next time
+          if (meta.channel && meta.channelIdentifier) {
+            await confirmLink(
               session.user.companyId,
-              preferenceKey,
-              preferenceValue
+              contact.id,
+              meta.channel,
+              meta.channelIdentifier
             );
           }
+
+          // Also confirm the explicit confirmLink if the UI sent one
+          if (linkToConfirm) {
+            await confirmLink(
+              session.user.companyId,
+              linkToConfirm.contactId,
+              linkToConfirm.channel,
+              linkToConfirm.identifier
+            );
+          }
+
+          // Re-run the orchestrator with the now-resolved contactId (fire-and-forget)
+          if (meta.rawText && meta.source) {
+            runAgent({
+              companyId: session.user.companyId,
+              userId: session.user.id,
+              source: meta.source,
+              rawText: meta.rawText,
+              channelIdentifier: meta.channelIdentifier ?? undefined,
+              senderName: meta.senderName ?? undefined,
+              occurredAt: meta.occurredAt,
+              resolvedContactId: contact.id,
+            }).catch((err) => console.error("[questions/replay]", err));
+          }
         }
-      } catch {
-        // context isn't JSON — ignore
       }
+
+      // ── Case 2: vendor answered a field conflict ───────────────────────────
+      if (meta.type === "field_conflict" && meta.contactId && meta.field && meta.newValue) {
+        const answerText = (answer ?? "").trim();
+        const userSaysYes = /^(s[íi]|yes|ok|actualiz|correcto|dale|anda|sip)/i.test(answerText);
+        const userSaysNo  = /^(no|manten|dejar|está bien así)/i.test(answerText);
+
+        if (userSaysYes) {
+          await supabase
+            .from("contacts")
+            .update({ [meta.field]: meta.newValue })
+            .eq("id", meta.contactId)
+            .eq("company_id", session.user.companyId);
+        }
+
+        if (userSaysYes || userSaysNo) {
+          await recordLearnedPreference(
+            session.user.id,
+            session.user.companyId,
+            `field_${meta.field}_${meta.contactId.slice(0, 8)}`,
+            userSaysYes
+              ? `Para el campo "${meta.field}", usar "${meta.newValue}" cuando el agente lo detecte.`
+              : `Para el campo "${meta.field}", mantener el valor actual aunque el agente detecte uno diferente.`
+          );
+        }
+      }
+    } catch {
+      // context not JSON or malformed — no-op
     }
+  }
+
+  // Explicit confirmLink (without context replay)
+  if (action === "answer" && linkToConfirm && !question.context) {
+    await confirmLink(
+      session.user.companyId,
+      linkToConfirm.contactId,
+      linkToConfirm.channel,
+      linkToConfirm.identifier
+    );
   }
 
   return NextResponse.json({ ok: true });

@@ -39,6 +39,11 @@ export interface AgentInput {
   senderCompany?: string;
   /** Activity timestamp — defaults to now() */
   occurredAt?: string;
+  /**
+   * If set, skips identity resolution entirely and uses this contact directly.
+   * Used when replaying events after a vendor answers an identity question.
+   */
+  resolvedContactId?: string;
 }
 
 // ─── Output ───────────────────────────────────────────────────────────────────
@@ -204,13 +209,16 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
 
   try {
     // ── Step 1: Resolve contact identity ────────────────────────────────────
-    let resolved = await resolveIdentity({
-      companyId,
-      channel,
-      identifier: channelIdentifier,
-      name: senderName,
-      company: senderCompany,
-    });
+    // If the caller already knows the contactId (replay after vendor answer), skip resolution.
+    let resolved = input.resolvedContactId
+      ? { contactId: input.resolvedContactId, confidence: "high" as const, method: "channel_link" as const }
+      : await resolveIdentity({
+          companyId,
+          channel,
+          identifier: channelIdentifier,
+          name: senderName,
+          company: senderCompany,
+        });
 
     // ── Step 2a: Quick extraction to get name/email for contact creation ───
     // We do a lightweight extraction first if contact couldn't be resolved,
@@ -250,16 +258,21 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
         );
 
         if (!newId) {
-          // Queue question for vendor to identify this contact
-          const queued = await queueQuestion(
-            companyId,
-            userId,
-            null,
-            senderName
-              ? `¿Conocés a ${senderName}? El agente recibió un mensaje de esta persona pero no pudo identificarla en el CRM.`
-              : `¿A quién corresponde esta interacción recibida vía ${source}?`,
-            rawText
-          );
+          // Queue question for vendor to identify this contact.
+          // Store full replay payload in context so the answer handler can re-run the pipeline.
+          const replayPayload = JSON.stringify({
+            type: "identity_unknown",
+            source,
+            channel,
+            channelIdentifier: channelIdentifier ?? null,
+            rawText: rawText.slice(0, 800),
+            occurredAt,
+            senderName: senderName ?? null,
+          });
+          const identityQuestion = senderName
+            ? `¿Conocés a "${senderName}"? El agente recibió un mensaje de esta persona vía ${source} pero no la encontró en el CRM. ¿A qué contacto corresponde?`
+            : `El agente recibió una interacción vía ${source}${channelIdentifier ? ` desde ${channelIdentifier}` : ""} pero no pudo identificar al contacto. ¿A quién pertenece?`;
+          const queued = await queueQuestion(companyId, userId, null, identityQuestion, replayPayload);
           if (queued) questionsCreated++;
 
           return {
