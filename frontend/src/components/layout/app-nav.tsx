@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
 import {
   Activity,
+  Bot,
   Building2,
   FolderCog,
   Loader2,
@@ -48,6 +49,12 @@ export function AppNav({
       href: "/app/meetings",
       label: "Reuniones",
       icon: Video,
+      visible: hasWorkspaceAccess && (role === "owner" || role === "vendor"),
+    },
+    {
+      href: "/app/agente",
+      label: "Agente IA",
+      icon: Bot,
       visible: hasWorkspaceAccess && (role === "owner" || role === "vendor"),
     },
     {
