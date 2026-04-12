@@ -11,7 +11,6 @@ import {
   Loader2,
   Shield,
   Users,
-  Video,
 } from "lucide-react";
 import {
   canAccessAdmin,
@@ -45,12 +44,6 @@ export function AppNav({
 
   const items: NavItem[] = [
     { href: "/app/crm", label: "CRM", icon: Activity, visible: hasWorkspaceAccess },
-    {
-      href: "/app/meetings",
-      label: "Reuniones",
-      icon: Video,
-      visible: hasWorkspaceAccess && (role === "owner" || role === "vendor"),
-    },
     {
       href: "/app/agente",
       label: "Agente IA",
