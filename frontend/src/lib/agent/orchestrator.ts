@@ -18,6 +18,7 @@ import { resolveIdentity, registerLink, type Channel } from "@/lib/agent/identit
 import { extractStructuredData, hasUsefulData, type DataSource } from "@/lib/agent/data-extractor";
 import { writeTocrm } from "@/lib/agent/crm-writer";
 import { getContactContext } from "@/lib/contact-context";
+import { getAgentMemory, hasSimilarAnsweredQuestion } from "@/lib/agent/memory";
 
 // ─── Input ────────────────────────────────────────────────────────────────────
 
@@ -143,6 +144,7 @@ async function createContact(
 }
 
 // ─── Question queue ───────────────────────────────────────────────────────────
+// Checks memory before inserting — avoids repeating questions the vendor already answered.
 
 async function queueQuestion(
   companyId: string,
@@ -150,8 +152,27 @@ async function queueQuestion(
   contactId: string | null,
   question: string,
   context: string
-): Promise<void> {
+): Promise<boolean> {  // returns true if question was actually queued
+  // Check if a similar question was already answered
+  const { found } = await hasSimilarAnsweredQuestion(question, userId, companyId);
+  if (found) {
+    console.log("[orchestrator] skipping duplicate question (already answered):", question.slice(0, 60));
+    return false;
+  }
+
+  // Also check if the same question is already pending (don't stack duplicates)
   const supabase = createAdminSupabaseClient();
+  const { data: existing } = await supabase
+    .from("agent_questions")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("company_id", companyId)
+    .eq("status", "pending")
+    .eq("question", question)
+    .maybeSingle();
+
+  if (existing) return false;
+
   await supabase.from("agent_questions").insert({
     company_id: companyId,
     user_id: userId,
@@ -160,6 +181,7 @@ async function queueQuestion(
     context: context.slice(0, 500),
     status: "pending",
   });
+  return true;
 }
 
 // ─── Main orchestrator ────────────────────────────────────────────────────────
@@ -229,7 +251,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
 
         if (!newId) {
           // Queue question for vendor to identify this contact
-          await queueQuestion(
+          const queued = await queueQuestion(
             companyId,
             userId,
             null,
@@ -238,7 +260,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
               : `¿A quién corresponde esta interacción recibida vía ${source}?`,
             rawText
           );
-          questionsCreated++;
+          if (queued) questionsCreated++;
 
           return {
             status: "unresolved",
@@ -310,11 +332,12 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       contactId = resolved.contactId;
     }
 
-    // ── Step 2b: Full extraction with context ────────────────────────────────
-    const [vendorName, contactHistory, openDeals] = await Promise.all([
+    // ── Step 2b: Full extraction with context + memory ───────────────────────
+    const [vendorName, contactHistory, openDeals, memory] = await Promise.all([
       getVendorName(userId),
       getContactContext(contactId!, companyId),
       getOpenDeals(contactId!, companyId),
+      getAgentMemory(userId, companyId),
     ]);
 
     const extracted = await extractStructuredData(rawText, source, {
@@ -323,6 +346,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       knownCompanyName: senderCompany,
       contactHistory: contactHistory ?? undefined,
       openDeals,
+      agentMemory: memory.promptContext || undefined,
     });
 
     if (!hasUsefulData(extracted)) {
@@ -355,17 +379,24 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
 
     // ── Step 4: Queue pending confirmations as vendor questions ──────────────
     for (const pending of writeResult.pendingConfirmations) {
-      await queueQuestion(
-        companyId,
-        userId,
-        contactId,
+      const question =
         `El agente encontró un valor distinto para "${pending.field}" del contacto:\n` +
         `• Valor actual: ${pending.currentValue}\n` +
         `• Nuevo valor detectado: ${pending.newValue}\n` +
-        `¿Querés actualizar el dato?`,
-        rawText
-      );
-      questionsCreated++;
+        `¿Querés actualizar el dato? (respondé "sí" para actualizar, "no" para mantener el valor actual)`;
+
+      // Embed structured metadata so the answer handler can apply the update automatically
+      const structuredContext = JSON.stringify({
+        type: "field_conflict",
+        contactId: contactId!,
+        field: pending.field,
+        currentValue: pending.currentValue,
+        newValue: pending.newValue,
+        rawSnippet: rawText.slice(0, 200),
+      });
+
+      const queued = await queueQuestion(companyId, userId, contactId, question, structuredContext);
+      if (queued) questionsCreated++;
     }
 
     const parts: string[] = [];

@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/workspace-auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { confirmLink } from "@/lib/agent/identity-resolver";
+import { recordLearnedPreference } from "@/lib/agent/memory";
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
   // Verify the question belongs to this vendor
   const { data: question } = await supabase
     .from("agent_questions")
-    .select("id, status, contact_id")
+    .select("id, status, contact_id, context")
     .eq("id", questionId)
     .eq("company_id", session.user.companyId)
     .eq("user_id", session.user.id)
@@ -107,20 +108,70 @@ export async function POST(request: Request) {
     })
     .eq("id", questionId);
 
-  // If the vendor confirmed a contact identity link, register it so the agent
-  // will resolve this contact automatically in future interactions.
-  if (action === "answer" && linkToConfirm) {
-    await confirmLink(
-      session.user.companyId,
-      linkToConfirm.contactId,
-      linkToConfirm.channel,
-      linkToConfirm.identifier
-    );
-  }
+  // ── Apply structured actions from the context ────────────────────────────
 
-  // If the answer contains a contact update (field: value pairs), apply them.
-  // Supported format: field changes are passed as answer="company_name:Acme Corp"
-  // This is opt-in — the UI can choose to call a separate contact update endpoint.
+  if (action === "answer") {
+    // 1. Confirm channel identity link
+    if (linkToConfirm) {
+      await confirmLink(
+        session.user.companyId,
+        linkToConfirm.contactId,
+        linkToConfirm.channel,
+        linkToConfirm.identifier
+      );
+    }
+
+    // 2. Handle field_conflict: apply contact update if vendor says "sí"
+    if (question.context) {
+      try {
+        const meta = JSON.parse(question.context) as {
+          type?: string;
+          contactId?: string;
+          field?: string;
+          newValue?: string;
+        };
+
+        if (
+          meta.type === "field_conflict" &&
+          meta.contactId &&
+          meta.field &&
+          meta.newValue
+        ) {
+          const userSaysYes = /^(s[íi]|yes|ok|actualiz|correcto|dale|anda|sip)/i.test(
+            (answer ?? "").trim()
+          );
+          const userSaysNo = /^(no|manten|dejar|está bien así)/i.test(
+            (answer ?? "").trim()
+          );
+
+          if (userSaysYes) {
+            // Apply the update the agent detected
+            await supabase
+              .from("contacts")
+              .update({ [meta.field]: meta.newValue })
+              .eq("id", meta.contactId)
+              .eq("company_id", session.user.companyId);
+          }
+
+          // Learn the preference either way (helps avoid future re-asks)
+          if (userSaysYes || userSaysNo) {
+            const preferenceKey = `field_${meta.field}_${meta.contactId.slice(0, 8)}`;
+            const preferenceValue = userSaysYes
+              ? `Para el campo "${meta.field}", el agente debe usar "${meta.newValue}" cuando lo detecte.`
+              : `Para el campo "${meta.field}", el vendedor prefiere mantener el valor actual aunque el agente detecte uno diferente.`;
+            await recordLearnedPreference(
+              session.user.id,
+              session.user.companyId,
+              preferenceKey,
+              preferenceValue
+            );
+          }
+        }
+      } catch {
+        // context isn't JSON — ignore
+      }
+    }
+  }
 
   return NextResponse.json({ ok: true });
 }

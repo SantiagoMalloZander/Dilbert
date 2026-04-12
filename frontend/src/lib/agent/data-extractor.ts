@@ -23,6 +23,8 @@ export interface ExtractorContext {
   knownCompanyName?: string;
   /** Existing open deals for this contact (to help decide new vs existing) */
   openDeals?: Array<{ id: string; title: string; value: number | null }>;
+  /** Accumulated agent memory: learned preferences + answered questions */
+  agentMemory?: string;
 }
 
 // ─── Output types ─────────────────────────────────────────────────────────────
@@ -130,6 +132,7 @@ export async function extractStructuredData(
     knownContactName,
     knownCompanyName,
     openDeals,
+    agentMemory,
   } = context;
 
   // Build the open deals list for the prompt
@@ -147,6 +150,7 @@ ${vendorName ? `El vendedor se llama: ${vendorName}.` : ""}
 ${knownContactName ? `El contacto ya identificado es: ${knownContactName}.` : ""}
 ${knownCompanyName ? `La empresa del contacto ya identificada es: ${knownCompanyName}.` : ""}
 ${dealsContext}
+${agentMemory ? `\nMemoria del agente (reglas aprendidas del vendedor):\n${agentMemory}` : ""}
 
 Reglas estrictas:
 - Si un dato no está en el texto, usá null. Nunca inventes.

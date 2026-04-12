@@ -896,6 +896,7 @@ export type Database = {
         | "zoom"
         | "teams"
         | "fathom"
+        | "agent_memory"
       company_plan: "starter" | "pro" | "enterprise"
       company_status: "active" | "inactive" | "suspended"
       crm_source:
@@ -1064,6 +1065,7 @@ export const Constants = {
         "zoom",
         "teams",
         "fathom",
+        "agent_memory",
       ],
       company_plan: ["starter", "pro", "enterprise"],
       company_status: ["active", "inactive", "suspended"],
