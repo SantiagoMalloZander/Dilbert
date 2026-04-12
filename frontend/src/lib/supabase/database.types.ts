@@ -114,6 +114,98 @@ export type Database = {
           },
         ]
       }
+      agent_questions: {
+        Row: {
+          id: string
+          company_id: string
+          user_id: string
+          contact_id: string | null
+          question: string
+          context: string | null
+          status: "pending" | "answered" | "skipped"
+          answer: string | null
+          created_at: string
+          answered_at: string | null
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          user_id: string
+          contact_id?: string | null
+          question: string
+          context?: string | null
+          status?: "pending" | "answered" | "skipped"
+          answer?: string | null
+          created_at?: string
+          answered_at?: string | null
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          user_id?: string
+          contact_id?: string | null
+          question?: string
+          context?: string | null
+          status?: "pending" | "answered" | "skipped"
+          answer?: string | null
+          created_at?: string
+          answered_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_questions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_channel_links: {
+        Row: {
+          id: string
+          company_id: string
+          contact_id: string
+          channel: "whatsapp" | "gmail" | "fathom" | "manual"
+          identifier: string
+          confidence: "high" | "medium"
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          contact_id: string
+          channel: "whatsapp" | "gmail" | "fathom" | "manual"
+          identifier: string
+          confidence?: "high" | "medium"
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          contact_id?: string
+          channel?: "whatsapp" | "gmail" | "fathom" | "manual"
+          identifier?: string
+          confidence?: "high" | "medium"
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_channel_links_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_channel_links_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -302,6 +394,7 @@ export type Database = {
       }
       contacts: {
         Row: {
+          annual_revenue: number | null
           assigned_to: string | null
           company_id: string
           company_name: string | null
@@ -309,9 +402,15 @@ export type Database = {
           created_by: string
           custom_fields: Json
           email: string | null
+          employee_count: number | null
           first_name: string
           id: string
+          industry: string | null
           last_name: string
+          linkedin_url: string | null
+          address: string | null
+          website: string | null
+          notes: string | null
           phone: string | null
           position: string | null
           source: Database["public"]["Enums"]["crm_source"]
@@ -319,6 +418,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          annual_revenue?: number | null
           assigned_to?: string | null
           company_id: string
           company_name?: string | null
@@ -326,9 +426,15 @@ export type Database = {
           created_by: string
           custom_fields?: Json
           email?: string | null
+          employee_count?: number | null
           first_name: string
           id?: string
+          industry?: string | null
           last_name: string
+          linkedin_url?: string | null
+          address?: string | null
+          website?: string | null
+          notes?: string | null
           phone?: string | null
           position?: string | null
           source?: Database["public"]["Enums"]["crm_source"]
@@ -336,6 +442,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          annual_revenue?: number | null
           assigned_to?: string | null
           company_id?: string
           company_name?: string | null
@@ -343,9 +450,15 @@ export type Database = {
           created_by?: string
           custom_fields?: Json
           email?: string | null
+          employee_count?: number | null
           first_name?: string
           id?: string
+          industry?: string | null
           last_name?: string
+          linkedin_url?: string | null
+          address?: string | null
+          website?: string | null
+          notes?: string | null
           phone?: string | null
           position?: string | null
           source?: Database["public"]["Enums"]["crm_source"]
