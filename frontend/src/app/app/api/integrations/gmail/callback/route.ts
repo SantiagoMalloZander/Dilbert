@@ -24,8 +24,8 @@ async function importEmails(
   const supabase = createAdminSupabaseClient();
 
   const [sentEmails, receivedEmails] = await Promise.all([
-    fetchParsedEmails(accessToken, vendorEmail, "is:sent newer_than:90d", 40),
-    fetchParsedEmails(accessToken, vendorEmail, "is:inbox newer_than:90d", 40),
+    fetchParsedEmails(accessToken, vendorEmail, `from:${vendorEmail} newer_than:90d`, 40),
+    fetchParsedEmails(accessToken, vendorEmail, `-from:${vendorEmail} newer_than:90d -in:trash -in:draft`, 40),
   ]);
 
   const unique = [...new Map(

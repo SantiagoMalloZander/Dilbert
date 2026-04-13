@@ -49,8 +49,8 @@ export async function POST() {
   const afterDate = `${lastSync.getFullYear()}/${String(lastSync.getMonth() + 1).padStart(2, "0")}/${String(lastSync.getDate()).padStart(2, "0")}`;
 
   const [sentEmails, receivedEmails] = await Promise.all([
-    fetchParsedEmails(accessToken, vendorEmail, `is:sent after:${afterDate}`, 25),
-    fetchParsedEmails(accessToken, vendorEmail, `is:inbox after:${afterDate}`, 25),
+    fetchParsedEmails(accessToken, vendorEmail, `from:${vendorEmail} after:${afterDate}`, 25),
+    fetchParsedEmails(accessToken, vendorEmail, `-from:${vendorEmail} after:${afterDate} -in:trash -in:draft`, 25),
   ]);
 
   const all = [...sentEmails, ...receivedEmails];
@@ -112,10 +112,8 @@ export async function POST() {
       if (result.status === "ok" || result.status === "new_contact") {
         imported++;
         console.log(`[gmail/sync] email:${email.id} → ${result.status} contact:${result.contactId}`);
-      } else if (result.status === "unresolved") {
-        // Unknown sender — log a minimal activity without a contact
-        skipped++;
       } else {
+        console.log(`[gmail/sync] email:${email.id} skipped → status:${result.status} summary:${result.summary}`);
         skipped++;
       }
     } catch (err) {

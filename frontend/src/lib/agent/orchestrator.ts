@@ -129,7 +129,7 @@ async function createContact(
     fathom: "import",
   };
 
-  const { data: contact } = await supabase
+  const { data: contact, error: insertErr } = await supabase
     .from("contacts")
     .insert({
       company_id: companyId,
@@ -144,6 +144,10 @@ async function createContact(
     })
     .select("id")
     .single();
+
+  if (insertErr) {
+    console.error("[orchestrator/createContact] DB insert failed:", insertErr.message, { companyId, userId, source, firstName });
+  }
 
   return contact?.id ?? null;
 }
@@ -258,6 +262,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
         );
 
         if (!newId) {
+          console.error("[orchestrator] createContact returned null — cannot process interaction", { companyId, userId, source, channelIdentifier, senderName });
           // Queue question for vendor to identify this contact.
           // Store full replay payload in context so the answer handler can re-run the pipeline.
           const replayPayload = JSON.stringify({

@@ -63,8 +63,8 @@ export async function POST(request: Request) {
       ].join("/");
 
       const [sentEmails, receivedEmails] = await Promise.all([
-        fetchParsedEmails(accessToken, vendorEmail, `is:sent after:${afterDate}`, 20),
-        fetchParsedEmails(accessToken, vendorEmail, `is:inbox after:${afterDate}`, 20),
+        fetchParsedEmails(accessToken, vendorEmail, `from:${vendorEmail} after:${afterDate}`, 20),
+        fetchParsedEmails(accessToken, vendorEmail, `-from:${vendorEmail} after:${afterDate} -in:trash -in:draft`, 20),
       ]);
 
       const unique = [...new Map(
