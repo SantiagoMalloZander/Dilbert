@@ -90,12 +90,13 @@ export async function POST() {
 
       // Only process emails where we can identify the contact (existing or AI-resolvable)
       // Use the email body as raw text for the agent, with the dedup marker embedded
+      // Marker goes FIRST so it's always within the 600-char CRM snippet (dedup)
       const rawText = [
+        marker,
         `Asunto: ${email.subject}`,
         `De: ${email.from}`,
         `Para: ${email.to}`,
         email.snippet,
-        marker, // embedded for dedup — will appear in activity description snippet
       ].filter(Boolean).join("\n\n");
 
       const result = await runAgent({

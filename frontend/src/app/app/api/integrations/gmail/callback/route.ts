@@ -5,12 +5,10 @@ import {
   GOOGLE_CLIENT_SECRET,
   GMAIL_REDIRECT_URI,
   APP_URL,
-  refreshGmailToken,
   fetchParsedEmails,
   getGmailProfile,
-  type ParsedEmail,
 } from "@/lib/gmail";
-import { getContactContext } from "@/lib/contact-context";
+import { runAgent } from "@/lib/agent/orchestrator";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const REDIRECT_OK = `${APP_URL}/app/integrations?gmail=connected`;
@@ -25,74 +23,67 @@ async function importEmails(
 ): Promise<{ imported: number; skipped: number }> {
   const supabase = createAdminSupabaseClient();
 
-  // Fetch sent emails (last 90 days) + received from known contacts
   const [sentEmails, receivedEmails] = await Promise.all([
     fetchParsedEmails(accessToken, vendorEmail, "is:sent newer_than:90d", 40),
     fetchParsedEmails(accessToken, vendorEmail, "is:inbox newer_than:90d", 40),
   ]);
 
-  const all = [...sentEmails, ...receivedEmails];
-  // Dedup by message ID
-  const unique = [...new Map(all.map((e) => [e.id, e])).values()];
-
-  // Get all contact emails for this company+vendor to filter irrelevant messages
-  const { data: contacts } = await supabase
-    .from("contacts")
-    .select("id, email, first_name, last_name, company_name, position")
-    .eq("company_id", companyId)
-    .not("email", "is", null);
-
-  const contactByEmail = new Map(
-    (contacts ?? []).map((c) => [c.email!.toLowerCase(), c])
-  );
+  const unique = [...new Map(
+    [...sentEmails, ...receivedEmails].map((e) => [e.id, e])
+  ).values()];
 
   let imported = 0;
   let skipped = 0;
 
   for (const email of unique) {
-    const marker = `<!-- gmail:${email.id} -->`;
+    try {
+      const marker = `<!-- gmail:${email.id} -->`;
 
-    // Check dedup
-    const { data: existing } = await supabase
-      .from("activities")
-      .select("id")
-      .eq("user_id", vendorId)
-      .eq("company_id", companyId)
-      .like("description", `%${marker}%`)
-      .maybeSingle();
+      // Dedup check
+      const { data: existing } = await supabase
+        .from("activities")
+        .select("id")
+        .eq("user_id", vendorId)
+        .eq("company_id", companyId)
+        .like("description", `%${marker}%`)
+        .maybeSingle();
 
-    if (existing) { skipped++; continue; }
+      if (existing) { skipped++; continue; }
 
-    // Find matching contact
-    const contactEmail = email.direction === "sent"
-      ? email.toEmails.find((e) => contactByEmail.has(e))
-      : contactByEmail.has(email.fromEmail) ? email.fromEmail : null;
+      const externalEmail = email.direction === "sent"
+        ? email.toEmails[0]
+        : email.fromEmail;
 
-    if (!contactEmail) { skipped++; continue; } // skip emails unrelated to CRM contacts
+      if (!externalEmail || externalEmail === vendorEmail) { skipped++; continue; }
 
-    const contact = contactByEmail.get(contactEmail)!;
+      // Marker goes FIRST so it's always within the 600-char CRM snippet (dedup)
+      const rawText = [
+        marker,
+        `Asunto: ${email.subject}`,
+        `De: ${email.from}`,
+        `Para: ${email.to}`,
+        email.snippet,
+      ].filter(Boolean).join("\n\n");
 
-    // Build description
-    const bodySnippet = email.snippet.slice(0, 800).trim();
-    const dirLabel = email.direction === "sent" ? "Enviado a" : "Recibido de";
-    const description = [
-      `**${dirLabel}:** ${email.direction === "sent" ? email.to : email.from}`,
-      bodySnippet || null,
-      marker,
-    ].filter(Boolean).join("\n\n");
+      const result = await runAgent({
+        companyId,
+        userId: vendorId,
+        source: "gmail",
+        rawText,
+        channelIdentifier: externalEmail.toLowerCase(),
+        senderName: email.direction === "received" ? email.from.split("<")[0].trim() || undefined : undefined,
+        occurredAt: email.date.toISOString(),
+      });
 
-    await supabase.from("activities").insert({
-      company_id: companyId,
-      user_id: vendorId,
-      contact_id: contact.id,
-      type: "email" as const,
-      source: "automatic" as const,
-      title: email.subject,
-      description,
-      completed_at: email.date.toISOString(),
-    });
-
-    imported++;
+      if (result.status === "ok" || result.status === "new_contact") {
+        imported++;
+      } else {
+        skipped++;
+      }
+    } catch (err) {
+      console.error(`[gmail/callback] email ${email.id}:`, err);
+      skipped++;
+    }
   }
 
   return { imported, skipped };

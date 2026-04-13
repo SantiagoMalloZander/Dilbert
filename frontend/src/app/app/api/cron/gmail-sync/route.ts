@@ -95,12 +95,13 @@ export async function POST(request: Request) {
 
           if (!externalEmail || externalEmail === vendorEmail) { skipped++; continue; }
 
+          // Marker goes FIRST so it's always within the 600-char CRM snippet (dedup)
           const rawText = [
+            marker,
             `Asunto: ${email.subject}`,
             `De: ${email.from}`,
             `Para: ${email.to}`,
             email.snippet,
-            marker,
           ].filter(Boolean).join("\n\n");
 
           const result = await runAgent({

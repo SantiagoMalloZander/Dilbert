@@ -5,7 +5,7 @@ import { generateSmartQuestions } from "@/lib/meeting-questions";
 import { getContactContext } from "@/lib/contact-context";
 
 const FATHOM_API = "https://api.fathom.ai/external/v1";
-const WEBHOOK_BASE = "https://dilvert.netlify.app/api/webhooks/fathom";
+const WEBHOOK_BASE = "https://dilvert.netlify.app/app/api/webhooks/fathom";
 const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
 
 // ─── AI analysis ──────────────────────────────────────────────────────────────

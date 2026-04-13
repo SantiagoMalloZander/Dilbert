@@ -302,21 +302,8 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
           await registerLink(companyId, newId, "whatsapp", quick.contact_info.phone.replace(/\D/g, ""));
         }
 
-        // Run the full write with the quick extraction
-        if (!hasUsefulData(quick)) {
-          return {
-            status: "new_contact",
-            contactId: newId,
-            contactCreated: true,
-            activityId: null,
-            leadsCreated: [],
-            leadsUpdated: [],
-            contactFieldsUpdated: [],
-            questionsCreated,
-            summary: `Nuevo contacto creado: ${senderName ?? "Desconocido"}. Sin datos útiles adicionales.`,
-          };
-        }
-
+        // Always write to CRM — at minimum creates an activity to log the interaction.
+        // manageLead already guards against creating empty leads (checks has_purchase_intent).
         const writeResult = await writeTocrm({
           companyId,
           userId,
@@ -338,7 +325,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
           leadsUpdated: writeResult.leadsUpdated,
           contactFieldsUpdated: writeResult.contactFieldsUpdated,
           questionsCreated,
-          summary: `Nuevo contacto creado. ${writeResult.activityId ? "Actividad registrada." : ""} ${writeResult.leadsCreated.length ? `${writeResult.leadsCreated.length} lead(s) creado(s).` : ""}`.trim(),
+          summary: `Nuevo contacto creado. Actividad registrada.${writeResult.leadsCreated.length ? ` ${writeResult.leadsCreated.length} lead(s) creado(s).` : ""}`,
         };
       }
 
@@ -362,22 +349,9 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       agentMemory: memory.promptContext || undefined,
     });
 
-    if (!hasUsefulData(extracted)) {
-      // Still create a minimal activity to log the interaction
-      return {
-        status: "no_data",
-        contactId,
-        contactCreated,
-        activityId: null,
-        leadsCreated: [],
-        leadsUpdated: [],
-        contactFieldsUpdated: [],
-        questionsCreated,
-        summary: `Contacto identificado pero sin datos útiles que extraer.`,
-      };
-    }
-
     // ── Step 3: Write to CRM ─────────────────────────────────────────────────
+    // Always write even if GPT found nothing useful — createActivity always logs
+    // the raw interaction. manageLead has its own guard for empty lead data.
     const writeResult = await writeTocrm({
       companyId,
       userId,
@@ -423,7 +397,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       parts.push("actividad registrada");
 
     return {
-      status: "ok",
+      status: writeResult.activityId ? "ok" : "no_data",
       contactId,
       contactCreated,
       activityId: writeResult.activityId,
@@ -431,7 +405,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       leadsUpdated: writeResult.leadsUpdated,
       contactFieldsUpdated: writeResult.contactFieldsUpdated,
       questionsCreated,
-      summary: parts.join(", ") || "Sin cambios.",
+      summary: parts.join(", ") || "Actividad registrada sin datos adicionales.",
     };
   } catch (err) {
     console.error("[orchestrator] unexpected error", err);
