@@ -10,6 +10,10 @@
 [functions."*"]
   timeout = 30
 
+# Gmail sync runs every 30 minutes for all connected vendors
+[functions."gmail-sync-cron"]
+  schedule = "*/30 * * * *"
+
 [build.environment]
   NODE_VERSION = "20"
 
