@@ -120,6 +120,22 @@ async function updateContact(
     }
   }
 
+  // Name fields: update if current was auto-generated from an email address or is the default placeholder
+  if (ci.first_name) {
+    const curFirst = (current.first_name ?? "") as string;
+    if (!curFirst || curFirst === "Desconocido" || curFirst.includes("@")) {
+      updates["first_name"] = ci.first_name;
+      updated.push("first_name");
+    }
+  }
+  if (ci.last_name) {
+    const curLast = (current.last_name ?? "") as string;
+    if (!curLast) {
+      updates["last_name"] = ci.last_name;
+      updated.push("last_name");
+    }
+  }
+
   consider("company_name",    ci.company_name,    current.company_name);
   consider("position",        ci.position,        current.position);
   consider("phone",           ci.phone,           current.phone);
@@ -323,7 +339,7 @@ async function createActivity(
   const snippet = rawText.slice(0, 600).trim();
   if (snippet) descParts.push(`---\n${snippet}${rawText.length > 600 ? "\n..." : ""}`);
 
-  const { data: activity } = await supabase
+  const { data: activity, error: activityErr } = await supabase
     .from("activities")
     .insert({
       company_id: companyId,
@@ -335,15 +351,13 @@ async function createActivity(
       title: extracted.deal_info.title ?? extracted.topics[0] ?? `Interacción vía ${source}`,
       description: descParts.join("\n\n") || null,
       completed_at: occurredAt,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      metadata: {
-        agent_confidence: extracted.confidence_level,
-        has_purchase_intent: extracted.has_purchase_intent,
-        deal_is_new_or_existing: extracted.deal_is_new_or_existing,
-      } as any,
     })
     .select("id")
     .single();
+
+  if (activityErr) {
+    console.error("[crm-writer/createActivity] insert failed:", activityErr.message, { companyId, contactId, type, source });
+  }
 
   return activity?.id ?? null;
 }

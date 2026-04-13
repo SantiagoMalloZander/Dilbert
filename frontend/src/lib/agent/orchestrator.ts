@@ -117,9 +117,21 @@ async function createContact(
   let firstName = extractedFirstName;
   let lastName = extractedLastName;
   if (!firstName && senderName) {
-    const parts = senderName.trim().split(/\s+/);
-    firstName = parts[0] ?? null;
-    lastName = parts.slice(1).join(" ") || null;
+    if (senderName.includes("@")) {
+      // senderName is actually an email address (no display name) — derive human name from local part
+      const local = senderName.split("@")[0];
+      const words = local.replace(/[._\-+]+/g, " ").trim().split(/\s+/).filter(Boolean);
+      firstName = words[0]
+        ? words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase()
+        : null;
+      lastName = words.slice(1)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ") || null;
+    } else {
+      const parts = senderName.trim().split(/\s+/);
+      firstName = parts[0] ?? null;
+      lastName = parts.slice(1).join(" ") || null;
+    }
   }
   if (!firstName) firstName = "Desconocido";
 
@@ -248,6 +260,11 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       }
 
       if (!resolved) {
+        // For Gmail: channelIdentifier IS the sender's email — use as fallback if GPT didn't extract one
+        const emailForContact =
+          quick.contact_info.email ??
+          (source === "gmail" && channelIdentifier?.includes("@") ? channelIdentifier : null);
+
         // Create new contact from available data
         const newId = await createContact(
           companyId,
@@ -256,7 +273,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
           senderName,
           quick.contact_info.first_name,
           quick.contact_info.last_name,
-          quick.contact_info.email,
+          emailForContact,
           quick.contact_info.phone,
           quick.contact_info.company_name ?? senderCompany,
         );

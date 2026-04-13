@@ -13,11 +13,14 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { refreshGmailToken, fetchParsedEmails } from "@/lib/gmail";
 import { runAgent } from "@/lib/agent/orchestrator";
 
-export async function POST() {
+export async function POST(request: Request) {
   const session = await getAuthSession();
   if (!session?.user?.id || !session.user.companyId) {
     return NextResponse.json({ error: "No autorizado." }, { status: 403 });
   }
+
+  // ?force=true bypasses dedup — useful when activities failed to write on a previous run
+  const force = new URL(request.url).searchParams.get("force") === "true";
 
   const userId = session.user.id;
   const companyId = session.user.companyId;
@@ -42,9 +45,12 @@ export async function POST() {
   }
 
   const vendorEmail = creds.gmailEmail ?? "";
-  const lastSync = credRow.last_sync_at
-    ? new Date(credRow.last_sync_at)
-    : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // default: last 7 days
+  // force=true uses a 14-day window to catch previously-missed emails
+  const lastSync = force
+    ? new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
+    : credRow.last_sync_at
+      ? new Date(credRow.last_sync_at)
+      : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const afterDate = `${lastSync.getFullYear()}/${String(lastSync.getMonth() + 1).padStart(2, "0")}/${String(lastSync.getDate()).padStart(2, "0")}`;
 
@@ -64,18 +70,20 @@ export async function POST() {
     try {
       const marker = `<!-- gmail:${email.id} -->`;
 
-      // Dedup: check if we already processed this email
-      const { data: existing } = await supabase
-        .from("activities")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("company_id", companyId)
-        .like("description", `%${marker}%`)
-        .maybeSingle();
+      // Dedup: check if we already processed this email (skip in force mode)
+      if (!force) {
+        const { data: existing } = await supabase
+          .from("activities")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("company_id", companyId)
+          .like("description", `%${marker}%`)
+          .maybeSingle();
 
-      if (existing) {
-        skipped++;
-        continue;
+        if (existing) {
+          skipped++;
+          continue;
+        }
       }
 
       // Find the external party's email

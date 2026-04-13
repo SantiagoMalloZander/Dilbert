@@ -111,6 +111,7 @@ function VendorChannelCard({
   onConnect,
   onDisconnect,
   onSync,
+  onForceSync,
   actionKey,
   syncing,
 }: {
@@ -118,6 +119,7 @@ function VendorChannelCard({
   onConnect: (channelType: IntegrationChannelType) => void;
   onDisconnect: (channelType: IntegrationChannelType) => void;
   onSync?: () => void;
+  onForceSync?: () => void;
   actionKey: string | null;
   syncing?: boolean;
 }) {
@@ -150,7 +152,7 @@ function VendorChannelCard({
             Conectar
           </Button>
         ) : (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {onSync && (
               <Button variant="outline" onClick={onSync} disabled={syncing}>
                 {syncing ? (
@@ -159,6 +161,16 @@ function VendorChannelCard({
                   <RefreshCw className="mr-2 h-4 w-4" />
                 )}
                 Sincronizar
+              </Button>
+            )}
+            {onForceSync && (
+              <Button variant="outline" onClick={onForceSync} disabled={syncing} title="Reimportar los últimos 14 días ignorando emails ya procesados">
+                {syncing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                Reimportar todo
               </Button>
             )}
             <Button
@@ -460,13 +472,19 @@ export function IntegrationsCenter({
     }
   }
 
-  async function handleGmailSync() {
+  async function handleGmailSync(force = false) {
     setGmailSyncing(true);
     try {
-      const res = await fetch("/app/api/integrations/gmail/sync", { method: "POST" });
+      const url = force
+        ? "/app/api/integrations/gmail/sync?force=true"
+        : "/app/api/integrations/gmail/sync";
+      const res = await fetch(url, { method: "POST" });
       const data = await res.json();
       if (res.ok) {
-        setFlashMessage({ tone: "success", text: `Gmail sincronizado. ${data.imported} emails nuevos importados.` });
+        const msg = force
+          ? `Reimportación forzada completada. ${data.imported} emails importados, ${data.skipped} omitidos.`
+          : `Gmail sincronizado. ${data.imported} emails nuevos importados.`;
+        setFlashMessage({ tone: "success", text: msg });
         startTransition(() => router.refresh());
       } else {
         setFlashMessage({ tone: "error", text: data.error || "Error al sincronizar Gmail." });
@@ -626,7 +644,8 @@ export function IntegrationsCenter({
                   channel={channel}
                   onConnect={openConnectDialog}
                   onDisconnect={handleDisconnect}
-                  onSync={channel.channelType === "gmail" ? handleGmailSync : undefined}
+                  onSync={channel.channelType === "gmail" ? () => handleGmailSync(false) : undefined}
+                  onForceSync={channel.channelType === "gmail" ? () => handleGmailSync(true) : undefined}
                   actionKey={actionKey}
                   syncing={channel.channelType === "gmail" ? gmailSyncing : false}
                 />

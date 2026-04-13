@@ -109,8 +109,11 @@ const SOURCE_HINTS: Record<DataSource, string> = {
     "El texto es una conversación de WhatsApp. Los mensajes son cortos e informales. " +
     "Prestá atención a menciones de productos, precios, fechas de entrega y señales de interés o rechazo.",
   gmail:
-    "El texto es un email o hilo de emails. El tono es más formal. " +
-    "Buscá propuestas, presupuestos, confirmaciones de reuniones y compromisos explícitos.",
+    "El texto es un email comercial. IMPORTANTE: " +
+    "La línea 'De:' contiene el email/nombre del CLIENTE (es el contacto — ponelo en contact_info.email y extraé su nombre). " +
+    "La línea 'Para:' contiene el email del VENDEDOR — ignoralo para datos del contacto. " +
+    "Los marcadores <!-- gmail:... --> son IDs internos del sistema, ignóralos completamente. " +
+    "Buscá: intención de compra, productos/servicios mencionados, cantidades, precios, señales de interés.",
   fathom:
     "El texto es una transcripción o resumen de una videollamada. " +
     "Puede haber varios participantes. Identificá quién es el cliente y quién es el vendedor. " +
