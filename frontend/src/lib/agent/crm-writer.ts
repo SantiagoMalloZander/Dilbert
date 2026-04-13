@@ -120,19 +120,29 @@ async function updateContact(
     }
   }
 
-  // Name fields: update if current was auto-generated from an email address or is the default placeholder
+  // Name fields: update if current is empty, placeholder, derived from email,
+  // or if we now have a more complete name (single-word → first+last)
   if (ci.first_name) {
     const curFirst = (current.first_name ?? "") as string;
-    if (!curFirst || curFirst === "Desconocido" || curFirst.includes("@")) {
+    const curLast  = (current.last_name  ?? "") as string;
+    const currentIsSingleWord = curFirst && !curFirst.includes(" ") && !curLast;
+    const newHasLastName = !!ci.last_name;
+    const shouldUpdateName =
+      !curFirst ||
+      curFirst === "Desconocido" ||
+      curFirst.includes("@") ||                        // was an email address used as name
+      (currentIsSingleWord && newHasLastName);         // upgrade "Orbitalcreators" → "Paula Grillo"
+    if (shouldUpdateName) {
       updates["first_name"] = ci.first_name;
       updated.push("first_name");
     }
   }
   if (ci.last_name) {
     const curLast = (current.last_name ?? "") as string;
-    if (!curLast) {
+    // Update last_name if empty, or if we're also updating first_name (coherent name upgrade)
+    if (!curLast || "first_name" in updates) {
       updates["last_name"] = ci.last_name;
-      updated.push("last_name");
+      if (!updated.includes("last_name")) updated.push("last_name");
     }
   }
 
@@ -279,7 +289,7 @@ async function manageLead(
   }
 
   // Create new lead
-  const { data: newLead } = await supabase
+  const { data: newLead, error: leadErr } = await supabase
     .from("leads")
     .insert({
       company_id: companyId,
@@ -304,6 +314,9 @@ async function manageLead(
     .select("id")
     .single();
 
+  if (leadErr) {
+    console.error("[crm-writer/manageLead] lead insert failed:", leadErr.message, { companyId, contactId, title });
+  }
   if (newLead) created.push(newLead.id);
   return { created, updated };
 }
