@@ -137,7 +137,7 @@ function parseMessage(msg: GmailMessage, vendorEmail: string): ParsedEmail {
   };
 }
 
-// ─── Fetch a batch of messages matching a Gmail query ─────────────────────────
+// ─── Fetch a single page of message IDs ───────────────────────────────────────
 export async function listGmailMessages(
   accessToken: string,
   query: string,
@@ -148,6 +148,34 @@ export async function listGmailMessages(
   if (!res.ok) return [];
   const data = await res.json() as { messages?: { id: string }[] };
   return data.messages ?? [];
+}
+
+// ─── Paginate through ALL matching message IDs ────────────────────────────────
+// Follows nextPageToken until exhausted or maxTotal is reached.
+export async function listAllGmailMessageIds(
+  accessToken: string,
+  query: string,
+  maxTotal = 500
+): Promise<{ id: string }[]> {
+  const all: { id: string }[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    const params = new URLSearchParams({
+      q: query,
+      maxResults: "100",
+      ...(pageToken ? { pageToken } : {}),
+    });
+    const res = await fetch(`${GMAIL_BASE}/messages?${params}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) break;
+    const data = await res.json() as { messages?: { id: string }[]; nextPageToken?: string };
+    all.push(...(data.messages ?? []));
+    pageToken = data.nextPageToken;
+  } while (pageToken && all.length < maxTotal);
+
+  return all.slice(0, maxTotal);
 }
 
 export async function getGmailMessage(

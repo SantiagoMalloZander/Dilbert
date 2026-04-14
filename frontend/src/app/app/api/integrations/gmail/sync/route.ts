@@ -1,19 +1,20 @@
 /**
  * POST /app/api/integrations/gmail/sync[?force=true]
  *
- * FAST — no AI here. Fetches emails from Gmail API and drops them into
- * gmail_queue. Returns immediately with how many were queued.
+ * FAST — no AI. Paginates through ALL Gmail messages since last_sync_at
+ * (or last 14 days if force=true) and queues them in gmail_queue.
  *
- * The AI runs separately in /app/api/integrations/gmail/process (one
- * email at a time, called in a loop from the browser).
+ * Each queued row stores the pre-built rawText so the /process endpoint
+ * can run AI immediately without fetching from Gmail again.
  *
- * ?force=true  → last 14 days, re-queues even if already in activities
- * (normal)     → since last_sync_at, skips already-imported emails
+ * Returns { queued, skipped, total_found, has_more }
+ * has_more=true means there are still messages in Gmail not yet fetched
+ * (hit the 8s time budget) — call sync again to continue.
  */
 import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/workspace-auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
-import { refreshGmailToken, fetchParsedEmails } from "@/lib/gmail";
+import { refreshGmailToken, listAllGmailMessageIds, getGmailMessage } from "@/lib/gmail";
 
 export async function POST(request: Request) {
   const session = await getAuthSession();
@@ -50,76 +51,143 @@ export async function POST(request: Request) {
     ? new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
     : credRow.last_sync_at
       ? new Date(credRow.last_sync_at)
-      : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      : new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
 
-  const afterDate = `${lastSync.getFullYear()}/${String(lastSync.getMonth() + 1).padStart(2, "0")}/${String(lastSync.getDate()).padStart(2, "0")}`;
+  const after = `${lastSync.getFullYear()}/${String(lastSync.getMonth() + 1).padStart(2, "0")}/${String(lastSync.getDate()).padStart(2, "0")}`;
 
-  // ── Fetch emails (no AI, just Gmail API calls — fast) ─────────────────────
-  const MAX_PER_QUERY = 10;
-  const [sentEmails, receivedEmails] = await Promise.all([
-    fetchParsedEmails(accessToken, vendorEmail, `from:${vendorEmail} after:${afterDate}`, MAX_PER_QUERY),
-    fetchParsedEmails(accessToken, vendorEmail, `-from:${vendorEmail} after:${afterDate} -in:trash -in:draft`, MAX_PER_QUERY),
+  // ── Get ALL message IDs (paginated, fast — one list call per 100 IDs) ─────
+  const [sentIds, receivedIds] = await Promise.all([
+    listAllGmailMessageIds(accessToken, `from:${vendorEmail} after:${after}`, 500),
+    listAllGmailMessageIds(accessToken, `-from:${vendorEmail} after:${after} -in:trash -in:draft`, 500),
   ]);
 
-  const unique = [...new Map(
-    [...sentEmails, ...receivedEmails].map((e) => [e.id, e])
-  ).values()];
+  const allIds = [...new Map([...sentIds, ...receivedIds].map((m) => [m.id, m])).values()];
 
+  // ── Dedup: skip IDs already in activities or already queued ───────────────
+  // We only do this for already-imported (activities) — gmail_queue has a
+  // unique index on (user_id, email_id) that handles queue dedup via upsert.
+  let alreadyImportedIds = new Set<string>();
+  if (!force) {
+    // Batch check existing activities (look for the gmail marker pattern)
+    const { data: existingActivities } = await supabase
+      .from("activities")
+      .select("description")
+      .eq("user_id", userId)
+      .eq("company_id", companyId)
+      .not("description", "is", null)
+      .like("description", "%<!-- gmail:%");
+
+    alreadyImportedIds = new Set(
+      (existingActivities ?? [])
+        .map((a) => {
+          const match = (a.description ?? "").match(/<!-- gmail:([^>]+) -->/);
+          return match?.[1] ?? null;
+        })
+        .filter(Boolean) as string[]
+    );
+  }
+
+  const toFetch = allIds.filter((m) => !alreadyImportedIds.has(m.id));
+  const total_found = toFetch.length;
+
+  // ── Fetch full message content in parallel batches of 10 ─────────────────
+  // Budget: 8s. Each batch of 10 takes ~300ms → ~25 batches → ~250 emails.
+  // If we exceed budget we stop and set has_more=true.
+  const BATCH_SIZE = 10;
+  const deadline = Date.now() + 7_500;
   let queued = 0;
   let skipped = 0;
+  let has_more = false;
 
-  for (const email of unique) {
-    const externalEmail = email.direction === "sent"
-      ? email.toEmails[0]
-      : email.fromEmail;
-
-    if (!externalEmail || externalEmail === vendorEmail) {
-      skipped++;
-      continue;
+  for (let i = 0; i < toFetch.length; i += BATCH_SIZE) {
+    if (Date.now() > deadline) {
+      has_more = true;
+      break;
     }
 
-    // On normal sync, skip emails already in activities (already processed)
-    if (!force) {
-      const marker = `<!-- gmail:${email.id} -->`;
-      const { data: existing } = await supabase
-        .from("activities")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("company_id", companyId)
-        .like("description", `%${marker}%`)
-        .maybeSingle();
-      if (existing) { skipped++; continue; }
+    const batch = toFetch.slice(i, i + BATCH_SIZE);
+    const messages = await Promise.all(batch.map(({ id }) => getGmailMessage(accessToken, id)));
+
+    for (const msg of messages) {
+      if (!msg) { skipped++; continue; }
+
+      const hdrs = msg.payload.headers;
+      const getHdr = (name: string) =>
+        hdrs.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value ?? "";
+
+      const from = getHdr("from");
+      const to = getHdr("to");
+      const subject = getHdr("subject") || "(Sin asunto)";
+      const dateStr = getHdr("date");
+      const date = dateStr ? new Date(dateStr) : new Date(parseInt(msg.internalDate));
+
+      const fromEmails = Array.from(from.matchAll(/[\w.+%-]+@[\w.-]+\.[a-z]{2,}/gi)).map((m) => m[0].toLowerCase());
+      const toEmails = Array.from(to.matchAll(/[\w.+%-]+@[\w.-]+\.[a-z]{2,}/gi)).map((m) => m[0].toLowerCase());
+      const direction: "sent" | "received" = fromEmails.includes(vendorEmail) ? "sent" : "received";
+
+      const externalEmail = direction === "sent" ? toEmails[0] : fromEmails[0];
+      if (!externalEmail || externalEmail === vendorEmail) { skipped++; continue; }
+
+      // Extract body text
+      function extractText(parts: Array<{ mimeType: string; body?: { data?: string }; parts?: unknown[] }> | undefined): string {
+        if (!parts) return "";
+        for (const part of parts) {
+          if (part.mimeType === "text/plain" && part.body?.data) {
+            return Buffer.from(part.body.data.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf-8");
+          }
+          if (part.parts) {
+            const found = extractText(part.parts as Parameters<typeof extractText>[0]);
+            if (found) return found;
+          }
+        }
+        for (const part of parts) {
+          if (part.mimeType === "text/html" && part.body?.data) {
+            return Buffer.from(part.body.data.replace(/-/g, "+").replace(/_/g, "/"), "base64")
+              .toString("utf-8")
+              .replace(/<style[\s\S]*?<\/style>/gi, "")
+              .replace(/<[^>]+>/g, " ")
+              .replace(/\s{2,}/g, " ")
+              .trim()
+              .slice(0, 2000);
+          }
+        }
+        return "";
+      }
+
+      const bodyText = extractText(msg.payload.parts) ||
+        (msg.payload.body?.data
+          ? Buffer.from(msg.payload.body.data.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf-8")
+          : "");
+
+      const marker = `<!-- gmail:${msg.id} -->`;
+      const rawText = [
+        marker,
+        `Asunto: ${subject}`,
+        `De: ${from}`,
+        `Para: ${to}`,
+        bodyText.slice(0, 3000) || "(sin cuerpo)",
+      ].filter(Boolean).join("\n\n");
+
+      const senderName = direction === "received"
+        ? from.split("<")[0].trim() || undefined
+        : undefined;
+
+      const { error } = await supabase
+        .from("gmail_queue")
+        .upsert({
+          company_id: companyId,
+          user_id: userId,
+          email_id: msg.id,
+          raw_text: rawText,
+          external_email: externalEmail,
+          sender_name: senderName ?? null,
+          occurred_at: date.toISOString(),
+          direction,
+        }, { onConflict: "user_id,email_id", ignoreDuplicates: true });
+
+      if (!error) queued++;
+      else console.error("[gmail/sync] queue insert error", error.message);
     }
-
-    const marker = `<!-- gmail:${email.id} -->`;
-    const rawText = [
-      marker,
-      `Asunto: ${email.subject}`,
-      `De: ${email.from}`,
-      `Para: ${email.to}`,
-      email.snippet,
-    ].filter(Boolean).join("\n\n");
-
-    const senderName = email.direction === "received"
-      ? email.from.split("<")[0].trim() || undefined
-      : undefined;
-
-    // Upsert into queue — unique index on (user_id, email_id) prevents duplicates
-    const { error } = await supabase
-      .from("gmail_queue")
-      .upsert({
-        company_id: companyId,
-        user_id: userId,
-        email_id: email.id,
-        raw_text: rawText,
-        external_email: externalEmail.toLowerCase(),
-        sender_name: senderName ?? null,
-        occurred_at: email.date.toISOString(),
-        direction: email.direction,
-      }, { onConflict: "user_id,email_id", ignoreDuplicates: true });
-
-    if (!error) queued++;
-    else console.error("[gmail/sync] queue insert error", error.message);
   }
 
   // Update last_sync_at on normal syncs
@@ -131,5 +199,5 @@ export async function POST(request: Request) {
       .eq("channel", "gmail");
   }
 
-  return NextResponse.json({ ok: true, queued, skipped, total_found: unique.length });
+  return NextResponse.json({ ok: true, queued, skipped, total_found, has_more });
 }

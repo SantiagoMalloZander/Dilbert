@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { WhatsAppOnboardingDialog } from "@/components/whatsapp-onboarding-dialog";
 import { FathomSetupDialog } from "@/components/fathom-setup-dialog";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -388,16 +388,7 @@ export function IntegrationsCenter({
   const [gmailSyncing, setGmailSyncing] = useState(false);
   const [gmailProgress, setGmailProgress] = useState<{ done: number; total: number } | null>(null);
   const searchParams = useSearchParams();
-
-  // Show feedback when returning from Gmail OAuth
-  useEffect(() => {
-    const gmail = searchParams.get("gmail");
-    if (gmail === "connected") {
-      setFlashMessage({ tone: "success", text: "Gmail conectado. Importando emails..." });
-    } else if (gmail === "error") {
-      setFlashMessage({ tone: "error", text: "No se pudo conectar Gmail. Intentá de nuevo." });
-    }
-  }, [searchParams]);
+  const autoProcessFired = useRef(false);
 
   const selectedDefinition = useMemo(
     () =>
@@ -481,7 +472,7 @@ export function IntegrationsCenter({
     }
   }
 
-  async function handleGmailSync(force = false) {
+  const handleGmailSync = useCallback(async function handleGmailSync(force = false) {
     setGmailSyncing(true);
     setGmailProgress(null);
     try {
@@ -533,7 +524,23 @@ export function IntegrationsCenter({
       setGmailSyncing(false);
       setGmailProgress(null);
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
+
+  // Show feedback when returning from Gmail OAuth; auto-start sync if requested
+  useEffect(() => {
+    const gmail = searchParams.get("gmail");
+    const autoProcess = searchParams.get("auto_process") === "true";
+    if (gmail === "connected") {
+      setFlashMessage({ tone: "success", text: "Gmail conectado. Bajando emails..." });
+      if (autoProcess && !autoProcessFired.current) {
+        autoProcessFired.current = true;
+        handleGmailSync(true);
+      }
+    } else if (gmail === "error") {
+      setFlashMessage({ tone: "error", text: "No se pudo conectar Gmail. Intentá de nuevo." });
+    }
+  }, [searchParams, handleGmailSync]);
 
   function openConnectDialog(channelType: IntegrationChannelType) {
     if (channelType === "whatsapp_business" || channelType === "whatsapp_personal") {

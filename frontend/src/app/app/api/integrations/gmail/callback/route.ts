@@ -5,89 +5,11 @@ import {
   GOOGLE_CLIENT_SECRET,
   GMAIL_REDIRECT_URI,
   APP_URL,
-  fetchParsedEmails,
   getGmailProfile,
 } from "@/lib/gmail";
-import { runAgent } from "@/lib/agent/orchestrator";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
-const REDIRECT_OK = `${APP_URL}/app/integrations?gmail=connected`;
 const REDIRECT_ERR = `${APP_URL}/app/integrations?gmail=error`;
-
-// ─── Import historical sent + received emails ─────────────────────────────────
-async function importEmails(
-  accessToken: string,
-  vendorId: string,
-  companyId: string,
-  vendorEmail: string
-): Promise<{ imported: number; skipped: number }> {
-  const supabase = createAdminSupabaseClient();
-
-  const [sentEmails, receivedEmails] = await Promise.all([
-    fetchParsedEmails(accessToken, vendorEmail, `from:${vendorEmail} newer_than:7d`, 20),
-    fetchParsedEmails(accessToken, vendorEmail, `-from:${vendorEmail} newer_than:7d -in:trash -in:draft`, 20),
-  ]);
-
-  const unique = [...new Map(
-    [...sentEmails, ...receivedEmails].map((e) => [e.id, e])
-  ).values()];
-
-  let imported = 0;
-  let skipped = 0;
-
-  for (const email of unique) {
-    try {
-      const marker = `<!-- gmail:${email.id} -->`;
-
-      // Dedup check
-      const { data: existing } = await supabase
-        .from("activities")
-        .select("id")
-        .eq("user_id", vendorId)
-        .eq("company_id", companyId)
-        .like("description", `%${marker}%`)
-        .maybeSingle();
-
-      if (existing) { skipped++; continue; }
-
-      const externalEmail = email.direction === "sent"
-        ? email.toEmails[0]
-        : email.fromEmail;
-
-      if (!externalEmail || externalEmail === vendorEmail) { skipped++; continue; }
-
-      // Marker goes FIRST so it's always within the 600-char CRM snippet (dedup)
-      const rawText = [
-        marker,
-        `Asunto: ${email.subject}`,
-        `De: ${email.from}`,
-        `Para: ${email.to}`,
-        email.snippet,
-      ].filter(Boolean).join("\n\n");
-
-      const result = await runAgent({
-        companyId,
-        userId: vendorId,
-        source: "gmail",
-        rawText,
-        channelIdentifier: externalEmail.toLowerCase(),
-        senderName: email.direction === "received" ? email.from.split("<")[0].trim() || undefined : undefined,
-        occurredAt: email.date.toISOString(),
-      });
-
-      if (result.status === "ok" || result.status === "new_contact") {
-        imported++;
-      } else {
-        skipped++;
-      }
-    } catch (err) {
-      console.error(`[gmail/callback] email ${email.id}:`, err);
-      skipped++;
-    }
-  }
-
-  return { imported, skipped };
-}
 
 // ─── OAuth callback ────────────────────────────────────────────────────────────
 export async function GET(request: Request) {
@@ -149,7 +71,8 @@ export async function GET(request: Request) {
   const companyId = user.company_id;
   const vendorEmail = gmailEmail || (user.email?.toLowerCase() ?? "");
 
-  // Persist credentials
+  // Persist credentials — set last_sync_at to 14 days ago so first sync picks up history
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   await supabase.from("channel_credentials").upsert(
     {
       company_id: companyId,
@@ -161,15 +84,11 @@ export async function GET(request: Request) {
         connectedAt: new Date().toISOString(),
       },
       status: "connected",
-      last_sync_at: new Date().toISOString(),
+      last_sync_at: fourteenDaysAgo,
     },
     { onConflict: "user_id,channel" }
   );
 
-  // Fire-and-forget historical import (don't block the redirect)
-  importEmails(tokens.access_token, userId, companyId, vendorEmail).catch((err) =>
-    console.error("[gmail/callback] import error:", err)
-  );
-
-  return NextResponse.redirect(REDIRECT_OK);
+  // Redirect with auto_process=true so the frontend kicks off sync+process immediately
+  return NextResponse.redirect(`${APP_URL}/app/integrations?gmail=connected&auto_process=true`);
 }
