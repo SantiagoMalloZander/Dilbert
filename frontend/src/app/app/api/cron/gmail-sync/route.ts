@@ -60,9 +60,13 @@ export async function POST(request: Request) {
       }
 
       const vendorEmail = creds.gmailEmail ?? "";
-      const lastSync = row.last_sync_at
+      const lastSyncRaw = row.last_sync_at
         ? new Date(row.last_sync_at)
         : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      // Subtract 1 day — Gmail's after: is exclusive, so this ensures we
+      // don't miss emails that arrived on the same day as the last sync.
+      const lastSync = new Date(lastSyncRaw.getTime() - 24 * 60 * 60 * 1000);
 
       const after = `${lastSync.getFullYear()}/${String(lastSync.getMonth() + 1).padStart(2, "0")}/${String(lastSync.getDate()).padStart(2, "0")}`;
 
