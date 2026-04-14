@@ -71,8 +71,9 @@ export async function POST(request: Request) {
   let skipped = 0;
   let errors = 0;
 
-  // Time budget: stop processing 7s in to avoid Netlify 10s timeout
-  const deadline = Date.now() + 7_000;
+  // Time budget: force=true is called from the browser (no function timeout),
+  // so give it 50s. Normal sync runs as a Netlify scheduled function (10s limit).
+  const deadline = Date.now() + (force ? 50_000 : 8_000);
 
   for (const email of unique) {
     // Stop before we hit the function timeout

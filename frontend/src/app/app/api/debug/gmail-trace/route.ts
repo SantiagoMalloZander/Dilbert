@@ -224,9 +224,13 @@ export async function GET() {
       last_name: extracted.contact_info.last_name,
       email: extracted.contact_info.email,
       has_purchase_intent: extracted.has_purchase_intent,
+      is_relevant_for_crm: extracted.is_relevant_for_crm,
+      is_relevant_raw_value: (extracted as unknown as Record<string, unknown>).is_relevant_for_crm,
       deal_title: extracted.deal_info.title,
+      sentiment: extracted.sentiment,
       crm_note: extracted.crm_note,
       confidence: extracted.confidence_level,
+      topics: extracted.topics,
     };
 
     // Check if activities table has the right schema

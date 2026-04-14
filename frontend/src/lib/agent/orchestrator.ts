@@ -267,10 +267,9 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       });
 
       // ── Relevance gate ────────────────────────────────────────────────────
-      // If the AI says this isn't relevant to the business, skip entirely.
-      // This prevents newsletters, notifications, and service emails from
-      // creating CRM entries.
-      if (!quick.is_relevant_for_crm) {
+      // Only skip when the AI explicitly returns false — undefined/missing
+      // field means the model didn't include it, so we default to relevant.
+      if (quick.is_relevant_for_crm === false) {
         console.log("[orchestrator] skipping — not relevant for CRM", {
           source, channelIdentifier, senderName,
           crm_note: quick.crm_note || "(no note)",
