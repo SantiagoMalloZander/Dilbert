@@ -257,6 +257,45 @@ export type Database = {
           },
         ]
       }
+      gmail_queue: {
+        Row: {
+          id: string
+          company_id: string
+          user_id: string
+          email_id: string
+          raw_text: string
+          external_email: string
+          sender_name: string | null
+          occurred_at: string
+          direction: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          user_id: string
+          email_id: string
+          raw_text: string
+          external_email: string
+          sender_name?: string | null
+          occurred_at: string
+          direction: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          user_id?: string
+          email_id?: string
+          raw_text?: string
+          external_email?: string
+          sender_name?: string | null
+          occurred_at?: string
+          direction?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       authorized_emails: {
         Row: {
           added_by: string | null

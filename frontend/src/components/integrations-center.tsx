@@ -116,6 +116,7 @@ function VendorChannelCard({
   onForceSync,
   actionKey,
   syncing,
+  progress,
 }: {
   channel: VendorIntegrationRecord;
   onConnect: (channelType: IntegrationChannelType) => void;
@@ -124,6 +125,7 @@ function VendorChannelCard({
   onForceSync?: () => void;
   actionKey: string | null;
   syncing?: boolean;
+  progress?: { done: number; total: number } | null;
 }) {
   const Icon = CHANNEL_ICONS[channel.channelType] ?? PlugZap;
   const badge = getStatusBadge(channel.status);
@@ -172,7 +174,11 @@ function VendorChannelCard({
                 ) : (
                   <RefreshCw className="mr-2 h-4 w-4" />
                 )}
-                Reimportar todo
+                {syncing && progress
+                  ? `Procesando ${progress.done}/${progress.total}...`
+                  : syncing
+                    ? "Bajando emails..."
+                    : "Reimportar todo"}
               </Button>
             )}
             <Button
@@ -380,6 +386,7 @@ export function IntegrationsCenter({
   const [onboardingInstance, setOnboardingInstance] = useState<string | null>(null);
   const [fathomOpen, setFathomOpen] = useState(false);
   const [gmailSyncing, setGmailSyncing] = useState(false);
+  const [gmailProgress, setGmailProgress] = useState<{ done: number; total: number } | null>(null);
   const searchParams = useSearchParams();
 
   // Show feedback when returning from Gmail OAuth
@@ -476,27 +483,55 @@ export function IntegrationsCenter({
 
   async function handleGmailSync(force = false) {
     setGmailSyncing(true);
+    setGmailProgress(null);
     try {
+      // Step 1: Sync — fast, just queues emails from Gmail API (no AI yet)
       const url = force
         ? "/app/api/integrations/gmail/sync?force=true"
         : "/app/api/integrations/gmail/sync";
-      const res = await fetch(url, { method: "POST" });
-      const data = await res.json() as { imported?: number; skipped?: number; total_found?: number; error?: string };
-      if (res.ok) {
-        const imported = data.imported ?? 0;
-        const total = data.total_found ?? 0;
-        const msg = force
-          ? `${imported} emails importados de ${total} encontrados. Si tenés más de 4 emails nuevos, clickeá de nuevo.`
-          : `Gmail sincronizado. ${imported} emails nuevos importados.`;
-        setFlashMessage({ tone: "success", text: msg });
-        startTransition(() => router.refresh());
-      } else {
-        setFlashMessage({ tone: "error", text: data.error || "Error al sincronizar Gmail." });
+      const syncRes = await fetch(url, { method: "POST" });
+      const syncData = await syncRes.json() as { queued?: number; skipped?: number; total_found?: number; error?: string };
+
+      if (!syncRes.ok) {
+        setFlashMessage({ tone: "error", text: syncData.error || "Error al sincronizar Gmail." });
+        return;
       }
+
+      const total = syncData.queued ?? 0;
+      if (total === 0) {
+        setFlashMessage({ tone: "success", text: "Gmail sincronizado. No hay emails nuevos para procesar." });
+        startTransition(() => router.refresh());
+        return;
+      }
+
+      // Step 2: Process queue — one email at a time with AI
+      setGmailProgress({ done: 0, total });
+      let imported = 0;
+      let remaining = total;
+
+      while (remaining > 0) {
+        const processRes = await fetch("/app/api/integrations/gmail/process", { method: "POST" });
+        if (!processRes.ok) break;
+
+        const processData = await processRes.json() as { processed: number; remaining: number; status?: string };
+        remaining = processData.remaining;
+
+        if (processData.processed > 0) {
+          imported++;
+          setGmailProgress({ done: imported, total });
+        } else {
+          break; // Queue empty
+        }
+      }
+
+      setGmailProgress(null);
+      setFlashMessage({ tone: "success", text: `${imported} emails procesados e importados al CRM.` });
+      startTransition(() => router.refresh());
     } catch {
       setFlashMessage({ tone: "error", text: "Error de red al sincronizar." });
     } finally {
       setGmailSyncing(false);
+      setGmailProgress(null);
     }
   }
 
@@ -652,6 +687,7 @@ export function IntegrationsCenter({
                   onForceSync={channel.channelType === "gmail" ? () => handleGmailSync(true) : undefined}
                   actionKey={actionKey}
                   syncing={channel.channelType === "gmail" ? gmailSyncing : false}
+                  progress={channel.channelType === "gmail" ? gmailProgress : null}
                 />
               ))}
             </div>
