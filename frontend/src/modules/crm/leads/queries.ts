@@ -230,9 +230,7 @@ async function getLeadsForBoard(params: {
     .eq("pipeline_id", params.pipelineId)
     .order("updated_at", { ascending: false });
 
-  if (params.role === "vendor") {
-    query = query.eq("assigned_to", params.userId);
-  } else if (params.filters.assignedTo) {
+  if (params.filters.assignedTo) {
     query = query.eq("assigned_to", params.filters.assignedTo);
   }
 
@@ -383,10 +381,6 @@ async function getLeadDetail(params: {
     .eq("id", params.leadId)
     .limit(1);
 
-  if (params.role === "vendor") {
-    query = query.eq("assigned_to", params.userId);
-  }
-
   const { data, error } = await query;
   if (error) {
     throw error;
@@ -534,7 +528,7 @@ export async function getLeadBoardData(filters: LeadBoardFilters): Promise<LeadB
     selectedLead,
     leadForm: {
       pipelines,
-      canCreate: user.role !== "vendor",
+      canCreate: canEditLeads(user.role),
     },
     stages: stages.map((stage) => {
       const cards = cardsByStage.get(stage.id) || [];
@@ -561,45 +555,18 @@ export async function getDashboardKpis(): Promise<DashboardKpiData> {
   const month = getCurrentMonthRange();
 
   const scopedBase = () => {
-    let query = supabase.from("leads").select("*").eq("company_id", company_id);
-
-    if (user.role === "vendor") {
-      query = query.eq("assigned_to", user.id);
-    }
-
-    return query;
+    return supabase.from("leads").select("*").eq("company_id", company_id);
   };
 
-  const teamBase = () => supabase.from("leads").select("*").eq("company_id", company_id);
-
-  const [openResult, wonMonthResult, monthTotalResult, pipelineValueResult, teamOpenResult, teamWonMonthResult, teamMonthTotalResult, teamPipelineValueResult] =
+  const [openResult, wonMonthResult, monthTotalResult, pipelineValueResult] =
     await Promise.all([
       scopedBase().eq("status", "open"),
       scopedBase().eq("status", "won").gte("updated_at", month.start).lte("updated_at", month.end),
       scopedBase().gte("created_at", month.start).lte("created_at", month.end),
       scopedBase().in("status", ["open", "paused"]),
-      user.role === "vendor" ? teamBase().eq("status", "open") : Promise.resolve({ data: null, error: null }),
-      user.role === "vendor"
-        ? teamBase().eq("status", "won").gte("updated_at", month.start).lte("updated_at", month.end)
-        : Promise.resolve({ data: null, error: null }),
-      user.role === "vendor"
-        ? teamBase().gte("created_at", month.start).lte("created_at", month.end)
-        : Promise.resolve({ data: null, error: null }),
-      user.role === "vendor"
-        ? teamBase().in("status", ["open", "paused"])
-        : Promise.resolve({ data: null, error: null }),
     ]);
 
-  [
-    openResult,
-    wonMonthResult,
-    monthTotalResult,
-    pipelineValueResult,
-    teamOpenResult,
-    teamWonMonthResult,
-    teamMonthTotalResult,
-    teamPipelineValueResult,
-  ].forEach((result) => {
+  [openResult, wonMonthResult, monthTotalResult, pipelineValueResult].forEach((result) => {
     if (result.error) {
       throw result.error;
     }
@@ -614,47 +581,34 @@ export async function getDashboardKpis(): Promise<DashboardKpiData> {
     0
   );
 
-  const teamOpenCount = teamOpenResult.data?.length || 0;
-  const teamWonMonthCount = teamWonMonthResult.data?.length || 0;
-  const teamMonthTotalCount = teamMonthTotalResult.data?.length || 0;
-  const teamConversionRate =
-    teamMonthTotalCount > 0 ? (teamWonMonthCount / teamMonthTotalCount) * 100 : 0;
-  const teamPipelineValue = (teamPipelineValueResult.data || []).reduce(
-    (sum, lead) => sum + (parseNumericValue(lead.value) || 0),
-    0
-  );
-
-  const benchmark = (formattedValue: string, label = "Equipo") =>
-    user.role === "vendor" ? { label, formattedValue } : null;
-
   const metrics: DashboardKpiMetric[] = [
     {
-      label: user.role === "vendor" ? "Mis leads abiertos" : "Leads totales abiertos",
+      label: "Leads totales abiertos",
       value: openCount,
       formattedValue: formatNumber(openCount),
-      description: user.role === "vendor" ? "Oportunidades activas asignadas a vos." : "Total de leads abiertos del pipeline.",
-      benchmark: benchmark(formatNumber(teamOpenCount)),
+      description: "Total de leads abiertos del pipeline.",
+      benchmark: null,
     },
     {
       label: "Ganados este mes",
       value: wonMonthCount,
       formattedValue: formatNumber(wonMonthCount),
       description: "Leads cerrados como ganados durante el mes actual.",
-      benchmark: benchmark(formatNumber(teamWonMonthCount)),
+      benchmark: null,
     },
     {
       label: "Tasa de conversión del mes",
       value: conversionRate,
       formattedValue: formatPercent(conversionRate),
       description: "Won / leads creados en el mes actual.",
-      benchmark: benchmark(formatPercent(teamConversionRate)),
+      benchmark: null,
     },
     {
       label: "Valor total del pipeline",
       value: pipelineValue,
       formattedValue: formatCurrency(pipelineValue),
       description: "Suma de oportunidades abiertas y pausadas.",
-      benchmark: benchmark(formatCurrency(teamPipelineValue)),
+      benchmark: null,
     },
   ];
 
@@ -676,10 +630,6 @@ export async function getLeadsByStageMetrics(): Promise<LeadsByStageMetric[]> {
         .select("stage_id")
         .eq("company_id", company_id)
         .eq("pipeline_id", pipeline.id);
-
-      if (user.role === "vendor") {
-        query = query.eq("assigned_to", user.id);
-      }
 
       return query;
     })(),
@@ -705,13 +655,11 @@ export async function getLeadsByStageMetrics(): Promise<LeadsByStageMetric[]> {
 export async function getLeadsBySourceMetrics(): Promise<LeadsBySourceMetric[]> {
   const { user, company_id } = await requireAuth();
   const supabase = await createServerSupabaseClient();
-  let query = supabase.from("leads").select("source").eq("company_id", company_id);
+  const { data, error } = await supabase
+    .from("leads")
+    .select("source")
+    .eq("company_id", company_id);
 
-  if (user.role === "vendor") {
-    query = query.eq("assigned_to", user.id);
-  }
-
-  const { data, error } = await query;
   if (error) {
     throw error;
   }
@@ -755,10 +703,6 @@ export async function getUpcomingClosingLeads(): Promise<UpcomingLeadRecord[]> {
     .lte("expected_close_date", end.toISOString().slice(0, 10))
     .order("expected_close_date", { ascending: true })
     .limit(8);
-
-  if (user.role === "vendor") {
-    query = query.eq("assigned_to", user.id);
-  }
 
   const { data, error } = await query;
   if (error) {

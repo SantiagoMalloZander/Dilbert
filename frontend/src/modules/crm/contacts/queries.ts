@@ -115,10 +115,6 @@ export async function getContacts(
     .order("created_at", { ascending: false })
     .range((pagination.page - 1) * pagination.pageSize, pagination.page * pagination.pageSize - 1);
 
-  if (user?.role === "vendor") {
-    query = query.eq("assigned_to", user.id);
-  }
-
   if (filters.source) {
     query = query.eq("source", filters.source);
   }
@@ -174,10 +170,6 @@ async function getActiveLeadCounts(
     .in("contact_id", contactIds)
     .in("status", ["open", "paused"]);
 
-  if (user?.role === "vendor") {
-    query = query.eq("assigned_to", user.id);
-  }
-
   const { data, error } = await query;
   if (error) {
     throw error;
@@ -203,10 +195,6 @@ export async function getContactById(
     .eq("id", contactId)
     .limit(1);
 
-  if (user?.role === "vendor") {
-    contactQuery = contactQuery.eq("assigned_to", user.id);
-  }
-
   const { data, error } = await contactQuery;
   if (error) {
     throw error;
@@ -223,10 +211,6 @@ export async function getContactById(
     .eq("company_id", companyId)
     .eq("contact_id", contact.id)
     .order("created_at", { ascending: false });
-
-  if (user?.role === "vendor") {
-    leadsQuery = leadsQuery.eq("assigned_to", user.id);
-  }
 
   const [leadsResult, activitiesResult, stagesResult, usersResult] = await Promise.all([
     leadsQuery,
@@ -320,10 +304,6 @@ export async function searchContacts(
     .eq("company_id", companyId)
     .order("created_at", { ascending: false })
     .limit(8);
-
-  if (user?.role === "vendor") {
-    request = request.eq("assigned_to", user.id);
-  }
 
   const normalizedQuery = normalizeSearch(query);
   if (normalizedQuery) {
