@@ -87,20 +87,19 @@ export async function POST(request: Request) {
     try {
       const marker = `<!-- gmail:${email.id} -->`;
 
-      // Dedup: check if we already processed this email (skip in force mode)
-      if (!force) {
-        const { data: existing } = await supabase
-          .from("activities")
-          .select("id")
-          .eq("user_id", userId)
-          .eq("company_id", companyId)
-          .like("description", `%${marker}%`)
-          .maybeSingle();
+      // Dedup: always check — even in force mode we skip already-imported emails
+      // so repeated "Reimportar todo" clicks don't create duplicates.
+      const { data: existing } = await supabase
+        .from("activities")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("company_id", companyId)
+        .like("description", `%${marker}%`)
+        .maybeSingle();
 
-        if (existing) {
-          skipped++;
-          continue;
-        }
+      if (existing) {
+        skipped++;
+        continue;
       }
 
       // Find the external party's email
