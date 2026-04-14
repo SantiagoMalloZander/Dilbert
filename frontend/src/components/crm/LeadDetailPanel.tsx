@@ -13,11 +13,15 @@ import {
   MessageSquarePlus,
   Milestone,
   NotebookPen,
+  Trash2,
   X,
 } from "lucide-react";
 import {
   addLeadActivity,
   addLeadNote,
+  deleteActivity,
+  deleteLead,
+  deleteNote,
   markLeadAsLost,
   markLeadAsWon,
   moveLeadToStage,
@@ -107,6 +111,7 @@ export function LeadDetailPanel({
   const [isActivityOpen, setIsActivityOpen] = useState(false);
   const [isStageOpen, setIsStageOpen] = useState(false);
   const [isLostOpen, setIsLostOpen] = useState(false);
+  const [isDeleteLeadOpen, setIsDeleteLeadOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     title: lead?.title || "",
     value: lead?.value == null ? "" : String(lead.value),
@@ -218,6 +223,38 @@ export function LeadDetailPanel({
 
     setIsStageOpen(false);
     emitGlobalToast({ tone: "success", text: "Etapa actualizada." });
+    refreshView();
+  };
+
+  const handleDeleteLead = async () => {
+    const response = await deleteLead(lead.id);
+    if (response.error) {
+      emitGlobalToast({ tone: "error", text: response.error });
+      return;
+    }
+    setIsDeleteLeadOpen(false);
+    emitGlobalToast({ tone: "success", text: "Lead eliminado." });
+    closePanel();
+    refreshView();
+  };
+
+  const handleDeleteActivity = async (activityId: string) => {
+    const response = await deleteActivity(activityId);
+    if (response.error) {
+      emitGlobalToast({ tone: "error", text: response.error });
+      return;
+    }
+    emitGlobalToast({ tone: "success", text: "Actividad eliminada." });
+    refreshView();
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    const response = await deleteNote(noteId);
+    if (response.error) {
+      emitGlobalToast({ tone: "error", text: response.error });
+      return;
+    }
+    emitGlobalToast({ tone: "success", text: "Nota eliminada." });
     refreshView();
   };
 
@@ -378,6 +415,15 @@ export function LeadDetailPanel({
                 <CircleOff className="mr-2 h-4 w-4" />
                 Marcar como Perdido
               </Button>
+              <Button
+                variant="outline"
+                disabled={!lead.permissions.canEdit || isPending}
+                onClick={() => setIsDeleteLeadOpen(true)}
+                className="border-red-400/30 bg-red-500/10 text-red-400 hover:bg-red-500/15 hover:text-red-300"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Eliminar lead
+              </Button>
             </div>
           </section>
 
@@ -393,17 +439,28 @@ export function LeadDetailPanel({
                 </div>
               ) : (
                 lead.timeline.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
+                  <div key={item.id} className="group rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
                         <p className="font-medium">{item.title}</p>
                         <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
                           {item.type} · {item.user?.name || "Usuario"} · {formatDate(item.createdAt)}
                         </p>
                       </div>
-                      <Badge className="border border-[#2A1A0A]/15 bg-transparent text-foreground">
-                        {item.source}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className="border border-[#2A1A0A]/15 bg-transparent text-foreground">
+                          {item.source}
+                        </Badge>
+                        {lead.permissions.canEdit ? (
+                          <button
+                            onClick={() => handleDeleteActivity(item.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
+                            title="Eliminar actividad"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                     {item.description ? (
                       <p className="mt-3 text-sm text-[#c3d3e8]">{item.description}</p>
@@ -431,14 +488,25 @@ export function LeadDetailPanel({
                 </div>
               ) : (
                 lead.notes.map((note) => (
-                  <div key={note.id} className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
+                  <div key={note.id} className="group rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                         {note.user?.name || "Usuario"} · {formatDate(note.createdAt)}
                       </p>
-                      <Badge className="border border-[#2A1A0A]/15 bg-transparent text-foreground">
-                        {note.source}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className="border border-[#2A1A0A]/15 bg-transparent text-foreground">
+                          {note.source}
+                        </Badge>
+                        {lead.permissions.canEdit ? (
+                          <button
+                            onClick={() => handleDeleteNote(note.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
+                            title="Eliminar nota"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                     <p className="mt-3 whitespace-pre-wrap text-sm text-[#e6eef8]">{note.content}</p>
                   </div>
@@ -705,6 +773,31 @@ export function LeadDetailPanel({
             >
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Confirmar pérdida
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteLeadOpen} onOpenChange={setIsDeleteLeadOpen}>
+        <DialogContent className="border-[3px] border-[#2A1A0A] bg-[#F5F0E8] text-[#1A1A1A] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Eliminar lead</DialogTitle>
+            <DialogDescription>
+              Esto borrará el lead <strong>{lead.title}</strong> junto con todas sus actividades y
+              notas. Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteLeadOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={isPending}
+              onClick={handleDeleteLead}
+              className="bg-red-600 text-white hover:bg-red-500"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Eliminar lead
             </Button>
           </DialogFooter>
         </DialogContent>

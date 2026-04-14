@@ -585,6 +585,90 @@ export async function addLeadActivity(
   }
 }
 
+export async function deleteLead(leadId: string): Promise<Result<{ id: string }>> {
+  try {
+    const { lead, user, company_id } = await getLeadForMutation(leadId);
+
+    const admin = createAdminSupabaseClient();
+
+    // 1. Delete activities and notes tied to this lead
+    await admin.from("activities").delete().eq("company_id", company_id).eq("lead_id", leadId);
+    await admin.from("notes").delete().eq("company_id", company_id).eq("lead_id", leadId);
+
+    // 2. Delete the lead
+    const { error } = await admin
+      .from("leads")
+      .delete()
+      .eq("company_id", company_id)
+      .eq("id", leadId);
+
+    if (error) throw error;
+
+    await insertLeadAudit({
+      companyId: company_id,
+      userId: user.id,
+      action: "lead.deleted",
+      entityId: leadId,
+      before: lead,
+      after: null,
+    });
+
+    revalidateLeadViews();
+    return { data: { id: leadId }, error: null };
+  } catch (error) {
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "NO_PUDIMOS_ELIMINAR_EL_LEAD",
+    };
+  }
+}
+
+export async function deleteActivity(activityId: string): Promise<Result<{ id: string }>> {
+  try {
+    const { user, company_id } = await getMutationContext();
+
+    const admin = createAdminSupabaseClient();
+    const { error } = await admin
+      .from("activities")
+      .delete()
+      .eq("company_id", company_id)
+      .eq("id", activityId);
+
+    if (error) throw error;
+
+    revalidateLeadViews();
+    return { data: { id: activityId }, error: null };
+  } catch (error) {
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "NO_PUDIMOS_ELIMINAR_LA_ACTIVIDAD",
+    };
+  }
+}
+
+export async function deleteNote(noteId: string): Promise<Result<{ id: string }>> {
+  try {
+    const { user, company_id } = await getMutationContext();
+
+    const admin = createAdminSupabaseClient();
+    const { error } = await admin
+      .from("notes")
+      .delete()
+      .eq("company_id", company_id)
+      .eq("id", noteId);
+
+    if (error) throw error;
+
+    revalidateLeadViews();
+    return { data: { id: noteId }, error: null };
+  } catch (error) {
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "NO_PUDIMOS_ELIMINAR_LA_NOTA",
+    };
+  }
+}
+
 export async function markLeadAsWon(leadId: string): Promise<Result<LeadMutationRecord>> {
   return closeLead(leadId, "won");
 }

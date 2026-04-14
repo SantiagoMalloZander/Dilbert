@@ -230,6 +230,77 @@ export async function updateContact(
   }
 }
 
+export async function deleteContact(contactId: string): Promise<Result<{ id: string }>> {
+  try {
+    const { user, company_id } = await requireAuth();
+
+    const admin = createAdminSupabaseClient();
+
+    // Verify the contact belongs to this company
+    const { data: existing, error: fetchErr } = await admin
+      .from("contacts")
+      .select("id, first_name, last_name")
+      .eq("company_id", company_id)
+      .eq("id", contactId)
+      .maybeSingle();
+
+    if (fetchErr) throw fetchErr;
+    if (!existing) throw new Error("CONTACT_NOT_FOUND");
+
+    if (!canEditContact(user.role, user.id, user.id)) throw new Error("FORBIDDEN");
+
+    // 1. Find all leads for this contact
+    const { data: leads } = await admin
+      .from("leads")
+      .select("id")
+      .eq("company_id", company_id)
+      .eq("contact_id", contactId);
+
+    const leadIds = (leads ?? []).map((l) => l.id);
+
+    // 2. Delete activities and notes tied to those leads
+    if (leadIds.length > 0) {
+      await admin.from("activities").delete().eq("company_id", company_id).in("lead_id", leadIds);
+      await admin.from("notes").delete().eq("company_id", company_id).in("lead_id", leadIds);
+    }
+
+    // 3. Delete activities and notes tied directly to the contact
+    await admin.from("activities").delete().eq("company_id", company_id).eq("contact_id", contactId);
+    await admin.from("notes").delete().eq("company_id", company_id).eq("contact_id", contactId);
+
+    // 4. Delete the leads themselves
+    if (leadIds.length > 0) {
+      await admin.from("leads").delete().eq("company_id", company_id).in("id", leadIds);
+    }
+
+    // 5. Delete the contact
+    const { error: deleteErr } = await admin
+      .from("contacts")
+      .delete()
+      .eq("company_id", company_id)
+      .eq("id", contactId);
+
+    if (deleteErr) throw deleteErr;
+
+    await insertAuditLog({
+      companyId: company_id,
+      userId: user.id,
+      action: "contact.deleted",
+      entityId: contactId,
+      before: existing,
+      after: null,
+    });
+
+    revalidateContactViews();
+    return { data: { id: contactId }, error: null };
+  } catch (error) {
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "NO_PUDIMOS_ELIMINAR_EL_CONTACTO",
+    };
+  }
+}
+
 export async function searchContactsAction(query: string): Promise<Result<ContactSearchResult[]>> {
   try {
     const { user, company_id } = await requireAuth();

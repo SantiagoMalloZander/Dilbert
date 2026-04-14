@@ -907,6 +907,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
         onClose={closeContact}
         onEdit={() => setContactFormState({ open: true, contact: data.selectedContact })}
         onCreateLead={(contact) => setLeadFormPreset(contact)}
+        onDelete={closeContact}
       />
 
       <ContactFormDialog

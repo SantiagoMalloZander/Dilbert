@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   BriefcaseBusiness,
@@ -8,9 +9,20 @@ import {
   Phone,
   Plus,
   Sparkles,
+  Trash2,
   UserRoundPlus,
   X,
 } from "lucide-react";
+import { deleteContact } from "@/modules/crm/contacts/actions";
+import { emitGlobalToast } from "@/lib/global-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type {
   ContactDetailRecord,
   ContactSearchResult,
@@ -56,6 +68,7 @@ export function ContactDetailPanel({
   onClose,
   onEdit,
   onCreateLead,
+  onDelete,
   canEdit,
   canCreateLead,
 }: {
@@ -63,14 +76,30 @@ export function ContactDetailPanel({
   onClose: () => void;
   onEdit: () => void;
   onCreateLead: (contact: ContactSearchResult) => void;
+  onDelete?: () => void;
   canEdit: boolean;
   canCreateLead: boolean;
 }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   if (!contact) {
     return null;
   }
+
+  const handleDelete = async () => {
+    const response = await deleteContact(contact.id);
+    if (response.error) {
+      emitGlobalToast({ tone: "error", text: response.error });
+      return;
+    }
+    setIsDeleteOpen(false);
+    emitGlobalToast({ tone: "success", text: "Contacto eliminado con todo su historial." });
+    onClose();
+    onDelete?.();
+    startTransition(() => router.refresh());
+  };
 
   return (
     <>
@@ -112,6 +141,16 @@ export function ContactDetailPanel({
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Nuevo lead para este contacto
+              </Button>
+            ) : null}
+            {canEdit ? (
+              <Button
+                variant="outline"
+                className="border-red-400/30 bg-red-500/10 text-red-400 hover:bg-red-500/15 hover:text-red-300"
+                onClick={() => setIsDeleteOpen(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Eliminar
               </Button>
             ) : null}
           </div>
@@ -214,6 +253,31 @@ export function ContactDetailPanel({
           </section>
         </div>
       </aside>
+
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent className="border-[3px] border-[#2A1A0A] bg-[#F5F0E8] text-[#1A1A1A] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Eliminar contacto</DialogTitle>
+            <DialogDescription>
+              Esto borrará a <strong>{contact.fullName}</strong> junto con todos sus leads,
+              actividades y notas. Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={isPending}
+              onClick={handleDelete}
+              className="bg-red-600 text-white hover:bg-red-500"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Eliminar todo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
