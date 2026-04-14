@@ -45,7 +45,9 @@ export async function POST(request: Request) {
   }
 
   const vendorEmail = creds.gmailEmail ?? "";
-  // force=true uses a 14-day window to catch previously-missed emails
+
+  // force=true: last 14 days, bypass dedup, small batch
+  // normal: since last_sync_at, max 5 per query to stay within Netlify 10s timeout
   const lastSync = force
     ? new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
     : credRow.last_sync_at
@@ -54,9 +56,12 @@ export async function POST(request: Request) {
 
   const afterDate = `${lastSync.getFullYear()}/${String(lastSync.getMonth() + 1).padStart(2, "0")}/${String(lastSync.getDate()).padStart(2, "0")}`;
 
+  // Keep batch small: each email costs ~1-2s (OpenAI call). 5+5=10 emails max = ~10s worst case.
+  const MAX_PER_QUERY = 5;
+
   const [sentEmails, receivedEmails] = await Promise.all([
-    fetchParsedEmails(accessToken, vendorEmail, `from:${vendorEmail} after:${afterDate}`, 25),
-    fetchParsedEmails(accessToken, vendorEmail, `-from:${vendorEmail} after:${afterDate} -in:trash -in:draft`, 25),
+    fetchParsedEmails(accessToken, vendorEmail, `from:${vendorEmail} after:${afterDate}`, MAX_PER_QUERY),
+    fetchParsedEmails(accessToken, vendorEmail, `-from:${vendorEmail} after:${afterDate} -in:trash -in:draft`, MAX_PER_QUERY),
   ]);
 
   const all = [...sentEmails, ...receivedEmails];
@@ -66,7 +71,16 @@ export async function POST(request: Request) {
   let skipped = 0;
   let errors = 0;
 
+  // Time budget: stop processing 7s in to avoid Netlify 10s timeout
+  const deadline = Date.now() + 7_000;
+
   for (const email of unique) {
+    // Stop before we hit the function timeout
+    if (Date.now() > deadline) {
+      console.warn("[gmail/sync] deadline reached, stopping early");
+      break;
+    }
+
     try {
       const marker = `<!-- gmail:${email.id} -->`;
 
@@ -96,9 +110,6 @@ export async function POST(request: Request) {
         continue;
       }
 
-      // Only process emails where we can identify the contact (existing or AI-resolvable)
-      // Use the email body as raw text for the agent, with the dedup marker embedded
-      // Marker goes FIRST so it's always within the 600-char CRM snippet (dedup)
       const rawText = [
         marker,
         `Asunto: ${email.subject}`,
@@ -130,12 +141,14 @@ export async function POST(request: Request) {
     }
   }
 
-  // Update last_sync_at
-  await supabase
-    .from("channel_credentials")
-    .update({ last_sync_at: new Date().toISOString() })
-    .eq("user_id", userId)
-    .eq("channel", "gmail");
+  // Update last_sync_at only on normal sync (force=true is a one-off reimport)
+  if (!force) {
+    await supabase
+      .from("channel_credentials")
+      .update({ last_sync_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("channel", "gmail");
+  }
 
-  return NextResponse.json({ ok: true, imported, skipped, errors });
+  return NextResponse.json({ ok: true, imported, skipped, errors, total_found: unique.length });
 }

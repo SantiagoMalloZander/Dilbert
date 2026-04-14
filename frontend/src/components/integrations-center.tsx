@@ -80,9 +80,11 @@ function getInitials(name: string, email: string) {
 }
 
 function formatDate(dateString: string) {
+  // Use UTC-based formatting to avoid server/client hydration mismatch
   return new Intl.DateTimeFormat("es-AR", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "America/Argentina/Buenos_Aires",
   }).format(new Date(dateString));
 }
 
