@@ -100,15 +100,20 @@ async function getVendorName(userId: string): Promise<string | undefined> {
 async function getOpenDeals(
   contactId: string,
   companyId: string
-): Promise<Array<{ id: string; title: string; value: number | null }>> {
+): Promise<Array<{ id: string; title: string; value: number | null; stage: string | null }>> {
   const supabase = createAdminSupabaseClient();
   const { data } = await supabase
     .from("leads")
-    .select("id, title, value")
+    .select("id, title, value, pipeline_stages(name)")
     .eq("company_id", companyId)
     .eq("contact_id", contactId)
     .eq("status", "open");
-  return data ?? [];
+  return (data ?? []).map((d: { id: string; title: string; value: number | null; pipeline_stages: { name: string } | null }) => ({
+    id: d.id,
+    title: d.title,
+    value: d.value,
+    stage: (d.pipeline_stages as { name: string } | null)?.name ?? null,
+  }));
 }
 
 // ─── Contact creator ──────────────────────────────────────────────────────────

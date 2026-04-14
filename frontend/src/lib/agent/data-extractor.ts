@@ -22,7 +22,7 @@ export interface ExtractorContext {
   /** Known company name if already resolved */
   knownCompanyName?: string;
   /** Existing open deals for this contact (to help decide new vs existing) */
-  openDeals?: Array<{ id: string; title: string; value: number | null }>;
+  openDeals?: Array<{ id: string; title: string; value: number | null; stage?: string | null }>;
   /** Accumulated agent memory: learned preferences + answered questions */
   agentMemory?: string;
   /** Company-level business context set by the owner (what the company sells, who to ignore, etc.) */
@@ -47,6 +47,15 @@ export interface ContactInfo {
   notes: string | null;
 }
 
+export type StageKeyword =
+  | "nuevo"
+  | "en_contacto"
+  | "propuesta"
+  | "negociacion"
+  | "ganado"
+  | "perdido"
+  | null;
+
 export interface DealInfo {
   title: string | null;
   /** Estimated value in USD */
@@ -59,6 +68,16 @@ export interface DealInfo {
   product_or_service: string | null;
   /** Which existing deal_id this belongs to, if detectable */
   existing_deal_id: string | null;
+  /**
+   * Stage keyword inferred from the email content.
+   * Used to advance the pipeline stage automatically.
+   * "ganado"/"perdido" also trigger status change on the lead.
+   */
+  suggested_stage_keyword: StageKeyword;
+  /** true when the client explicitly confirms the purchase / signs / gives final OK */
+  mark_as_won: boolean;
+  /** true when the client explicitly declines, cancels or says they won't continue */
+  mark_as_lost: boolean;
 }
 
 export type Sentiment = "positive" | "neutral" | "negative";
@@ -99,6 +118,7 @@ function emptyResult(): ExtractedData {
     deal_info: {
       title: null, value: null, probability: null, expected_close_date: null,
       product_or_service: null, existing_deal_id: null,
+      suggested_stage_keyword: null, mark_as_won: false, mark_as_lost: false,
     },
     topics: [],
     sentiment: "neutral",
@@ -151,7 +171,7 @@ export async function extractStructuredData(
   // Build the open deals list for the prompt
   const dealsContext = openDeals?.length
     ? `\nDeals abiertos actuales de este contacto:\n${openDeals
-        .map((d) => `• [${d.id}] "${d.title}"${d.value != null ? ` — $${d.value}` : ""}`)
+        .map((d) => `• [${d.id}] "${d.title}"${d.value != null ? ` — $${d.value}` : ""}${d.stage ? ` (etapa actual: ${d.stage})` : ""}`)
         .join("\n")}`
     : "";
 
@@ -173,6 +193,17 @@ Reglas estrictas:
 - deal_is_new_or_existing: "existing" si se menciona algo ya discutido antes (usá el historial y los deals abiertos), "new" si es un producto/tema distinto, "unclear" si no se puede determinar.
 - existing_deal_id: solo si podés matchear con certeza uno de los deals abiertos listados arriba.
 - has_purchase_intent: true solo si hay señales claras (pidió precio, preguntó por disponibilidad, quiere avanzar, confirmó compra, etc.).
+- suggested_stage_keyword: etapa del pipeline que mejor refleja este email. Valores posibles:
+    "nuevo"       → sin señal suficiente para calificar, primer acercamiento sin intención clara
+    "en_contacto" → primer contacto real, respuesta de interés general, pidió más info
+    "propuesta"   → cliente pide cotización, presupuesto, propuesta formal, quiere ver números
+    "negociacion" → negocia precio/términos/condiciones, dice "queremos avanzar", pide cambios al contrato
+    "ganado"      → confirma la compra, firma, acepta la propuesta, da OK final explícito
+    "perdido"     → declina, cancela, dice que no va a seguir, elige otro proveedor
+    null          → el email no está relacionado con ningún deal (irrelevante, interno, automático)
+  Importante: solo avanzar stages, nunca retroceder. Si el deal ya está en "negociacion" y el email es genérico, poné null.
+- mark_as_won: true SOLO si el cliente confirma explícitamente la compra o cierre (firma, "acepto", "vamos", "trato hecho"). No true si solo "suena positivo".
+- mark_as_lost: true SOLO si el cliente rechaza o cancela explícitamente ("no gracias", "decidimos ir con otro", "cancelamos").
 - is_relevant_for_crm: CRÍTICO. Poné false si el email es: newsletter, notificación automática, alerta de servicio, email de plataforma (Twitch, GitHub, Render, Stripe, etc.), no-reply, email interno del equipo, confirmación de pago/envío, email de proveedor de servicios técnicos, o cualquier cosa que el contexto del negocio indique ignorar. Poné true SOLO si es una persona real con interés comercial real en los productos/servicios de la empresa.
 
 Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
@@ -198,7 +229,10 @@ Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
     "probability": number | null,
     "expected_close_date": string | null,
     "product_or_service": string | null,
-    "existing_deal_id": string | null
+    "existing_deal_id": string | null,
+    "suggested_stage_keyword": "nuevo" | "en_contacto" | "propuesta" | "negociacion" | "ganado" | "perdido" | null,
+    "mark_as_won": boolean,
+    "mark_as_lost": boolean
   },
   "topics": string[],
   "sentiment": "positive" | "neutral" | "negative",
