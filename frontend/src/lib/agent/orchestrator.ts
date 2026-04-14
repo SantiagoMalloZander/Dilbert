@@ -266,6 +266,28 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
         companyContext: quickCompanyCtx,
       });
 
+      // ── Relevance gate ────────────────────────────────────────────────────
+      // If the AI says this isn't relevant to the business, skip entirely.
+      // This prevents newsletters, notifications, and service emails from
+      // creating CRM entries.
+      if (!quick.is_relevant_for_crm) {
+        console.log("[orchestrator] skipping — not relevant for CRM", {
+          source, channelIdentifier, senderName,
+          crm_note: quick.crm_note || "(no note)",
+        });
+        return {
+          status: "no_data",
+          contactId: null,
+          contactCreated: false,
+          activityId: null,
+          leadsCreated: [],
+          leadsUpdated: [],
+          contactFieldsUpdated: [],
+          questionsCreated: 0,
+          summary: "Email no relevante para el negocio — omitido.",
+        };
+      }
+
       // Retry resolution with extracted email/phone
       if (quick.contact_info.email || quick.contact_info.phone) {
         resolved = await resolveIdentity({

@@ -73,6 +73,12 @@ export interface ExtractedData {
   sentiment: Sentiment;
   action_items: string[];
   has_purchase_intent: boolean;
+  /**
+   * Whether this interaction deserves a CRM entry at all.
+   * false = newsletter, automated notification, irrelevant service email, internal.
+   * true  = real person with commercial or sales relevance.
+   */
+  is_relevant_for_crm: boolean;
   /** Whether this is a new deal or continuation of an existing one */
   deal_is_new_or_existing: DealStatus;
   confidence_level: ConfidenceLevel;
@@ -98,6 +104,7 @@ function emptyResult(): ExtractedData {
     sentiment: "neutral",
     action_items: [],
     has_purchase_intent: false,
+    is_relevant_for_crm: false,
     deal_is_new_or_existing: "unclear",
     confidence_level: "low",
     crm_note: "",
@@ -166,6 +173,7 @@ Reglas estrictas:
 - deal_is_new_or_existing: "existing" si se menciona algo ya discutido antes (usá el historial y los deals abiertos), "new" si es un producto/tema distinto, "unclear" si no se puede determinar.
 - existing_deal_id: solo si podés matchear con certeza uno de los deals abiertos listados arriba.
 - has_purchase_intent: true solo si hay señales claras (pidió precio, preguntó por disponibilidad, quiere avanzar, confirmó compra, etc.).
+- is_relevant_for_crm: CRÍTICO. Poné false si el email es: newsletter, notificación automática, alerta de servicio, email de plataforma (Twitch, GitHub, Render, Stripe, etc.), no-reply, email interno del equipo, confirmación de pago/envío, email de proveedor de servicios técnicos, o cualquier cosa que el contexto del negocio indique ignorar. Poné true SOLO si es una persona real con interés comercial real en los productos/servicios de la empresa.
 
 Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
 {
@@ -196,6 +204,7 @@ Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
   "sentiment": "positive" | "neutral" | "negative",
   "action_items": string[],
   "has_purchase_intent": boolean,
+  "is_relevant_for_crm": boolean,
   "deal_is_new_or_existing": "new" | "existing" | "unclear",
   "confidence_level": "high" | "medium" | "low",
   "crm_note": string
