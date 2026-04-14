@@ -1,10 +1,10 @@
 import { schedule } from "@netlify/functions";
 
 /**
- * Runs every 30 minutes and triggers Gmail sync for all connected vendors.
+ * Runs every 10 minutes and triggers Gmail sync for all connected vendors.
  * The actual sync logic lives in the Next.js app at /app/api/cron/gmail-sync.
  */
-export const handler = schedule("*/30 * * * *", async () => {
+export const handler = schedule("*/10 * * * *", async () => {
   const secret = process.env.CRON_SECRET;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://dilvert.netlify.app";
 

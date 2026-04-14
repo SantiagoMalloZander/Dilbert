@@ -47,16 +47,13 @@ export async function POST(request: Request) {
 
   const vendorEmail = creds.gmailEmail ?? "";
 
-  const lastSyncRaw = force
+  // force=true  → last 14 days (full reimport)
+  // force=false → today only (manual "Sincronizar" or cron catch-up)
+  // Gmail's after: filter is exclusive, so we use yesterday's date to capture all of today.
+  const todayMinus1 = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const lastSync = force
     ? new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
-    : credRow.last_sync_at
-      ? new Date(credRow.last_sync_at)
-      : new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
-
-  // Gmail's after: filter is exclusive (after: means strictly after that date),
-  // so subtract 1 day to avoid missing emails that arrived on the same day as last_sync_at.
-  // Dedup via unique index on (user_id, email_id) prevents any actual duplicates.
-  const lastSync = new Date(lastSyncRaw.getTime() - 24 * 60 * 60 * 1000);
+    : todayMinus1;
 
   const after = `${lastSync.getFullYear()}/${String(lastSync.getMonth() + 1).padStart(2, "0")}/${String(lastSync.getDate()).padStart(2, "0")}`;
 
