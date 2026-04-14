@@ -56,8 +56,11 @@ export async function POST(request: Request) {
 
   const afterDate = `${lastSync.getFullYear()}/${String(lastSync.getMonth() + 1).padStart(2, "0")}/${String(lastSync.getDate()).padStart(2, "0")}`;
 
-  // Keep batch small: each email costs ~1-2s (OpenAI call). 5+5=10 emails max = ~10s worst case.
-  const MAX_PER_QUERY = 5;
+  // Each email = ~2s (OpenAI call). Netlify hard-kills functions at 10s.
+  // 2 emails × 2 = 4 sent + 4 received = max 4 unique emails → ~8s worst case.
+  // The browser "Reimportar todo" button calls this endpoint 3× sequentially
+  // to cover more emails without hitting the timeout.
+  const MAX_PER_QUERY = 2;
 
   const [sentEmails, receivedEmails] = await Promise.all([
     fetchParsedEmails(accessToken, vendorEmail, `from:${vendorEmail} after:${afterDate}`, MAX_PER_QUERY),
@@ -71,9 +74,8 @@ export async function POST(request: Request) {
   let skipped = 0;
   let errors = 0;
 
-  // Time budget: force=true is called from the browser (no function timeout),
-  // so give it 50s. Normal sync runs as a Netlify scheduled function (10s limit).
-  const deadline = Date.now() + (force ? 50_000 : 8_000);
+  // Hard deadline: always 8s — Netlify kills at 10s regardless of caller.
+  const deadline = Date.now() + 8_000;
 
   for (const email of unique) {
     // Stop before we hit the function timeout

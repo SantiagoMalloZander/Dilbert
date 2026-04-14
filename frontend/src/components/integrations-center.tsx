@@ -477,19 +477,34 @@ export function IntegrationsCenter({
   async function handleGmailSync(force = false) {
     setGmailSyncing(true);
     try {
-      const url = force
-        ? "/app/api/integrations/gmail/sync?force=true"
-        : "/app/api/integrations/gmail/sync";
-      const res = await fetch(url, { method: "POST" });
-      const data = await res.json();
-      if (res.ok) {
-        const msg = force
-          ? `Reimportación forzada completada. ${data.imported} emails importados, ${data.skipped} omitidos.`
-          : `Gmail sincronizado. ${data.imported} emails nuevos importados.`;
-        setFlashMessage({ tone: "success", text: msg });
+      if (force) {
+        // Each sync call handles ~4 emails (Netlify 10s limit).
+        // Call 4× sequentially to cover up to ~16 emails in the last 14 days.
+        // Dedup markers prevent double-importing.
+        let totalImported = 0;
+        let totalSkipped = 0;
+        for (let i = 0; i < 4; i++) {
+          const res = await fetch("/app/api/integrations/gmail/sync?force=true", { method: "POST" });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({})) as Record<string, unknown>;
+            setFlashMessage({ tone: "error", text: (err.error as string) || "Error al reimportar." });
+            return;
+          }
+          const data = await res.json() as { imported: number; skipped: number };
+          totalImported += data.imported ?? 0;
+          totalSkipped += data.skipped ?? 0;
+        }
+        setFlashMessage({ tone: "success", text: `Reimportación completada. ${totalImported} emails importados, ${totalSkipped} omitidos.` });
         startTransition(() => router.refresh());
       } else {
-        setFlashMessage({ tone: "error", text: data.error || "Error al sincronizar Gmail." });
+        const res = await fetch("/app/api/integrations/gmail/sync", { method: "POST" });
+        const data = await res.json() as { imported?: number; error?: string };
+        if (res.ok) {
+          setFlashMessage({ tone: "success", text: `Gmail sincronizado. ${data.imported ?? 0} emails nuevos importados.` });
+          startTransition(() => router.refresh());
+        } else {
+          setFlashMessage({ tone: "error", text: data.error || "Error al sincronizar Gmail." });
+        }
       }
     } catch {
       setFlashMessage({ tone: "error", text: "Error de red al sincronizar." });
