@@ -20,6 +20,19 @@ import { writeTocrm } from "@/lib/agent/crm-writer";
 import { getContactContext } from "@/lib/contact-context";
 import { getAgentMemory, hasSimilarAnsweredQuestion } from "@/lib/agent/memory";
 
+// ─── Company context loader ───────────────────────────────────────────────────
+
+async function getCompanyContext(companyId: string): Promise<string | undefined> {
+  const supabase = createAdminSupabaseClient();
+  const { data } = await supabase
+    .from("companies")
+    .select("settings")
+    .eq("id", companyId)
+    .maybeSingle();
+  const settings = (data?.settings ?? {}) as Record<string, unknown>;
+  return (settings.agent_context as string) || undefined;
+}
+
 // ─── Input ────────────────────────────────────────────────────────────────────
 
 export interface AgentInput {
@@ -243,9 +256,14 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
 
     if (!resolved) {
       // Try to get email/phone from the text before giving up
+      const [quickVendorName, quickCompanyCtx] = await Promise.all([
+        getVendorName(userId),
+        getCompanyContext(companyId),
+      ]);
       const quick = await extractStructuredData(rawText, source, {
-        vendorName: await getVendorName(userId),
+        vendorName: quickVendorName,
         knownContactName: senderName,
+        companyContext: quickCompanyCtx,
       });
 
       // Retry resolution with extracted email/phone
@@ -355,11 +373,12 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
     }
 
     // ── Step 2b: Full extraction with context + memory ───────────────────────
-    const [vendorName, contactHistory, openDeals, memory] = await Promise.all([
+    const [vendorName, contactHistory, openDeals, memory, companyCtx] = await Promise.all([
       getVendorName(userId),
       getContactContext(contactId!, companyId),
       getOpenDeals(contactId!, companyId),
       getAgentMemory(userId, companyId),
+      getCompanyContext(companyId),
     ]);
 
     const extracted = await extractStructuredData(rawText, source, {
@@ -369,6 +388,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       contactHistory: contactHistory ?? undefined,
       openDeals,
       agentMemory: memory.promptContext || undefined,
+      companyContext: companyCtx,
     });
 
     // ── Step 3: Write to CRM ─────────────────────────────────────────────────

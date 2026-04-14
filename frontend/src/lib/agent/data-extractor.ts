@@ -25,6 +25,8 @@ export interface ExtractorContext {
   openDeals?: Array<{ id: string; title: string; value: number | null }>;
   /** Accumulated agent memory: learned preferences + answered questions */
   agentMemory?: string;
+  /** Company-level business context set by the owner (what the company sells, who to ignore, etc.) */
+  companyContext?: string;
 }
 
 // ─── Output types ─────────────────────────────────────────────────────────────
@@ -136,6 +138,7 @@ export async function extractStructuredData(
     knownCompanyName,
     openDeals,
     agentMemory,
+    companyContext,
   } = context;
 
   // Build the open deals list for the prompt
@@ -147,7 +150,7 @@ export async function extractStructuredData(
 
   const systemPrompt = `Sos un agente de CRM de precisión. Tu única función es extraer datos estructurados de interacciones comerciales para cargarlos en el CRM. No respondés, no opinás — solo extraés.
 
-${SOURCE_HINTS[source]}
+${companyContext ? `CONTEXTO DEL NEGOCIO (leé esto primero — define qué interacciones son relevantes y cuáles ignorar):\n${companyContext}\n` : ""}${SOURCE_HINTS[source]}
 
 ${vendorName ? `El vendedor se llama: ${vendorName}.` : ""}
 ${knownContactName ? `El contacto ya identificado es: ${knownContactName}.` : ""}

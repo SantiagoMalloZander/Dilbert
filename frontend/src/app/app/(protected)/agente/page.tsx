@@ -2,6 +2,18 @@ import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/workspace-auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { AgentInbox } from "@/components/agent-inbox";
+import { AgentCompanyContext } from "@/components/agent-company-context";
+
+async function getCompanyContext(companyId: string): Promise<string> {
+  const supabase = createAdminSupabaseClient();
+  const { data } = await supabase
+    .from("companies")
+    .select("settings")
+    .eq("id", companyId)
+    .single();
+  const settings = (data?.settings ?? {}) as Record<string, unknown>;
+  return (settings.agent_context as string) ?? "";
+}
 
 async function getQuestions(companyId: string, userId: string) {
   const supabase = createAdminSupabaseClient();
@@ -54,20 +66,28 @@ export default async function AgentePage() {
   const session = await requireSession();
   if (!session?.user?.companyId) redirect("/app/account");
 
-  const [questions, activities] = await Promise.all([
+  const isOwner = session.user.role === "owner";
+
+  const [questions, activities, companyContext] = await Promise.all([
     getQuestions(session.user.companyId, session.user.id),
     getRecentActivity(session.user.companyId, session.user.id),
+    isOwner ? getCompanyContext(session.user.companyId) : Promise.resolve(""),
   ]);
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="mb-6">
+    <div className="p-6 max-w-3xl mx-auto space-y-8">
+      <div>
         <h1 className="text-2xl font-bold text-foreground">Agente IA</h1>
         <p className="text-muted-foreground text-sm mt-1">
           El agente procesa tus conversaciones de WhatsApp, emails y reuniones automáticamente.
           Acá te muestra lo que necesita tu confirmación y un log de lo que hizo.
         </p>
       </div>
+
+      {isOwner && (
+        <AgentCompanyContext initialContext={companyContext} />
+      )}
+
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <AgentInbox initialQuestions={questions as any} initialActivities={activities as any} />
     </div>
