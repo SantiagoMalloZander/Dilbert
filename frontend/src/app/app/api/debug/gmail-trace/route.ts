@@ -54,7 +54,41 @@ export async function GET() {
 
   const vendorEmail = creds.gmailEmail ?? "";
 
-  // ── Step 3: Fetch emails (last 14 days) ───────────────────────────────────
+  // ── Step 3: Raw Gmail API probe — test several queries to find what works ──
+  const GMAIL_BASE = "https://gmail.googleapis.com/gmail/v1/users/me";
+
+  async function rawQuery(q: string, max = 5) {
+    const url = `${GMAIL_BASE}/messages?q=${encodeURIComponent(q)}&maxResults=${max}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const body = await res.json() as Record<string, unknown>;
+    return { status: res.status, ok: res.ok, count: Array.isArray(body.messages) ? (body.messages as unknown[]).length : 0, raw: body };
+  }
+
+  // Profile check
+  const profileRes = await fetch(`${GMAIL_BASE}/profile`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const profile = await profileRes.json() as Record<string, unknown>;
+  trace.push({ step: "gmail_profile", status: profileRes.status, profile });
+
+  // Try multiple queries from simple to complex
+  const queries = [
+    "in:inbox",
+    "newer_than:30d",
+    `-from:${vendorEmail} newer_than:30d`,
+    `-from:${vendorEmail} newer_than:30d -in:trash -in:draft`,
+    `from:orbitalcreators@gmail.com`,
+    `after:2026/03/31`,
+    `-from:${vendorEmail} after:2026/03/31 -in:trash -in:draft`,
+    `from:${vendorEmail} after:2026/03/31`,
+  ];
+
+  const queryResults: Record<string, unknown>[] = [];
+  for (const q of queries) {
+    const r = await rawQuery(q, 5);
+    queryResults.push({ query: q, ...r });
+  }
+  trace.push({ step: "query_probe", results: queryResults });
+
+  // ── Step 4: Fetch emails with the query that returns results ──────────────
   const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
   const afterDate = [
     since.getFullYear(),
@@ -90,7 +124,7 @@ export async function GET() {
 
   if (unique.length === 0) {
     return NextResponse.json({
-      summary: "No se encontraron emails en los últimos 14 días con esa query.",
+      summary: "No se encontraron emails — revisá query_probe arriba para ver qué queries sí devuelven resultados.",
       trace,
     });
   }
