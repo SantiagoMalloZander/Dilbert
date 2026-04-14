@@ -290,10 +290,11 @@ export async function createLead(input: CreateLeadInput): Promise<Result<LeadMut
       error: null,
     };
   } catch (error) {
-    return {
-      data: null,
-      error: error instanceof Error ? error.message : "NO_PUDIMOS_CREAR_EL_LEAD",
-    };
+    const msg =
+      error instanceof Error
+        ? error.message
+        : (error as { message?: string })?.message ?? "NO_PUDIMOS_CREAR_EL_LEAD";
+    return { data: null, error: msg };
   }
 }
 

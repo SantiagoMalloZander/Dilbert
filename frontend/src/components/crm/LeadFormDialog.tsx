@@ -421,7 +421,9 @@ export function LeadFormDialog({
               <Label>Pipeline</Label>
               <Select value={form.pipelineId} onValueChange={handlePipelineChange}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <span className="flex-1 truncate text-left text-sm">
+                    {pipelines.find((p) => p.id === form.pipelineId)?.name || "Seleccioná pipeline"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {pipelines.map((pipeline) => (
@@ -441,7 +443,9 @@ export function LeadFormDialog({
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <span className="flex-1 truncate text-left text-sm">
+                    {stageOptions.find((s) => s.id === form.stageId)?.name || "Seleccioná stage"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {stageOptions.map((stage) => (

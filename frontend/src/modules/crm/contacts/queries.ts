@@ -308,8 +308,10 @@ export async function searchContacts(
   const normalizedQuery = normalizeSearch(query);
   if (normalizedQuery) {
     const escaped = normalizedQuery.replaceAll("%", "");
+    // Search individual fields AND the generated full_name column so
+    // "Eduardo Feiman" finds the contact even though name is split across columns.
     request = request.or(
-      `first_name.ilike.%${escaped}%,last_name.ilike.%${escaped}%,email.ilike.%${escaped}%,company_name.ilike.%${escaped}%`
+      `first_name.ilike.%${escaped}%,last_name.ilike.%${escaped}%,full_name.ilike.%${escaped}%,email.ilike.%${escaped}%,company_name.ilike.%${escaped}%`
     );
   }
 
