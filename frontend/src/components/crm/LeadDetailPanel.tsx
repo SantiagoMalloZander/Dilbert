@@ -69,14 +69,14 @@ const ACTIVITY_OPTIONS: Array<{ value: ActivityType; label: string }> = [
   { value: "note", label: "Nota" },
 ];
 
-function formatCurrency(value: number | null, currency: string) {
+function formatCurrency(value: number | null, currency: string | null) {
   if (value == null) {
     return "Sin valor";
   }
 
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
-    currency,
+    currency: currency || "ARS",
     maximumFractionDigits: 0,
   }).format(value);
 }

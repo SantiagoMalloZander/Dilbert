@@ -389,6 +389,7 @@ async function manageLead(
       stage_id: safeInitialStage.id,
       title,
       value: di.value ?? null,
+      currency: "ARS",
       probability: di.probability ?? 20,
       expected_close_date: di.expected_close_date ?? null,
       source: SOURCE_TO_CRM_SOURCE[source],
