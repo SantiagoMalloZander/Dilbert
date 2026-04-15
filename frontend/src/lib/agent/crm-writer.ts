@@ -252,7 +252,16 @@ async function manageLead(
   const created: string[] = [];
   const updated: string[] = [];
 
-  if (!extracted.has_purchase_intent && !di.title) return { created, updated };
+  // Gate: skip if the AI says it's not CRM-relevant (newsletter, notification, etc.)
+  if (extracted.is_relevant_for_crm === false) return { created, updated };
+
+  // Require at least something to go on: purchase intent, a title, a product mention, or topics
+  const hasAnything =
+    extracted.has_purchase_intent ||
+    !!di.title ||
+    !!di.product_or_service ||
+    extracted.topics.length > 0;
+  if (!hasAnything) return { created, updated };
 
   // ── Deal detector for "unclear" cases ──────────────────────────────────────
   if (extracted.deal_is_new_or_existing === "unclear" && (di.title || extracted.topics[0])) {
@@ -303,14 +312,19 @@ async function manageLead(
   }
 
   // ── Fetch pipeline for new-deal branches ───────────────────────────────────
-  const { data: pipeline } = await supabase
+  // Prefer is_default=true, fall back to first pipeline if none is marked default
+  const { data: pipelines } = await supabase
     .from("pipelines")
-    .select("id")
+    .select("id, is_default")
     .eq("company_id", companyId)
-    .eq("is_default", true)
-    .maybeSingle();
+    .order("is_default", { ascending: false })
+    .limit(5);
 
-  if (!pipeline) return { created, updated };
+  const pipeline = pipelines?.find((p) => p.is_default) ?? pipelines?.[0] ?? null;
+  if (!pipeline) {
+    console.warn("[crm-writer/manageLead] no pipeline found for company", companyId);
+    return { created, updated };
+  }
 
   const { data: allStages } = await supabase
     .from("pipeline_stages")

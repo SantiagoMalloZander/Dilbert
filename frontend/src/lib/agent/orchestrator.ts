@@ -419,9 +419,25 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       companyContext: companyCtx,
     });
 
-    // ── Step 3: Write to CRM ─────────────────────────────────────────────────
-    // Always write even if GPT found nothing useful — createActivity always logs
-    // the raw interaction. manageLead has its own guard for empty lead data.
+    // ── Step 3: Relevance gate for existing contacts ────────────────────────
+    if (extracted.is_relevant_for_crm === false) {
+      console.log("[orchestrator] skipping existing contact — not relevant for CRM", {
+        source, channelIdentifier, crm_note: extracted.crm_note || "(no note)",
+      });
+      return {
+        status: "no_data",
+        contactId: contactId!,
+        contactCreated: false,
+        activityId: null,
+        leadsCreated: [],
+        leadsUpdated: [],
+        contactFieldsUpdated: [],
+        questionsCreated: 0,
+        summary: "Email no relevante para el negocio — omitido.",
+      };
+    }
+
+    // ── Step 4: Write to CRM ─────────────────────────────────────────────────
     const writeResult = await writeTocrm({
       companyId,
       userId,
@@ -434,7 +450,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       occurredAt,
     });
 
-    // ── Step 4: Queue pending confirmations as vendor questions ──────────────
+    // ── Step 5: Queue pending confirmations as vendor questions ──────────────
     for (const pending of writeResult.pendingConfirmations) {
       const question =
         `El agente encontró un valor distinto para "${pending.field}" del contacto:\n` +
