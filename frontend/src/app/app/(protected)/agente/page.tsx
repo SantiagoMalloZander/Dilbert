@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/workspace-auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { AgentInbox } from "@/components/agent-inbox";
 import { AgentCompanyContext } from "@/components/agent-company-context";
+import { AgentVoiceButton } from "@/components/agent-voice-button";
 
 async function getCompanyContext(companyId: string): Promise<string> {
   const supabase = createAdminSupabaseClient();
@@ -82,6 +83,13 @@ export default async function AgentePage() {
           El agente procesa tus conversaciones de WhatsApp, emails y reuniones automáticamente.
           Acá te muestra lo que necesita tu confirmación y un log de lo que hizo.
         </p>
+      </div>
+
+      {/* Voice recording */}
+      <div className="rounded-2xl border border-white/10 bg-card/90 p-6">
+        <p className="text-sm font-medium text-foreground mb-1">Cargar llamada o reunión presencial</p>
+        <p className="text-xs text-muted-foreground mb-4">Grabá lo que hablaste y el agente crea el contacto y el lead automáticamente.</p>
+        <AgentVoiceButton />
       </div>
 
       {isOwner && (
