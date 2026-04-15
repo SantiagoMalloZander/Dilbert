@@ -10,7 +10,7 @@ const OPENAI_KEY = process.env.OPENAI_API_KEY ?? "";
 
 // ─── Input types ──────────────────────────────────────────────────────────────
 
-export type DataSource = "whatsapp" | "gmail" | "fathom";
+export type DataSource = "whatsapp" | "gmail" | "fathom" | "audio";
 
 export interface ExtractorContext {
   /** Contact history across all channels — output of getContactContext() */
@@ -147,6 +147,11 @@ const SOURCE_HINTS: Record<DataSource, string> = {
     "El texto es una transcripción o resumen de una videollamada. " +
     "Puede haber varios participantes. Identificá quién es el cliente y quién es el vendedor. " +
     "Buscá compromisos, objeciones, precios mencionados y próximos pasos acordados.",
+  audio:
+    "El texto es la transcripción de una llamada telefónica o reunión presencial. " +
+    "El vendedor puede estar narrando la conversación en tercera persona o puede ser una transcripción directa. " +
+    "Extraé nombre, empresa, teléfono del contacto si se mencionan. " +
+    "Buscá señales de interés, productos discutidos, precios y próximos pasos.",
 };
 
 // ─── Main extractor ───────────────────────────────────────────────────────────

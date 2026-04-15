@@ -3,11 +3,12 @@
 import dynamic from "next/dynamic";
 import { useMemo, useState, useTransition } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
-import { Loader2, Filter, Plus, Sparkles } from "lucide-react";
+import { Loader2, Filter, Plus, Sparkles, Phone } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PipelineStage } from "@/components/crm/PipelineStage";
 import { Breadcrumbs } from "@/components/crm/Breadcrumbs";
 import { LeadFormDialog } from "@/components/crm/LeadFormDialog";
+import { AudioUploadDialog } from "@/components/crm/AudioUploadDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
   const [isPending, startTransition] = useTransition();
   const [stages, setStages] = useState<PipelineStageRecord[]>(data.stages);
   const [createLeadOpen, setCreateLeadOpen] = useState(false);
+  const [audioUploadOpen, setAudioUploadOpen] = useState(false);
 
   const canDrag = data.currentUser.role === "owner" || data.currentUser.role === "vendor";
 
@@ -212,16 +214,26 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
                   </span>
                 )}
               </div>
-              {data.leadForm.canCreate && (
+              <div className="flex items-center gap-2">
                 <Button
                   size="sm"
-                  onClick={() => setCreateLeadOpen(true)}
-                  disabled={!data.leadForm.pipelines.length}
+                  variant="outline"
+                  onClick={() => setAudioUploadOpen(true)}
                 >
-                  <Plus className="mr-2 h-4 w-4" />
-                  CREAR LEAD
+                  <Phone className="mr-2 h-4 w-4" />
+                  CARGAR LLAMADA
                 </Button>
-              )}
+                {data.leadForm.canCreate && (
+                  <Button
+                    size="sm"
+                    onClick={() => setCreateLeadOpen(true)}
+                    disabled={!data.leadForm.pipelines.length}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    CREAR LEAD
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr_1fr_auto]">
               {data.currentUser.canManageAssigneeFilter ? (
@@ -329,6 +341,11 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
         pipelines={data.leadForm.pipelines}
         assignees={data.assignees}
         isOwner={data.currentUser.role === "owner"}
+      />
+
+      <AudioUploadDialog
+        open={audioUploadOpen}
+        onClose={() => setAudioUploadOpen(false)}
       />
     </>
   );

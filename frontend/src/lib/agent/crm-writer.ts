@@ -60,6 +60,7 @@ const SOURCE_TO_ACTIVITY_TYPE: Record<DataSource, "email" | "whatsapp" | "meetin
   gmail: "email",
   whatsapp: "whatsapp",
   fathom: "meeting",
+  audio: "meeting",
 };
 
 type CrmSource = "gmail" | "whatsapp" | "import";
@@ -67,6 +68,7 @@ const SOURCE_TO_CRM_SOURCE: Record<DataSource, CrmSource> = {
   gmail: "gmail",
   whatsapp: "whatsapp",
   fathom: "import",
+  audio: "import",
 };
 
 // ─── Contact updater ──────────────────────────────────────────────────────────

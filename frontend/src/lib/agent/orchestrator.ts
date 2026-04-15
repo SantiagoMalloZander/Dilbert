@@ -157,6 +157,7 @@ async function createContact(
     whatsapp: "whatsapp",
     gmail: "gmail",
     fathom: "import",
+    audio: "import",
   };
 
   const { data: contact, error: insertErr } = await supabase
@@ -237,7 +238,8 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
     occurredAt = new Date().toISOString(),
   } = input;
 
-  const channel: Channel = source; // DataSource and Channel overlap for whatsapp/gmail/fathom
+  // Map DataSource to Channel — "audio" has no DB channel type, treat as "manual"
+  const channel: Channel = source === "audio" ? "manual" : source;
   let questionsCreated = 0;
   let contactCreated = false;
 
