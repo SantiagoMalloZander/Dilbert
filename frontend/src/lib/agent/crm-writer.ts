@@ -423,23 +423,10 @@ async function createActivity(
   leadId: string | null,
   extracted: ExtractedData,
   source: DataSource,
-  rawText: string,
   occurredAt: string
 ): Promise<string | null> {
   const supabase = createAdminSupabaseClient();
   const type = SOURCE_TO_ACTIVITY_TYPE[source];
-
-  const descParts: string[] = [];
-  if (extracted.crm_note) descParts.push(extracted.crm_note);
-
-  if (extracted.sentiment !== "neutral") {
-    const label = { positive: "Positivo", negative: "Negativo", neutral: "Neutral" }[extracted.sentiment];
-    descParts.push(`Sentimiento: ${label}`);
-  }
-  if (extracted.topics.length)
-    descParts.push(`Temas: ${extracted.topics.join(", ")}`);
-  if (extracted.action_items.length)
-    descParts.push(`Próximos pasos: ${extracted.action_items.join(" · ")}`);
 
   const { data: activity, error: activityErr } = await supabase
     .from("activities")
@@ -451,7 +438,7 @@ async function createActivity(
       type,
       source: "automatic" as const,
       title: extracted.deal_info.title ?? extracted.topics[0] ?? `Interacción vía ${source}`,
-      description: descParts.join("\n\n") || null,
+      description: extracted.crm_note || null,
       completed_at: occurredAt,
     })
     .select("id")
@@ -545,7 +532,7 @@ export async function writeTocrm(input: WriterInput): Promise<WriterResult> {
   const leadId = created[0] ?? updatedLeads[0] ?? null;
   result.activityId = await createActivity(
     companyId, userId, contactId, leadId,
-    extracted, source, rawText, occurredAt
+    extracted, source, occurredAt
   );
 
   return result;
