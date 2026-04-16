@@ -434,16 +434,12 @@ async function createActivity(
 
   if (extracted.sentiment !== "neutral") {
     const label = { positive: "Positivo", negative: "Negativo", neutral: "Neutral" }[extracted.sentiment];
-    descParts.push(`**Sentimiento:** ${label}`);
+    descParts.push(`Sentimiento: ${label}`);
   }
   if (extracted.topics.length)
-    descParts.push(`**Temas:** ${extracted.topics.join(", ")}`);
+    descParts.push(`Temas: ${extracted.topics.join(", ")}`);
   if (extracted.action_items.length)
-    descParts.push(`**Próximos pasos:**\n${extracted.action_items.map((a) => `• ${a}`).join("\n")}`);
-
-  // Keep a trimmed snapshot of the original text for reference
-  const snippet = rawText.slice(0, 600).trim();
-  if (snippet) descParts.push(`---\n${snippet}${rawText.length > 600 ? "\n..." : ""}`);
+    descParts.push(`Próximos pasos: ${extracted.action_items.join(" · ")}`);
 
   const { data: activity, error: activityErr } = await supabase
     .from("activities")
