@@ -57,6 +57,12 @@ export interface AgentInput {
    * Used when replaying events after a vendor answers an identity question.
    */
   resolvedContactId?: string;
+  /**
+   * Stable id of the source event (gmail message id, whatsapp message id,
+   * fathom recording id). Enables idempotency: if an activity with this
+   * external_id already exists, the pipeline is skipped entirely.
+   */
+  externalId?: string;
 }
 
 // ─── Output ───────────────────────────────────────────────────────────────────
@@ -244,6 +250,32 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
   let contactCreated = false;
 
   try {
+    // ── Idempotency gate ────────────────────────────────────────────────────
+    // If this exact source event was already imported, skip — avoids duplicate
+    // activities/leads from webhook retries or re-syncs, and saves an OpenAI call.
+    if (input.externalId) {
+      const supabase = createAdminSupabaseClient();
+      const { data: existing } = await supabase
+        .from("activities")
+        .select("id, contact_id")
+        .eq("company_id", companyId)
+        .eq("external_id", input.externalId)
+        .maybeSingle();
+      if (existing) {
+        return {
+          status: "ok",
+          contactId: existing.contact_id ?? null,
+          contactCreated: false,
+          activityId: existing.id,
+          leadsCreated: [],
+          leadsUpdated: [],
+          contactFieldsUpdated: [],
+          questionsCreated: 0,
+          summary: "Evento ya procesado anteriormente — omitido (idempotencia).",
+        };
+      }
+    }
+
     // ── Step 1: Resolve contact identity ────────────────────────────────────
     // If the caller already knows the contactId (replay after vendor answer), skip resolution.
     let resolved = input.resolvedContactId
@@ -382,6 +414,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
           channelIdentifier,
           channel,
           occurredAt,
+          externalId: input.externalId,
         });
 
         return {
@@ -448,6 +481,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       channelIdentifier,
       channel,
       occurredAt,
+      externalId: input.externalId,
     });
 
     // ── Step 5: Queue pending confirmations as vendor questions ──────────────

@@ -65,26 +65,23 @@ export async function POST(request: Request) {
 
   const allIds = [...new Map([...sentIds, ...receivedIds].map((m) => [m.id, m])).values()];
 
-  // ── Dedup: skip IDs already in activities or already queued ───────────────
-  // We only do this for already-imported (activities) — gmail_queue has a
-  // unique index on (user_id, email_id) that handles queue dedup via upsert.
+  // ── Dedup: skip IDs already imported ──────────────────────────────────────
+  // Match against activities.external_id (the gmail message id). This replaces
+  // the old, fragile approach of scanning description for a "<!-- gmail:ID -->"
+  // marker, which broke when the activity description was simplified.
+  // gmail_queue's unique index on (user_id, email_id) handles queue-level dedup.
   let alreadyImportedIds = new Set<string>();
   if (!force) {
-    // Batch check existing activities (look for the gmail marker pattern)
     const { data: existingActivities } = await supabase
       .from("activities")
-      .select("description")
+      .select("external_id")
       .eq("user_id", userId)
       .eq("company_id", companyId)
-      .not("description", "is", null)
-      .like("description", "%<!-- gmail:%");
+      .not("external_id", "is", null);
 
     alreadyImportedIds = new Set(
       (existingActivities ?? [])
-        .map((a) => {
-          const match = (a.description ?? "").match(/<!-- gmail:([^>]+) -->/);
-          return match?.[1] ?? null;
-        })
+        .map((a) => a.external_id as string | null)
         .filter(Boolean) as string[]
     );
   }

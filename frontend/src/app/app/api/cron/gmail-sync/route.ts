@@ -26,7 +26,9 @@ export async function POST(request: Request) {
   }
 
   const supabase = createAdminSupabaseClient();
-  const deadline = Date.now() + 8_000;
+  // Netlify functions timeout is 30s (see netlify.toml) — use most of it so the
+  // queue actually drains. Leave headroom for the final count + response.
+  const deadline = Date.now() + 26_000;
 
   // ── Find all vendors with active Gmail ─────────────────────────────────────
   const { data: rows } = await supabase
@@ -82,21 +84,17 @@ export async function POST(request: Request) {
         continue;
       }
 
-      // Dedup against already imported activities
+      // Dedup against already imported activities (by external_id = gmail message id)
       const { data: existingActivities } = await supabase
         .from("activities")
-        .select("description")
+        .select("external_id")
         .eq("user_id", row.user_id)
         .eq("company_id", row.company_id)
-        .not("description", "is", null)
-        .like("description", "%<!-- gmail:%");
+        .not("external_id", "is", null);
 
       const alreadyImportedIds = new Set(
         (existingActivities ?? [])
-          .map((a) => {
-            const match = (a.description ?? "").match(/<!-- gmail:([^>]+) -->/);
-            return match?.[1] ?? null;
-          })
+          .map((a) => a.external_id as string | null)
           .filter(Boolean) as string[]
       );
 
@@ -232,6 +230,7 @@ export async function POST(request: Request) {
         channelIdentifier: queueRow.external_email as string,
         senderName: (queueRow.sender_name as string | null) ?? undefined,
         occurredAt: queueRow.occurred_at as string,
+        externalId: queueRow.email_id as string,
       });
       processed++;
     } catch (err) {

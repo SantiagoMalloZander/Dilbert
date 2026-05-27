@@ -22,8 +22,8 @@ export const handler = schedule("*/10 * * * *", async () => {
       },
     });
 
-    const data = await res.json() as { synced?: number; totalImported?: number };
-    console.log(`[gmail-sync-cron] ok — vendors:${data.synced ?? 0} imported:${data.totalImported ?? 0}`);
+    const data = await res.json() as { synced?: number; totalQueued?: number; processed?: number; queueRemaining?: number };
+    console.log(`[gmail-sync-cron] ok — vendors:${data.synced ?? 0} queued:${data.totalQueued ?? 0} processed:${data.processed ?? 0} remaining:${data.queueRemaining ?? 0}`);
     return { statusCode: 200 };
   } catch (err) {
     console.error("[gmail-sync-cron] error:", err);

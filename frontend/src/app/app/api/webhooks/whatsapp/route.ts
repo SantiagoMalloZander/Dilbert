@@ -61,6 +61,7 @@ export async function POST(request: Request) {
         rawText: message.body,
         channelIdentifier: phone,
         occurredAt,
+        externalId: message.id,
       });
 
       console.log(`[webhook/whatsapp] message from ${phone} → status:${result.status} ${result.summary}`);

@@ -58,8 +58,10 @@ export type StageKeyword =
 
 export interface DealInfo {
   title: string | null;
-  /** Estimated value in USD */
+  /** Estimated value in the currency mentioned (NOT converted) */
   value: number | null;
+  /** ISO 4217 code of the value: "ARS", "USD", "EUR"… null if no amount/currency mentioned */
+  currency: string | null;
   /** 0-100 */
   probability: number | null;
   /** YYYY-MM-DD */
@@ -116,7 +118,7 @@ function emptyResult(): ExtractedData {
       notes: null,
     },
     deal_info: {
-      title: null, value: null, probability: null, expected_close_date: null,
+      title: null, value: null, currency: null, probability: null, expected_close_date: null,
       product_or_service: null, existing_deal_id: null,
       suggested_stage_keyword: null, mark_as_won: false, mark_as_lost: false,
     },
@@ -192,7 +194,8 @@ ${agentMemory ? `\nMemoria del agente (reglas aprendidas del vendedor):\n${agent
 
 Reglas estrictas:
 - Si un dato no está en el texto, usá null. Nunca inventes.
-- Valores monetarios siempre en USD (convertí si está en otra moneda).
+- value: el monto tal como se menciona, SIN convertir de moneda. Si dicen "5 millones de pesos", value=5000000.
+- currency: código ISO de la moneda del monto ("ARS", "USD", "EUR", "BRL"…). Si hay monto pero no se aclara la moneda, asumí "ARS" (negocio argentino). Si no hay monto, null.
 - Fechas siempre en formato YYYY-MM-DD.
 - confidence_level: "high" si el texto es claro y explícito, "medium" si hay inferencia razonable, "low" si el texto es ambiguo o muy corto.
 - deal_is_new_or_existing: "existing" si se menciona algo ya discutido antes (usá el historial y los deals abiertos), "new" si es un producto/tema distinto, "unclear" si no se puede determinar.
@@ -231,6 +234,7 @@ Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
   "deal_info": {
     "title": string | null,
     "value": number | null,
+    "currency": string | null,
     "probability": number | null,
     "expected_close_date": string | null,
     "product_or_service": string | null,

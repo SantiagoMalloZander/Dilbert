@@ -30,6 +30,12 @@ export interface WriterInput {
   channel: Channel;
   /** Activity timestamp — defaults to now() */
   occurredAt?: string;
+  /**
+   * Stable id of the source event (gmail message id, whatsapp message id,
+   * fathom recording id). Used for idempotency — a unique index prevents
+   * duplicate activities from webhook retries / re-syncs.
+   */
+  externalId?: string;
 }
 
 // ─── Output ───────────────────────────────────────────────────────────────────
@@ -292,6 +298,7 @@ async function manageLead(
   if (extracted.deal_is_new_or_existing === "existing" && di.existing_deal_id) {
     const leadUpdates: Record<string, string | number> = {};
     if (di.value != null) leadUpdates.value = di.value;
+    if (di.value != null && di.currency) leadUpdates.currency = di.currency;
     if (di.probability != null) leadUpdates.probability = di.probability;
     if (di.expected_close_date) leadUpdates.expected_close_date = di.expected_close_date;
 
@@ -362,6 +369,7 @@ async function manageLead(
   if (existingLead) {
     const leadUpdates: Record<string, string | number> = {};
     if (di.value != null) leadUpdates.value = di.value;
+    if (di.value != null && di.currency) leadUpdates.currency = di.currency;
     if (di.probability != null) leadUpdates.probability = di.probability;
     if (di.expected_close_date) leadUpdates.expected_close_date = di.expected_close_date;
 
@@ -389,7 +397,7 @@ async function manageLead(
       stage_id: safeInitialStage.id,
       title,
       value: di.value ?? null,
-      currency: "ARS",
+      currency: di.currency ?? "ARS",
       probability: di.probability ?? 20,
       expected_close_date: di.expected_close_date ?? null,
       source: SOURCE_TO_CRM_SOURCE[source],
@@ -423,7 +431,8 @@ async function createActivity(
   leadId: string | null,
   extracted: ExtractedData,
   source: DataSource,
-  occurredAt: string
+  occurredAt: string,
+  externalId?: string
 ): Promise<string | null> {
   const supabase = createAdminSupabaseClient();
   const type = SOURCE_TO_ACTIVITY_TYPE[source];
@@ -440,12 +449,19 @@ async function createActivity(
       title: extracted.deal_info.title ?? extracted.topics[0] ?? `Interacción vía ${source}`,
       description: extracted.crm_note || null,
       completed_at: occurredAt,
+      external_id: externalId ?? null,
     })
     .select("id")
     .single();
 
   if (activityErr) {
-    console.error("[crm-writer/createActivity] insert failed:", activityErr.message, { companyId, contactId, type, source });
+    // 23505 = unique_violation on (company_id, external_id) — the event was already
+    // imported (webhook retry / re-sync). Not an error, just idempotency at work.
+    if (activityErr.code === "23505") {
+      console.log("[crm-writer/createActivity] duplicate event skipped:", externalId);
+    } else {
+      console.error("[crm-writer/createActivity] insert failed:", activityErr.message, { companyId, contactId, type, source });
+    }
   }
 
   return activity?.id ?? null;
@@ -532,7 +548,7 @@ export async function writeTocrm(input: WriterInput): Promise<WriterResult> {
   const leadId = created[0] ?? updatedLeads[0] ?? null;
   result.activityId = await createActivity(
     companyId, userId, contactId, leadId,
-    extracted, source, occurredAt
+    extracted, source, occurredAt, input.externalId
   );
 
   return result;

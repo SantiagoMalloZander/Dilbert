@@ -67,6 +67,7 @@ export async function POST() {
       channelIdentifier: row.external_email as string,
       senderName: (row.sender_name as string | null) ?? undefined,
       occurredAt: row.occurred_at as string,
+      externalId: row.email_id as string,
     });
 
     agentStatus = result.status;

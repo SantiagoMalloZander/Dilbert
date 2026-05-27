@@ -41,6 +41,7 @@ export type Database = {
           contact_id: string | null
           created_at: string
           description: string | null
+          external_id: string | null
           id: string
           lead_id: string | null
           metadata: Json | null
@@ -57,6 +58,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           description?: string | null
+          external_id?: string | null
           id?: string
           lead_id?: string | null
           metadata?: Json | null
@@ -73,6 +75,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           description?: string | null
+          external_id?: string | null
           id?: string
           lead_id?: string | null
           metadata?: Json | null
