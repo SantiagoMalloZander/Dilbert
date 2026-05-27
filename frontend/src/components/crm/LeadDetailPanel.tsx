@@ -13,6 +13,7 @@ import {
   MessageSquarePlus,
   Milestone,
   NotebookPen,
+  ShieldCheck,
   Trash2,
   X,
 } from "lucide-react";
@@ -81,6 +82,73 @@ function formatCurrency(value: number | null, currency: string | null) {
   }).format(value);
 }
 
+// ─── Insurance vertical: render policy data stored in lead metadata ───────────
+
+type InsuranceView = {
+  line_of_business?: string | null;
+  carrier?: string | null;
+  policy_number?: string | null;
+  premium?: number | null;
+  premium_currency?: string | null;
+  premium_frequency?: string | null;
+  coverage_amount?: number | null;
+  coverage_currency?: string | null;
+  deductible?: number | null;
+  effective_date?: string | null;
+  expiration_date?: string | null;
+  renewal_date?: string | null;
+  insured_item?: string | null;
+  beneficiary?: string | null;
+  status?: string | null;
+};
+
+const RAMO_LABELS: Record<string, string> = {
+  auto: "Automotor", hogar: "Hogar", vida: "Vida", salud: "Salud",
+  comercial: "Comercial", art: "ART", caucion: "Caución",
+  responsabilidad_civil: "Responsabilidad Civil", otros: "Otros",
+};
+const FREQ_LABELS: Record<string, string> = {
+  mensual: "Mensual", trimestral: "Trimestral", semestral: "Semestral",
+  anual: "Anual", unico: "Pago único",
+};
+const POLICY_STATUS_LABELS: Record<string, string> = {
+  cotizacion: "Cotización", emitida: "Emitida", renovacion: "Renovación",
+  siniestro: "Siniestro", baja: "Baja",
+};
+
+function getInsurance(metadata: unknown): InsuranceView | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const ins = (metadata as Record<string, unknown>).insurance;
+  if (!ins || typeof ins !== "object") return null;
+  return ins as InsuranceView;
+}
+
+/** Only the populated fields, formatted for display. */
+function insuranceFields(ins: InsuranceView): Array<{ label: string; value: string }> {
+  const out: Array<{ label: string; value: string }> = [];
+  const push = (label: string, value: string | null | undefined) => {
+    if (value != null && value !== "") out.push({ label, value });
+  };
+  push("Ramo", ins.line_of_business ? RAMO_LABELS[ins.line_of_business] ?? ins.line_of_business : null);
+  push("Aseguradora", ins.carrier);
+  if (ins.premium != null) {
+    const freq = ins.premium_frequency ? ` · ${FREQ_LABELS[ins.premium_frequency] ?? ins.premium_frequency}` : "";
+    push("Prima", formatCurrency(ins.premium, ins.premium_currency ?? null) + freq);
+  }
+  if (ins.coverage_amount != null)
+    push("Suma asegurada", formatCurrency(ins.coverage_amount, ins.coverage_currency ?? ins.premium_currency ?? null));
+  if (ins.deductible != null)
+    push("Franquicia", formatCurrency(ins.deductible, ins.premium_currency ?? null));
+  push("Vencimiento", ins.expiration_date ? formatDate(ins.expiration_date) : null);
+  push("Vigencia desde", ins.effective_date ? formatDate(ins.effective_date) : null);
+  push("Renovación", ins.renewal_date ? formatDate(ins.renewal_date) : null);
+  push("N° de póliza", ins.policy_number);
+  push("Bien asegurado", ins.insured_item);
+  push("Beneficiario", ins.beneficiary);
+  push("Estado", ins.status ? POLICY_STATUS_LABELS[ins.status] ?? ins.status : null);
+  return out;
+}
+
 function getStageTone(stage: LeadStageOption | null) {
   if (!stage) {
     return "border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground";
@@ -132,6 +200,8 @@ export function LeadDetailPanel({
   if (!lead) {
     return null;
   }
+
+  const insurance = getInsurance(lead.metadata);
 
   const closePanel = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -361,6 +431,26 @@ export function LeadDetailPanel({
               </div>
             </div>
           </section>
+
+          {insurance && insuranceFields(insurance).length > 0 ? (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Datos de la póliza
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {insuranceFields(insurance).map((field) => (
+                  <div
+                    key={field.label}
+                    className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4"
+                  >
+                    <p className="text-xs text-muted-foreground">{field.label}</p>
+                    <p className="mt-2 font-medium">{field.value}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <section className="space-y-3">
             <div className="flex flex-wrap gap-2">
