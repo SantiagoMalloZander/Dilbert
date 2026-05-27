@@ -352,14 +352,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname === "/") {
-    return NextResponse.next();
-  }
-
-  // The legacy single-tenant CRM has been removed. Anything outside the
-  // workspace app (/app/*), /admin and the public pages goes to the workspace
-  // sign-in.
-  return NextResponse.redirect(new URL("/app/", request.url));
+  // Legacy CRM paths are mapped to workspace equivalents by next.config
+  // redirects(); anything else falls through (unknown paths 404 naturally).
+  return NextResponse.next();
 }
 
 export const config = {
