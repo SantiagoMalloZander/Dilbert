@@ -10,6 +10,7 @@ import {
   Building2,
   FolderCog,
   Loader2,
+  Settings,
   Shield,
   Users,
 } from "lucide-react";
@@ -68,6 +69,12 @@ export function AppNav({
       label: role === "vendor" ? "Mis Integraciones" : "Integraciones",
       icon: FolderCog,
       visible: hasWorkspaceAccess && (role === "owner" || canConnectChannels(role)),
+    },
+    {
+      href: "/app/settings",
+      label: "Configuración",
+      icon: Settings,
+      visible: hasWorkspaceAccess && (role === "owner" || isSuperAdmin),
     },
     {
       href: "/app/account",

@@ -34,6 +34,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      insurance_providers: {
+        Row: {
+          id: string
+          company_id: string
+          name: string
+          categories: string[]
+          logo_url: string | null
+          notes: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          name: string
+          categories?: string[]
+          logo_url?: string | null
+          notes?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          name?: string
+          categories?: string[]
+          logo_url?: string | null
+          notes?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_providers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activities: {
         Row: {
           company_id: string
