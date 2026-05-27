@@ -15,16 +15,24 @@
 
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { resolveIdentity, registerLink, type Channel } from "@/lib/agent/identity-resolver";
-import { extractStructuredData, hasUsefulData, type DataSource } from "@/lib/agent/data-extractor";
+import { extractStructuredData, hasUsefulData, type DataSource, type ExtractionProfile } from "@/lib/agent/data-extractor";
 import { writeTocrm } from "@/lib/agent/crm-writer";
 import { getContactContext } from "@/lib/contact-context";
 import { getAgentMemory, hasSimilarAnsweredQuestion } from "@/lib/agent/memory";
 import { getConnectorForCompany } from "@/lib/agent/crm/factory";
 import type { CRMConnector, CrmSource } from "@/lib/agent/crm/types";
 
-// ─── Company context loader ───────────────────────────────────────────────────
+// ─── Company config loader ────────────────────────────────────────────────────
+// Reads tenant settings once: the owner-set business context + the extraction
+// vertical (e.g. "insurance"). Drives both the relevance gate and which domain
+// schema the extractor uses.
 
-async function getCompanyContext(companyId: string): Promise<string | undefined> {
+interface CompanyConfig {
+  agentContext?: string;
+  profile: ExtractionProfile;
+}
+
+async function getCompanyConfig(companyId: string): Promise<CompanyConfig> {
   const supabase = createAdminSupabaseClient();
   const { data } = await supabase
     .from("companies")
@@ -32,7 +40,11 @@ async function getCompanyContext(companyId: string): Promise<string | undefined>
     .eq("id", companyId)
     .maybeSingle();
   const settings = (data?.settings ?? {}) as Record<string, unknown>;
-  return (settings.agent_context as string) || undefined;
+  const vertical = settings.vertical ?? settings.extraction_profile;
+  return {
+    agentContext: (settings.agent_context as string) || undefined,
+    profile: vertical === "insurance" ? "insurance" : "generic",
+  };
 }
 
 // ─── Input ────────────────────────────────────────────────────────────────────
@@ -260,15 +272,15 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
 
     if (!resolved) {
       // Try to get email/phone from the text before giving up
-      const [quickVendorName, quickCompanyCtx] = await Promise.all([
+      const [quickVendorName, quickCompanyCfg] = await Promise.all([
         getVendorName(userId),
-        getCompanyContext(companyId),
+        getCompanyConfig(companyId),
       ]);
       const quick = await extractStructuredData(rawText, source, {
         vendorName: quickVendorName,
         knownContactName: senderName,
-        companyContext: quickCompanyCtx,
-      });
+        companyContext: quickCompanyCfg.agentContext,
+      }, quickCompanyCfg.profile);
 
       // ── Relevance gate ────────────────────────────────────────────────────
       // Only skip when the AI explicitly returns false — undefined/missing
@@ -399,12 +411,12 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
     }
 
     // ── Step 2b: Full extraction with context + memory ───────────────────────
-    const [vendorName, contactHistory, openDeals, memory, companyCtx] = await Promise.all([
+    const [vendorName, contactHistory, openDeals, memory, companyCfg] = await Promise.all([
       getVendorName(userId),
       getContactContext(contactId!, companyId),
       connector.getOpenDeals(contactId!),
       getAgentMemory(userId, companyId),
-      getCompanyContext(companyId),
+      getCompanyConfig(companyId),
     ]);
 
     const extracted = await extractStructuredData(rawText, source, {
@@ -414,8 +426,8 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       contactHistory: contactHistory ?? undefined,
       openDeals,
       agentMemory: memory.promptContext || undefined,
-      companyContext: companyCtx,
-    });
+      companyContext: companyCfg.agentContext,
+    }, companyCfg.profile);
 
     // ── Step 3: Relevance gate for existing contacts ────────────────────────
     if (extracted.is_relevant_for_crm === false) {

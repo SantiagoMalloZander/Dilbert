@@ -347,6 +347,8 @@ async function manageLead(
       product_or_service: di.product_or_service,
       topics: extracted.topics,
       sentiment: extracted.sentiment,
+      // Insurance vertical: structured policy/quote data (null for generic tenants)
+      ...(extracted.insurance ? { insurance: extracted.insurance } : {}),
     },
   });
   if (newId) created.push(newId);

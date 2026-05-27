@@ -86,9 +86,50 @@ export type Sentiment = "positive" | "neutral" | "negative";
 export type DealStatus = "new" | "existing" | "unclear";
 export type ConfidenceLevel = "high" | "medium" | "low";
 
+/** Vertical-specific extraction profile. Selects the domain prompt + schema. */
+export type ExtractionProfile = "generic" | "insurance";
+
+/**
+ * Insurance-specific structured data. Populated only by the "insurance" profile.
+ * Stored in lead metadata.insurance; the premium also feeds deal_info.value.
+ */
+export interface InsuranceInfo {
+  /** Ramo: auto, hogar, vida, salud, comercial, art, caucion, responsabilidad_civil, otros */
+  line_of_business: string | null;
+  /** Aseguradora / compañía que emite la póliza (no el broker) */
+  carrier: string | null;
+  /** Número de póliza si se menciona */
+  policy_number: string | null;
+  /** Prima (monto), tal como se menciona, sin convertir */
+  premium: number | null;
+  /** Moneda de la prima (ISO): ARS, USD… */
+  premium_currency: string | null;
+  /** Frecuencia de pago: mensual, trimestral, semestral, anual, unico */
+  premium_frequency: string | null;
+  /** Suma asegurada / capital asegurado */
+  coverage_amount: number | null;
+  coverage_currency: string | null;
+  /** Franquicia / deducible */
+  deductible: number | null;
+  /** Vigencia desde (YYYY-MM-DD) */
+  effective_date: string | null;
+  /** Vencimiento de la póliza (YYYY-MM-DD) */
+  expiration_date: string | null;
+  /** Fecha de renovación (YYYY-MM-DD) */
+  renewal_date: string | null;
+  /** Bien asegurado: patente/modelo de auto, dirección del inmueble, etc. */
+  insured_item: string | null;
+  /** Beneficiario (seguros de vida) */
+  beneficiary: string | null;
+  /** Estado: cotizacion, emitida, renovacion, siniestro, baja */
+  status: string | null;
+}
+
 export interface ExtractedData {
   contact_info: ContactInfo;
   deal_info: DealInfo;
+  /** Insurance-specific fields — only populated by the "insurance" profile, else null. */
+  insurance: InsuranceInfo | null;
   /** Main topics discussed, e.g. ["pricing", "demo", "delivery timeline"] */
   topics: string[];
   sentiment: Sentiment;
@@ -122,6 +163,7 @@ function emptyResult(): ExtractedData {
       product_or_service: null, existing_deal_id: null,
       suggested_stage_keyword: null, mark_as_won: false, mark_as_lost: false,
     },
+    insurance: null,
     topics: [],
     sentiment: "neutral",
     action_items: [],
@@ -156,12 +198,51 @@ const SOURCE_HINTS: Record<DataSource, string> = {
     "Buscá señales de interés, productos discutidos, precios y próximos pasos.",
 };
 
+// ─── Insurance profile (vertical) ─────────────────────────────────────────────
+
+const INSURANCE_DOMAIN =
+  "DOMINIO: SEGUROS. Estás procesando interacciones de una agencia/broker de seguros. " +
+  "El 'contacto' es el asegurado o prospecto; el 'deal' es una cotización o póliza. " +
+  "Términos clave (español rioplatense): " +
+  "ramo (tipo de seguro: auto, hogar, vida, salud, comercial, ART, caución, responsabilidad civil), " +
+  "aseguradora/compañía (quien emite la póliza, ej. Sancor, La Caja, Federación Patronal — NO el broker), " +
+  "prima (lo que paga el asegurado), suma asegurada/capital, franquicia/deducible, " +
+  "póliza y su número, vigencia (desde/hasta), vencimiento, renovación, siniestro, bien asegurado (patente, inmueble).";
+
+const INSURANCE_RULES =
+  "\n- insurance.premium: la prima mencionada (sin convertir). insurance.premium_currency: su moneda ISO.\n" +
+  "- Para seguros, deal_info.value = la prima (insurance.premium) y deal_info.currency = insurance.premium_currency.\n" +
+  "- deal_info.title: armalo como \"Seguro {ramo}\" y agregá la aseguradora si se conoce (ej. \"Seguro Auto — Sancor\").\n" +
+  "- insurance.line_of_business: normalizá a uno de: auto, hogar, vida, salud, comercial, art, caucion, responsabilidad_civil, otros.\n" +
+  "- insurance.status: cotizacion (pide presupuesto), emitida (ya contratada), renovacion, siniestro (reclamo), baja (cancela). null si no se infiere.\n" +
+  "- Fechas de vigencia/vencimiento/renovación en YYYY-MM-DD. Si no están, null.";
+
+const INSURANCE_SCHEMA = `,
+  "insurance": {
+    "line_of_business": "auto" | "hogar" | "vida" | "salud" | "comercial" | "art" | "caucion" | "responsabilidad_civil" | "otros" | null,
+    "carrier": string | null,
+    "policy_number": string | null,
+    "premium": number | null,
+    "premium_currency": string | null,
+    "premium_frequency": "mensual" | "trimestral" | "semestral" | "anual" | "unico" | null,
+    "coverage_amount": number | null,
+    "coverage_currency": string | null,
+    "deductible": number | null,
+    "effective_date": string | null,
+    "expiration_date": string | null,
+    "renewal_date": string | null,
+    "insured_item": string | null,
+    "beneficiary": string | null,
+    "status": "cotizacion" | "emitida" | "renovacion" | "siniestro" | "baja" | null
+  }`;
+
 // ─── Main extractor ───────────────────────────────────────────────────────────
 
 export async function extractStructuredData(
   text: string,
   source: DataSource,
-  context: ExtractorContext = {}
+  context: ExtractorContext = {},
+  profile: ExtractionProfile = "generic"
 ): Promise<ExtractedData> {
   if (!OPENAI_KEY || !text.trim()) return emptyResult();
 
@@ -184,7 +265,7 @@ export async function extractStructuredData(
 
   const systemPrompt = `Sos un agente de CRM de precisión. Tu única función es extraer datos estructurados de interacciones comerciales para cargarlos en el CRM. No respondés, no opinás — solo extraés.
 
-${companyContext ? `CONTEXTO DEL NEGOCIO (leé esto primero — define qué interacciones son relevantes y cuáles ignorar):\n${companyContext}\n` : ""}${SOURCE_HINTS[source]}
+${companyContext ? `CONTEXTO DEL NEGOCIO (leé esto primero — define qué interacciones son relevantes y cuáles ignorar):\n${companyContext}\n` : ""}${profile === "insurance" ? INSURANCE_DOMAIN + "\n\n" : ""}${SOURCE_HINTS[source]}
 
 ${vendorName ? `El vendedor se llama: ${vendorName}.` : ""}
 ${knownContactName ? `El contacto ya identificado es: ${knownContactName}.` : ""}
@@ -212,7 +293,7 @@ Reglas estrictas:
   Importante: solo avanzar stages, nunca retroceder. Si el deal ya está en "negociacion" y el email es genérico, poné null.
 - mark_as_won: true SOLO si el cliente confirma explícitamente la compra o cierre (firma, "acepto", "vamos", "trato hecho"). No true si solo "suena positivo".
 - mark_as_lost: true SOLO si el cliente rechaza o cancela explícitamente ("no gracias", "decidimos ir con otro", "cancelamos").
-- is_relevant_for_crm: CRÍTICO. Poné false si el email es: newsletter, notificación automática, alerta de servicio, email de plataforma (Twitch, GitHub, Render, Stripe, etc.), no-reply, email interno del equipo, confirmación de pago/envío, email de proveedor de servicios técnicos, o cualquier cosa que el contexto del negocio indique ignorar. Poné true SOLO si es una persona real con interés comercial real en los productos/servicios de la empresa.
+- is_relevant_for_crm: CRÍTICO. Poné false si el email es: newsletter, notificación automática, alerta de servicio, email de plataforma (Twitch, GitHub, Render, Stripe, etc.), no-reply, email interno del equipo, confirmación de pago/envío, email de proveedor de servicios técnicos, o cualquier cosa que el contexto del negocio indique ignorar. Poné true SOLO si es una persona real con interés comercial real en los productos/servicios de la empresa.${profile === "insurance" ? INSURANCE_RULES : ""}
 
 Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
 {
@@ -250,7 +331,7 @@ Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
   "is_relevant_for_crm": boolean,
   "deal_is_new_or_existing": "new" | "existing" | "unclear",
   "confidence_level": "high" | "medium" | "low",
-  "crm_note": string
+  "crm_note": string${profile === "insurance" ? INSURANCE_SCHEMA : ""}
 }`;
 
   const userContent = [
@@ -293,6 +374,9 @@ Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
     // Sanitise — make sure required arrays exist
     parsed.topics = Array.isArray(parsed.topics) ? parsed.topics : [];
     parsed.action_items = Array.isArray(parsed.action_items) ? parsed.action_items : [];
+    // insurance present only for the insurance profile; default to null otherwise
+    parsed.insurance =
+      parsed.insurance && typeof parsed.insurance === "object" ? parsed.insurance : null;
 
     return parsed;
   } catch (err) {
