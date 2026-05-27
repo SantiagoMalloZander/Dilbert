@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { decodeJwt, jwtVerify } from "jose";
+import { decodeJwt } from "jose";
 import {
   canAccessAdmin,
   canAccessProtectedPath,
@@ -17,16 +17,12 @@ import {
   parseImpersonationCookieValue,
 } from "@/lib/workspace-impersonation";
 
-const AUTH_SECRET = process.env.AUTH_SECRET
-  ? new TextEncoder().encode(process.env.AUTH_SECRET)
-  : null;
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY =
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const WORKSPACE_MAX_IDLE_MS = 30 * 60 * 1000;
 
 const PUBLIC = [
-  "/login",
   "/qr",
   "/waitlist",
   "/reservar",
@@ -356,37 +352,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("dilbert_session")?.value;
-  let session = null;
-
-  if (token && AUTH_SECRET) {
-    try {
-      const { payload } = await jwtVerify(token, AUTH_SECRET);
-      session = payload as { username: string; companyName: string; role: string };
-    } catch {
-      // invalid token
-    }
-  }
-
   if (pathname === "/") {
     return NextResponse.next();
   }
 
-  if (!session) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  if (pathname.startsWith("/admin") && session.role !== "admin") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-pathname", pathname);
-  requestHeaders.set("x-company-name", session.companyName);
-  requestHeaders.set("x-user-role", session.role);
-  requestHeaders.set("x-username", session.username);
-
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  // The legacy single-tenant CRM has been removed. Anything outside the
+  // workspace app (/app/*), /admin and the public pages goes to the workspace
+  // sign-in.
+  return NextResponse.redirect(new URL("/app/", request.url));
 }
 
 export const config = {
