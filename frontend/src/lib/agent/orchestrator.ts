@@ -19,6 +19,8 @@ import { extractStructuredData, hasUsefulData, type DataSource } from "@/lib/age
 import { writeTocrm } from "@/lib/agent/crm-writer";
 import { getContactContext } from "@/lib/contact-context";
 import { getAgentMemory, hasSimilarAnsweredQuestion } from "@/lib/agent/memory";
+import { getConnectorForCompany } from "@/lib/agent/crm/factory";
+import type { CRMConnector, CrmSource } from "@/lib/agent/crm/types";
 
 // ─── Company context loader ───────────────────────────────────────────────────
 
@@ -101,31 +103,10 @@ async function getVendorName(userId: string): Promise<string | undefined> {
   return data?.name ?? undefined;
 }
 
-// ─── Open deals fetcher ───────────────────────────────────────────────────────
-
-async function getOpenDeals(
-  contactId: string,
-  companyId: string
-): Promise<Array<{ id: string; title: string; value: number | null; stage: string | null }>> {
-  const supabase = createAdminSupabaseClient();
-  const { data } = await supabase
-    .from("leads")
-    .select("id, title, value, pipeline_stages(name)")
-    .eq("company_id", companyId)
-    .eq("contact_id", contactId)
-    .eq("status", "open");
-  return (data ?? []).map((d: { id: string; title: string; value: number | null; pipeline_stages: { name: string } | null }) => ({
-    id: d.id,
-    title: d.title,
-    value: d.value,
-    stage: (d.pipeline_stages as { name: string } | null)?.name ?? null,
-  }));
-}
-
 // ─── Contact creator ──────────────────────────────────────────────────────────
 
 async function createContact(
-  companyId: string,
+  connector: CRMConnector,
   userId: string,
   source: DataSource,
   senderName?: string,
@@ -135,8 +116,6 @@ async function createContact(
   extractedPhone?: string | null,
   extractedCompany?: string | null,
 ): Promise<string | null> {
-  const supabase = createAdminSupabaseClient();
-
   // Parse name from senderName if first/last not extracted
   let firstName = extractedFirstName;
   let lastName = extractedLastName;
@@ -159,34 +138,23 @@ async function createContact(
   }
   if (!firstName) firstName = "Desconocido";
 
-  const sourceMap: Record<DataSource, "whatsapp" | "gmail" | "import"> = {
+  const sourceMap: Record<DataSource, CrmSource> = {
     whatsapp: "whatsapp",
     gmail: "gmail",
     fathom: "import",
     audio: "import",
   };
 
-  const { data: contact, error: insertErr } = await supabase
-    .from("contacts")
-    .insert({
-      company_id: companyId,
-      created_by: userId,
-      first_name: firstName,
-      last_name: lastName ?? "",
-      email: extractedEmail ?? null,
-      phone: extractedPhone ?? null,
-      company_name: extractedCompany ?? null,
-      source: sourceMap[source],
-      tags: [],
-    })
-    .select("id")
-    .single();
-
-  if (insertErr) {
-    console.error("[orchestrator/createContact] DB insert failed:", insertErr.message, { companyId, userId, source, firstName });
-  }
-
-  return contact?.id ?? null;
+  return connector.createContact({
+    createdBy: userId,
+    firstName,
+    lastName: lastName ?? "",
+    email: extractedEmail ?? null,
+    phone: extractedPhone ?? null,
+    companyName: extractedCompany ?? null,
+    source: sourceMap[source],
+    tags: [],
+  });
 }
 
 // ─── Question queue ───────────────────────────────────────────────────────────
@@ -250,21 +218,18 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
   let contactCreated = false;
 
   try {
+    // Resolve the CRM destination for this tenant (native Supabase by default).
+    const connector = await getConnectorForCompany(companyId);
+
     // ── Idempotency gate ────────────────────────────────────────────────────
     // If this exact source event was already imported, skip — avoids duplicate
     // activities/leads from webhook retries or re-syncs, and saves an OpenAI call.
     if (input.externalId) {
-      const supabase = createAdminSupabaseClient();
-      const { data: existing } = await supabase
-        .from("activities")
-        .select("id, contact_id")
-        .eq("company_id", companyId)
-        .eq("external_id", input.externalId)
-        .maybeSingle();
+      const existing = await connector.findActivityByExternalId(input.externalId);
       if (existing) {
         return {
           status: "ok",
-          contactId: existing.contact_id ?? null,
+          contactId: existing.contactId,
           contactCreated: false,
           activityId: existing.id,
           leadsCreated: [],
@@ -345,7 +310,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
 
         // Create new contact from available data
         const newId = await createContact(
-          companyId,
+          connector,
           userId,
           source,
           senderName,
@@ -415,7 +380,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
           channel,
           occurredAt,
           externalId: input.externalId,
-        });
+        }, connector);
 
         return {
           status: "new_contact",
@@ -437,7 +402,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
     const [vendorName, contactHistory, openDeals, memory, companyCtx] = await Promise.all([
       getVendorName(userId),
       getContactContext(contactId!, companyId),
-      getOpenDeals(contactId!, companyId),
+      connector.getOpenDeals(contactId!),
       getAgentMemory(userId, companyId),
       getCompanyContext(companyId),
     ]);
@@ -482,7 +447,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       channel,
       occurredAt,
       externalId: input.externalId,
-    });
+    }, connector);
 
     // ── Step 5: Queue pending confirmations as vendor questions ──────────────
     for (const pending of writeResult.pendingConfirmations) {

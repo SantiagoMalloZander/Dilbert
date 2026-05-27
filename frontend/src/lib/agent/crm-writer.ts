@@ -1,12 +1,20 @@
 /**
- * CRM Writer — persists extracted data into Supabase
+ * CRM Writer — applies extracted data to a CRM destination
  *
  * Given a resolved contact_id + ExtractedData, this module:
  *   1. Updates contact fields (only fills blanks or upgrades confidence)
- *   2. Creates or updates leads (one per distinct product/topic)
+ *   2. Creates or updates deals (one per distinct product/topic)
  *   3. Creates the activity (email / whatsapp / meeting)
- *   4. Registers new channel identifiers in contact_channel_links
+ *   4. Registers new channel identifiers in the local cross-channel index
  *   5. Returns a structured log of what happened + what needs vendor confirmation
+ *
+ * The *business logic* (merge rules, deal disambiguation, forward-only stage
+ * advancement) lives here and is destination-neutral. The actual reads/writes go
+ * through a CRMConnector, so the same logic targets our Supabase CRM or an
+ * external system (HubSpot, Salesforce, an insurance AMS) without changes.
+ *
+ * The cross-channel identity index (contact_channel_links) stays local — it is
+ * our index, not the customer's system of record — so it still uses Supabase.
  */
 
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
@@ -14,6 +22,7 @@ import { registerLink, type Channel } from "@/lib/agent/identity-resolver";
 import type { ExtractedData, DataSource } from "@/lib/agent/data-extractor";
 import { detectDeal } from "@/lib/agent/deal-detector";
 import { resolveStageByKeyword } from "@/lib/agent/stage-resolver";
+import type { CRMConnector, CrmSource, ActivityType, DealPatch } from "@/lib/agent/crm/types";
 
 // ─── Input ────────────────────────────────────────────────────────────────────
 
@@ -62,14 +71,13 @@ export interface WriterResult {
 
 // ─── Type maps ────────────────────────────────────────────────────────────────
 
-const SOURCE_TO_ACTIVITY_TYPE: Record<DataSource, "email" | "whatsapp" | "meeting"> = {
+const SOURCE_TO_ACTIVITY_TYPE: Record<DataSource, ActivityType> = {
   gmail: "email",
   whatsapp: "whatsapp",
   fathom: "meeting",
   audio: "meeting",
 };
 
-type CrmSource = "gmail" | "whatsapp" | "import";
 const SOURCE_TO_CRM_SOURCE: Record<DataSource, CrmSource> = {
   gmail: "gmail",
   whatsapp: "whatsapp",
@@ -81,22 +89,14 @@ const SOURCE_TO_CRM_SOURCE: Record<DataSource, CrmSource> = {
 // Rule: only write a field if new value is non-null AND (current is empty OR confidence is high).
 
 async function updateContact(
-  companyId: string,
+  connector: CRMConnector,
   contactId: string,
   extracted: ExtractedData,
   confidence: "high" | "medium" | "low"
 ): Promise<{ updated: string[]; pending: WriterResult["pendingConfirmations"] }> {
-  const supabase = createAdminSupabaseClient();
   const ci = extracted.contact_info;
 
-  // Fetch current contact state
-  const { data: current } = await supabase
-    .from("contacts")
-    .select("*")
-    .eq("id", contactId)
-    .eq("company_id", companyId)
-    .single();
-
+  const current = await connector.getContact(contactId);
   if (!current) return { updated: [], pending: [] };
 
   const updates: Record<string, string | number> = {};
@@ -173,53 +173,35 @@ async function updateContact(
     updated.push("notes");
   }
 
-  if (Object.keys(updates).length > 0) {
-    await supabase
-      .from("contacts")
-      .update(updates)
-      .eq("id", contactId)
-      .eq("company_id", companyId);
-  }
+  await connector.updateContactFields(contactId, updates);
 
   return { updated, pending };
 }
 
 // ─── Stage updater helper ─────────────────────────────────────────────────────
-// Builds the stage/status portion of a lead update object.
+// Builds the stage/status portion of a deal update.
 // RULE: only advance forward — never move a lead backward in the pipeline.
 
 async function buildStageUpdates(
-  companyId: string,
+  connector: CRMConnector,
   leadId: string,
   extracted: ExtractedData
-): Promise<Record<string, string>> {
+): Promise<DealPatch> {
   const di = extracted.deal_info;
   const keyword = di.suggested_stage_keyword;
-  const updates: Record<string, string> = {};
+  const updates: DealPatch = {};
 
-  // Fetch current lead to get pipeline_id + current stage position
-  const supabase = createAdminSupabaseClient();
-  const { data: currentLead } = await supabase
-    .from("leads")
-    .select("pipeline_id, stage_id, status, pipeline_stages(position)")
-    .eq("id", leadId)
-    .eq("company_id", companyId)
-    .maybeSingle();
-
-  if (!currentLead) return updates;
+  const info = await connector.getLeadStageInfo(leadId);
+  if (!info) return updates;
 
   // Don't touch leads that are already closed
-  if (currentLead.status === "won" || currentLead.status === "lost") return updates;
+  if (info.status === "won" || info.status === "lost") return updates;
 
-  const currentPosition =
-    (currentLead.pipeline_stages as { position: number } | null)?.position ?? -1;
+  const currentPosition = info.position;
 
   if (keyword) {
-    const targetStage = await resolveStageByKeyword(
-      companyId,
-      currentLead.pipeline_id as string,
-      keyword
-    );
+    const stages = await connector.getPipelineStages(info.pipeline_id);
+    const targetStage = resolveStageByKeyword(stages, keyword);
 
     if (targetStage) {
       // Only advance forward OR apply terminal stages
@@ -235,9 +217,9 @@ async function buildStageUpdates(
   }
 
   // Status changes for terminal stages
-  if (di.mark_as_won || di.suggested_stage_keyword === "ganado") {
+  if (di.mark_as_won || keyword === "ganado") {
     updates.status = "won";
-  } else if (di.mark_as_lost || di.suggested_stage_keyword === "perdido") {
+  } else if (di.mark_as_lost || keyword === "perdido") {
     updates.status = "lost";
   }
 
@@ -247,13 +229,12 @@ async function buildStageUpdates(
 // ─── Lead manager ─────────────────────────────────────────────────────────────
 
 async function manageLead(
-  companyId: string,
+  connector: CRMConnector,
   userId: string,
   contactId: string,
   extracted: ExtractedData,
   source: DataSource
 ): Promise<{ created: string[]; updated: string[] }> {
-  const supabase = createAdminSupabaseClient();
   const di = extracted.deal_info;
   const created: string[] = [];
   const updated: string[] = [];
@@ -271,14 +252,9 @@ async function manageLead(
 
   // ── Deal detector for "unclear" cases ──────────────────────────────────────
   if (extracted.deal_is_new_or_existing === "unclear" && (di.title || extracted.topics[0])) {
-    const { data: openLeads } = await supabase
-      .from("leads")
-      .select("id, title, value")
-      .eq("company_id", companyId)
-      .eq("contact_id", contactId)
-      .eq("status", "open");
+    const openLeads = await connector.getOpenDeals(contactId);
 
-    if (openLeads?.length) {
+    if (openLeads.length) {
       const detection = await detectDeal(
         di.title ?? extracted.topics[0] ?? "",
         extracted.crm_note,
@@ -296,58 +272,37 @@ async function manageLead(
 
   // ── Branch 1: update an existing deal matched by ID ────────────────────────
   if (extracted.deal_is_new_or_existing === "existing" && di.existing_deal_id) {
-    const leadUpdates: Record<string, string | number> = {};
+    const leadUpdates: DealPatch = {};
     if (di.value != null) leadUpdates.value = di.value;
     if (di.value != null && di.currency) leadUpdates.currency = di.currency;
     if (di.probability != null) leadUpdates.probability = di.probability;
     if (di.expected_close_date) leadUpdates.expected_close_date = di.expected_close_date;
 
     // Stage / status advancement
-    const stageUpdates = await buildStageUpdates(companyId, di.existing_deal_id, extracted);
+    const stageUpdates = await buildStageUpdates(connector, di.existing_deal_id, extracted);
     Object.assign(leadUpdates, stageUpdates);
 
-    if (Object.keys(leadUpdates).length > 0) {
-      await supabase
-        .from("leads")
-        .update(leadUpdates)
-        .eq("id", di.existing_deal_id)
-        .eq("company_id", companyId);
-      console.log(`[crm-writer] updated lead ${di.existing_deal_id}`, leadUpdates);
-    }
+    await connector.updateDeal(di.existing_deal_id, leadUpdates);
     updated.push(di.existing_deal_id);
     return { created, updated };
   }
 
   // ── Fetch pipeline for new-deal branches ───────────────────────────────────
-  // Prefer is_default=true, fall back to first pipeline if none is marked default
-  const { data: pipelines } = await supabase
-    .from("pipelines")
-    .select("id, is_default")
-    .eq("company_id", companyId)
-    .order("is_default", { ascending: false })
-    .limit(5);
-
-  const pipeline = pipelines?.find((p) => p.is_default) ?? pipelines?.[0] ?? null;
+  const pipeline = await connector.getDefaultPipeline();
   if (!pipeline) {
-    console.warn("[crm-writer/manageLead] no pipeline found for company", companyId);
+    console.warn("[crm-writer/manageLead] no pipeline found for company");
     return { created, updated };
   }
 
-  const { data: allStages } = await supabase
-    .from("pipeline_stages")
-    .select("id, position, is_won_stage, is_lost_stage")
-    .eq("company_id", companyId)
-    .eq("pipeline_id", pipeline.id)
-    .order("position", { ascending: true });
-
-  const firstStage = (allStages ?? []).find((s) => !s.is_won_stage && !s.is_lost_stage);
+  const allStages = await connector.getPipelineStages(pipeline.id);
+  const firstStage = allStages.find((s) => !s.is_won_stage && !s.is_lost_stage);
   if (!firstStage) return { created, updated };
 
   // ── Resolve initial stage from AI keyword (for new leads) ─────────────────
   // If the AI detected a stage keyword, use that as starting point
   // instead of always putting new leads at position 0.
   const initialStage = di.suggested_stage_keyword
-    ? (await resolveStageByKeyword(companyId, pipeline.id, di.suggested_stage_keyword)) ?? firstStage
+    ? resolveStageByKeyword(allStages, di.suggested_stage_keyword) ?? firstStage
     : firstStage;
 
   // For won/lost keywords on new leads, still create the lead at first stage
@@ -357,75 +312,51 @@ async function manageLead(
 
   // ── Branch 2: duplicate-title check → update existing ─────────────────────
   const title = di.title ?? di.product_or_service ?? extracted.topics[0] ?? "Nuevo deal";
-  const { data: existingLead } = await supabase
-    .from("leads")
-    .select("id")
-    .eq("company_id", companyId)
-    .eq("contact_id", contactId)
-    .eq("status", "open")
-    .ilike("title", title)
-    .maybeSingle();
+  const existingLead = await connector.findOpenDealByTitle(contactId, title);
 
   if (existingLead) {
-    const leadUpdates: Record<string, string | number> = {};
+    const leadUpdates: DealPatch = {};
     if (di.value != null) leadUpdates.value = di.value;
     if (di.value != null && di.currency) leadUpdates.currency = di.currency;
     if (di.probability != null) leadUpdates.probability = di.probability;
     if (di.expected_close_date) leadUpdates.expected_close_date = di.expected_close_date;
 
-    const stageUpdates = await buildStageUpdates(companyId, existingLead.id, extracted);
+    const stageUpdates = await buildStageUpdates(connector, existingLead.id, extracted);
     Object.assign(leadUpdates, stageUpdates);
 
-    if (Object.keys(leadUpdates).length > 0) {
-      await supabase.from("leads").update(leadUpdates)
-        .eq("id", existingLead.id).eq("company_id", companyId);
-      console.log(`[crm-writer] updated lead (title match) ${existingLead.id}`, leadUpdates);
-    }
+    await connector.updateDeal(existingLead.id, leadUpdates);
     updated.push(existingLead.id);
     return { created, updated };
   }
 
   // ── Branch 3: create new lead ──────────────────────────────────────────────
-  const { data: newLead, error: leadErr } = await supabase
-    .from("leads")
-    .insert({
-      company_id: companyId,
-      created_by: userId,
-      assigned_to: userId,
-      contact_id: contactId,
-      pipeline_id: pipeline.id,
-      stage_id: safeInitialStage.id,
-      title,
-      value: di.value ?? null,
-      currency: di.currency ?? "ARS",
-      probability: di.probability ?? 20,
-      expected_close_date: di.expected_close_date ?? null,
-      source: SOURCE_TO_CRM_SOURCE[source],
-      status: "open" as const,
-      metadata: {
-        origin: "agent",
-        product_or_service: di.product_or_service,
-        topics: extracted.topics,
-        sentiment: extracted.sentiment,
-      },
-    })
-    .select("id")
-    .single();
-
-  if (leadErr) {
-    console.error("[crm-writer/manageLead] lead insert failed:", leadErr.message, { companyId, contactId, title });
-  }
-  if (newLead) {
-    console.log(`[crm-writer] created lead ${newLead.id} at stage "${safeInitialStage.id}"`);
-    created.push(newLead.id);
-  }
+  const newId = await connector.createDeal({
+    createdBy: userId,
+    assignedTo: userId,
+    contactId,
+    pipelineId: pipeline.id,
+    stageId: safeInitialStage.id,
+    title,
+    value: di.value ?? null,
+    currency: di.currency ?? "ARS",
+    probability: di.probability ?? 20,
+    expectedCloseDate: di.expected_close_date ?? null,
+    source: SOURCE_TO_CRM_SOURCE[source],
+    metadata: {
+      origin: "agent",
+      product_or_service: di.product_or_service,
+      topics: extracted.topics,
+      sentiment: extracted.sentiment,
+    },
+  });
+  if (newId) created.push(newId);
   return { created, updated };
 }
 
 // ─── Activity creator ─────────────────────────────────────────────────────────
 
 async function createActivity(
-  companyId: string,
+  connector: CRMConnector,
   userId: string,
   contactId: string,
   leadId: string | null,
@@ -434,49 +365,28 @@ async function createActivity(
   occurredAt: string,
   externalId?: string
 ): Promise<string | null> {
-  const supabase = createAdminSupabaseClient();
-  const type = SOURCE_TO_ACTIVITY_TYPE[source];
-
-  const { data: activity, error: activityErr } = await supabase
-    .from("activities")
-    .insert({
-      company_id: companyId,
-      user_id: userId,
-      contact_id: contactId,
-      lead_id: leadId,
-      type,
-      source: "automatic" as const,
-      title: extracted.deal_info.title ?? extracted.topics[0] ?? `Interacción vía ${source}`,
-      description: extracted.crm_note || null,
-      completed_at: occurredAt,
-      external_id: externalId ?? null,
-    })
-    .select("id")
-    .single();
-
-  if (activityErr) {
-    // 23505 = unique_violation on (company_id, external_id) — the event was already
-    // imported (webhook retry / re-sync). Not an error, just idempotency at work.
-    if (activityErr.code === "23505") {
-      console.log("[crm-writer/createActivity] duplicate event skipped:", externalId);
-    } else {
-      console.error("[crm-writer/createActivity] insert failed:", activityErr.message, { companyId, contactId, type, source });
-    }
-  }
-
-  return activity?.id ?? null;
+  return connector.createActivity({
+    userId,
+    contactId,
+    leadId,
+    type: SOURCE_TO_ACTIVITY_TYPE[source],
+    source: "automatic",
+    title: extracted.deal_info.title ?? extracted.topics[0] ?? `Interacción vía ${source}`,
+    description: extracted.crm_note || null,
+    completedAt: occurredAt,
+    externalId: externalId ?? null,
+  });
 }
 
 // ─── Main writer ──────────────────────────────────────────────────────────────
 
-export async function writeTocrm(input: WriterInput): Promise<WriterResult> {
+export async function writeTocrm(input: WriterInput, connector: CRMConnector): Promise<WriterResult> {
   const {
     companyId,
     userId,
     contactId,
     extracted,
     source,
-    rawText,
     channelIdentifier,
     channel,
     occurredAt = new Date().toISOString(),
@@ -493,12 +403,12 @@ export async function writeTocrm(input: WriterInput): Promise<WriterResult> {
 
   // 1. Update contact fields
   const { updated, pending } = await updateContact(
-    companyId, contactId, extracted, extracted.confidence_level
+    connector, contactId, extracted, extracted.confidence_level
   );
   result.contactFieldsUpdated = updated;
   result.pendingConfirmations = pending;
 
-  // 2. Register any new identifiers found in the extracted data
+  // 2. Register any new identifiers found in the extracted data (local index)
   const supabase = createAdminSupabaseClient();
 
   if (channelIdentifier) {
@@ -539,7 +449,7 @@ export async function writeTocrm(input: WriterInput): Promise<WriterResult> {
 
   // 3. Manage leads
   const { created, updated: updatedLeads } = await manageLead(
-    companyId, userId, contactId, extracted, source
+    connector, userId, contactId, extracted, source
   );
   result.leadsCreated = created;
   result.leadsUpdated = updatedLeads;
@@ -547,7 +457,7 @@ export async function writeTocrm(input: WriterInput): Promise<WriterResult> {
   // 4. Create activity — link to the first created/updated lead
   const leadId = created[0] ?? updatedLeads[0] ?? null;
   result.activityId = await createActivity(
-    companyId, userId, contactId, leadId,
+    connector, userId, contactId, leadId,
     extracted, source, occurredAt, input.externalId
   );
 
