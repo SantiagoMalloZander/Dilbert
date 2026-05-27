@@ -49,7 +49,7 @@ export function AppNav({
       href: "/app/crm/analytics",
       label: "Analytics",
       icon: BarChart3,
-      visible: hasWorkspaceAccess && role !== "vendor",
+      visible: hasWorkspaceAccess,
     },
     {
       href: "/app/agente",

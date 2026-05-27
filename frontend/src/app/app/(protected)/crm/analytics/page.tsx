@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
 import { ShieldCheck, CalendarClock, TrendingUp } from "lucide-react";
 import {
   DashboardSectionSkeleton,
@@ -186,12 +185,7 @@ async function InsuranceBlock({ promise }: { promise: Promise<InsuranceAnalytics
 }
 
 export default async function AnalyticsPage() {
-  const session = await requireSession();
-
-  // Analytics is company-wide — vendors only see their own data in the CRM.
-  if (session.user.role === "vendor") {
-    redirect("/app/crm");
-  }
+  await requireSession();
 
   const kpiPromise = getDashboardKpis();
   const stagePromise = getLeadsByStageMetrics();
