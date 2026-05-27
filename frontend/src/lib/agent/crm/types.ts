@@ -94,6 +94,23 @@ export interface LeadStageInfo {
   position: number;
 }
 
+/** Insurance attributes promoted to first-class lead columns (insurance vertical). */
+export interface InsuranceFields {
+  line_of_business: string | null;
+  carrier: string | null;
+  policy_number: string | null;
+  premium_frequency: string | null;
+  coverage_amount: number | null;
+  coverage_currency: string | null;
+  deductible: number | null;
+  effective_date: string | null;
+  expiration_date: string | null;
+  renewal_date: string | null;
+  insured_item: string | null;
+  beneficiary: string | null;
+  policy_status: string | null;
+}
+
 export interface NewDealInput {
   createdBy: string;
   assignedTo: string;
@@ -107,6 +124,8 @@ export interface NewDealInput {
   expectedCloseDate: string | null;
   source: CrmSource;
   metadata: Record<string, unknown>;
+  /** Insurance-vertical fields (null for generic tenants). */
+  insurance?: InsuranceFields | null;
 }
 
 /** Canonical, destination-neutral deal status vocabulary. */

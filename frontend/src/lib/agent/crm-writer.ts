@@ -22,7 +22,27 @@ import { registerLink, type Channel } from "@/lib/agent/identity-resolver";
 import type { ExtractedData, DataSource } from "@/lib/agent/data-extractor";
 import { detectDeal } from "@/lib/agent/deal-detector";
 import { resolveStageByKeyword } from "@/lib/agent/stage-resolver";
-import type { CRMConnector, CrmSource, ActivityType, DealPatch } from "@/lib/agent/crm/types";
+import type { CRMConnector, CrmSource, ActivityType, DealPatch, InsuranceFields } from "@/lib/agent/crm/types";
+
+/** Map the extractor's insurance block to the first-class lead columns. */
+function toInsuranceFields(ins: ExtractedData["insurance"]): InsuranceFields | null {
+  if (!ins) return null;
+  return {
+    line_of_business: ins.line_of_business ?? null,
+    carrier: ins.carrier ?? null,
+    policy_number: ins.policy_number ?? null,
+    premium_frequency: ins.premium_frequency ?? null,
+    coverage_amount: ins.coverage_amount ?? null,
+    coverage_currency: ins.coverage_currency ?? null,
+    deductible: ins.deductible ?? null,
+    effective_date: ins.effective_date ?? null,
+    expiration_date: ins.expiration_date ?? null,
+    renewal_date: ins.renewal_date ?? null,
+    insured_item: ins.insured_item ?? null,
+    beneficiary: ins.beneficiary ?? null,
+    policy_status: ins.status ?? null,
+  };
+}
 
 // ─── Input ────────────────────────────────────────────────────────────────────
 
@@ -350,6 +370,8 @@ async function manageLead(
       // Insurance vertical: structured policy/quote data (null for generic tenants)
       ...(extracted.insurance ? { insurance: extracted.insurance } : {}),
     },
+    // Promote insurance attributes to first-class columns (queryable/indexable).
+    insurance: toInsuranceFields(extracted.insurance),
   });
   if (newId) created.push(newId);
   return { created, updated };

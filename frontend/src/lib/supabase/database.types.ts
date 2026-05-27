@@ -630,6 +630,19 @@ export type Database = {
           title: string
           updated_at: string
           value: number | null
+          line_of_business: string | null
+          carrier: string | null
+          policy_number: string | null
+          premium_frequency: string | null
+          coverage_amount: number | null
+          coverage_currency: string | null
+          deductible: number | null
+          effective_date: string | null
+          expiration_date: string | null
+          renewal_date: string | null
+          insured_item: string | null
+          beneficiary: string | null
+          policy_status: string | null
         }
         Insert: {
           assigned_to: string
@@ -650,6 +663,19 @@ export type Database = {
           title: string
           updated_at?: string
           value?: number | null
+          line_of_business?: string | null
+          carrier?: string | null
+          policy_number?: string | null
+          premium_frequency?: string | null
+          coverage_amount?: number | null
+          coverage_currency?: string | null
+          deductible?: number | null
+          effective_date?: string | null
+          expiration_date?: string | null
+          renewal_date?: string | null
+          insured_item?: string | null
+          beneficiary?: string | null
+          policy_status?: string | null
         }
         Update: {
           assigned_to?: string
@@ -670,6 +696,19 @@ export type Database = {
           title?: string
           updated_at?: string
           value?: number | null
+          line_of_business?: string | null
+          carrier?: string | null
+          policy_number?: string | null
+          premium_frequency?: string | null
+          coverage_amount?: number | null
+          coverage_currency?: string | null
+          deductible?: number | null
+          effective_date?: string | null
+          expiration_date?: string | null
+          renewal_date?: string | null
+          insured_item?: string | null
+          beneficiary?: string | null
+          policy_status?: string | null
         }
         Relationships: [
           {

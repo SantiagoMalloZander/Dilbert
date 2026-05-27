@@ -46,7 +46,9 @@ export async function getInsuranceAnalytics(): Promise<InsuranceAnalytics> {
 
   const { data: leads } = await supabase
     .from("leads")
-    .select("id, title, value, currency, status, metadata, contact_id")
+    .select(
+      "id, title, value, currency, status, contact_id, line_of_business, carrier, expiration_date, renewal_date, policy_status, metadata"
+    )
     .eq("company_id", company_id);
 
   const rows = leads ?? [];
@@ -72,8 +74,19 @@ export async function getInsuranceAnalytics(): Promise<InsuranceAnalytics> {
   let totalPremium = 0;
 
   for (const lead of rows) {
-    const ins = readInsurance(lead.metadata);
-    if (!ins) continue;
+    // Prefer first-class columns, fall back to the legacy metadata.insurance blob.
+    const meta = readInsurance(lead.metadata);
+    const ins: InsuranceMeta = {
+      line_of_business: lead.line_of_business ?? meta?.line_of_business ?? null,
+      carrier: lead.carrier ?? meta?.carrier ?? null,
+      expiration_date: lead.expiration_date ?? meta?.expiration_date ?? null,
+      renewal_date: lead.renewal_date ?? meta?.renewal_date ?? null,
+      status: lead.policy_status ?? meta?.status ?? null,
+    };
+    const isInsurance = Boolean(
+      ins.line_of_business || ins.carrier || ins.expiration_date || ins.renewal_date || ins.status || meta
+    );
+    if (!isInsurance) continue;
 
     policiesCount += 1;
     totalPremium += Number(lead.value ?? 0) || 0;

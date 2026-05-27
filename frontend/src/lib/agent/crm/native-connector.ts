@@ -193,6 +193,7 @@ export class NativeSupabaseConnector implements CRMConnector {
         source: input.source,
         status: "open" as const,
         metadata: input.metadata as Json,
+        ...(input.insurance ?? {}),
       })
       .select("id")
       .single();
