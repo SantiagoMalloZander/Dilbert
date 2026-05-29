@@ -1,186 +1,99 @@
-# PROJECT_CONTEXT.md
+# Dilbert — Project Context
 
-## Product
-**Dilbert** is an AI sales agent that lives inside chat-based sales conversations and turns unstructured messaging activity into structured commercial intelligence.
+> Última actualización: 2026-05-27 — pivot a CRM inmobiliario.
 
-The current MVP is centered on **Telegram group chats** where a seller and a prospect interact while the bot listens silently, extracts relevant sales data, resolves ambiguities when needed, and syncs everything into a CRM-backed dashboard.
+## Qué es Dilbert hoy
+**Anti-data-entry CRM para inmobiliarias.** El motor del agente IA captura
+conversaciones (WhatsApp, Gmail, audios, reuniones) y las convierte en
+contactos, búsquedas y actividades dentro del CRM, sin que el vendedor cargue
+nada a mano.
 
-The strategic product direction is larger than the hackathon MVP: the long-term vision is a **conversational CRM layer** for chat-first sales teams in Latin America, especially teams that sell through WhatsApp and other messaging channels rather than through email-heavy workflows.
+- **ICP:** agencias y brokers inmobiliarios chicos/medianos en Argentina.
+- **Wedge:** no competimos con Tokko/Zonaprop (inventario / portales). Capturamos
+  la capa conversacional que vive en WhatsApp, audios y email, y la dejamos
+  estructurada en el CRM.
+- **Bot Meta Ads → vendedores:** próxima fase. Hoy el foco es el CRM 100%
+  pulido para que cualquier inmobiliaria pueda operar.
 
-## Core problem
-Traditional CRMs create friction because they force sales reps to interrupt live selling activity and manually enter data after conversations. That creates:
+## Stack
+- **Frontend / app activa:** `frontend/` (Next.js 16 + Tailwind + shadcn/ui en
+  Netlify). Workspace en `/app/*`.
+- **Backend:** API routes de Next + Supabase (Postgres con RLS) como source of
+  truth.
+- **Agente:** `frontend/src/lib/agent/` (orchestrator → identity-resolver →
+  data-extractor (GPT-4o-mini) → crm-writer → loop de revisión vía
+  `agent_questions`).
+- **Conectores CRM:** `frontend/src/lib/agent/crm/` con interfaz `CRMConnector`,
+  `NativeSupabaseConnector` (default) y `HubSpotConnector` (reference para
+  "bring your own CRM").
+- **Vertical:** perfil `real_estate` en el extractor + columnas first-class en
+  `leads` + zonas en `Configuración`.
 
-- low CRM adoption
-- incomplete or false records
-- lost commercial context
-- poor forecasting and weak visibility for managers
-- operational drag on the highest-leverage people in the company
+## Modelo de datos clave
+- `companies`, `users`, `authorized_emails`, `invite_links` — multi-tenant + auth.
+- `contacts` — la persona (comprador / vendedor / propietario / inquilino).
+- `leads` — una BÚSQUEDA o INTERÉS por una propiedad. Un contacto puede tener
+  varios leads (varias búsquedas). Trae columnas first-class de real estate:
+  `operation_type`, `client_role`, `property_type`, `zone`, `city`, `province`,
+  `budget_min/max`, `budget_currency`, `rooms` (ambientes), `bedrooms`
+  (dormitorios), `bathrooms`, `surface_total/covered`, `has_garage`, `urgency`,
+  `timeline`, `listing_ref`, `visit_status`, `financing`.
+- `pipelines` + `pipeline_stages` — Kanban configurable.
+- `activities` — timeline (email/whatsapp/llamada/reunión), con `external_id`
+  (idempotencia por canal) e índice único `(company_id, external_id)`.
+- `notes` — notas manuales/automáticas.
+- `agent_questions` — review queue (preguntas que el agente le hace al vendedor).
+- `contact_channel_links` — índice cross-canal (teléfono ↔ email ↔ JID).
+- `gmail_queue` — cola async (sync rápido sin IA → process con IA).
+- `property_zones` — zonas que cubre la inmobiliaria (Configuración).
+- `channel_credentials` — tokens de Gmail / Evolution (WhatsApp) / Fathom.
 
-Dilbert solves that by adapting the CRM to the seller's real workflow instead of forcing the seller to adapt to the CRM.
+## Pantallas del workspace (`/app/*`)
+- **CRM** (`/app/crm`): dashboard con KPIs + Kanban (`/app/crm/leads`) +
+  Contactos (`/app/crm/contacts`).
+- **Analytics** (`/app/crm/analytics`): KPIs, funnel por etapa, inteligencia
+  inmobiliaria (próximas visitas, leads urgentes, leads por operación / zona /
+  tipo de propiedad).
+- **Agente IA** (`/app/agente`): inbox de revisión + carga manual de audio.
+- **Integraciones** (`/app/integrations`): Gmail OAuth, WhatsApp (Evolution),
+  Fathom.
+- **Centro de Usuarios** (`/app/users`): owner agrega/revoca vendedores.
+- **Configuración** (`/app/settings`, owner): gestor de zonas (`property_zones`).
+- **Mi Perfil** (`/app/account`).
+- **Admin** (`/app/admin`, super admin): crear empresas, impersonar.
 
-## Core promise
-Dilbert removes manual CRM data entry by capturing what already happens in commercial conversations and transforming it into structured, usable CRM data in real time.
+## Canales conectados al agente
+| Canal | Entrada | Estado |
+|---|---|---|
+| Gmail | OAuth + cola + cron 10min | OK |
+| WhatsApp | webhook Evolution API | OK (auth débil — follow-up) |
+| Fathom (reuniones) | webhook → `runAgent` | OK |
+| Audio | upload + Whisper | OK |
 
-The promise is:
+## Configuración por tenant
+- `companies.settings.vertical = "real_estate"` (default tras el pivot).
+- `companies.settings.crm_connector = "hubspot"` opcional → activa el
+  HubSpotConnector (mirror best-effort).
+- `companies.settings.agent_context` — contexto libre que el owner inyecta al
+  prompt del agente.
 
-- less admin work for sellers
-- better CRM adoption
-- cleaner and fresher data
-- better visibility for managers
-- a CRM experience designed for chat-native commerce
+## Lo que NO está en alcance (por ahora)
+- Inventario de propiedades / MLS / publicación en portales (lo cubren Tokko,
+  Zonaprop, Argenprop).
+- Bot de WhatsApp para recibir y distribuir leads de Meta Ads (próxima fase —
+  no se está construyendo todavía).
+- Sincronización bidireccional con CRMs externos.
+- Outbound automation, telefonía integrada, analytics pesados.
 
-## Hackathon framing
-For hackITBA 2026, Dilbert is positioned as an **AI + automation** product. The MVP demonstrates a full end-to-end flow:
-
-1. a seller and prospect chat in Telegram
-2. the bot reads and buffers messages
-3. an LLM extracts structured sales information
-4. the bot asks clarifying questions if critical data is ambiguous
-5. leads and interactions are stored in Supabase
-6. a live dashboard updates in real time for the manager
-
-The repo and README show this clearly as the primary product narrative for the MVP.
-
-## Current MVP scope
-The codebase currently reflects a working or near-working hackathon MVP with these major parts:
-
-### 1. Bot layer
-Python bot using `python-telegram-bot`.
-
-Responsibilities:
-- receive messages from Telegram chats
-- accumulate conversation context in buffers
-- trigger analysis after inactivity, message count, or manual command
-- send transcript/context to the extractor
-- ask follow-up questions when ambiguities are detected
-- persist extracted data into Supabase
-
-### 2. Extraction layer
-LLM-based extraction using GPT-4o in structured JSON mode.
-
-Extracts fields such as:
-- client name
-- client company
-- product interest
-- estimated amount
-- currency
-- status
-- sentiment
-- next steps
-- summary
-- ambiguities
-- returning client signal
-
-### 3. Data layer
-Supabase/PostgreSQL stores the commercial records.
-
-Current core tables:
-- `companies`
-- `sellers`
-- `leads`
-- `interactions`
-
-The migrations also show:
-- seed demo data
-- realtime enabled for `leads` and `interactions`
-- source metadata fields on interactions
-
-### 4. Frontend/dashboard layer
-Next.js dashboard for managers.
-
-The current product UI direction in the repo is a **manager-facing operational dashboard**, not a marketing site. It includes:
-- lead views
-- analytics views
-- seller performance signals
-- revenue/pipeline intelligence
-- detail pages for individual records
-
-### 5. Analytics module
-The repo also includes a more advanced analytics layer (`DILBOT_ANALYTICS.md`) that interprets CRM data to generate customer-level priority signals and 30/90-day commercial predictions.
-
-This module is useful because it expands Dilbert beyond passive data capture and toward decision support.
-
-## Product roles
-Across the broader project materials, Dilbert has two main roles:
-
-### Manager
-The manager is the buyer/user with visibility needs.
-
-Expected responsibilities and value:
-- see live pipeline and team activity
-- track seller performance
-- identify stalled or high-value leads
-- choose between using Dilbert's CRM or integrating with an existing CRM
-- configure channels, team members, and possibly inventory/product setup
-
-### Seller / employee
-The seller is the workflow user whose friction Dilbert removes.
-
-Expected value:
-- avoid manual data entry
-- stay inside chat instead of switching tools
-- clarify missing information only when necessary
-- get automatic updates to CRM records without extra admin work
-
-## Product positioning
-Dilbert should be understood as **an AI agent first, CRM second**.
-
-That distinction matters. The core innovation is not "another CRM dashboard." The core innovation is the intelligence layer that:
-- lives in chat
-- observes commercial conversations
-- structures data automatically
-- bridges informal selling behavior and formal pipeline management
-
-This is especially strong for Latin American SMBs and mid-market teams where messaging channels dominate real commercial activity.
-
-## Geographic and behavioral context
-The project materials strongly frame Dilbert around Latin America and chat-first selling behavior.
-
-Key assumptions:
-- WhatsApp and messaging are the operational center of sales in LatAm
-- many businesses still manage sales with fragmented systems, spreadsheets, or weak CRM usage
-- traditional enterprise CRM flows are poorly adapted to chat-native teams
-- an invisible or low-friction AI layer is more likely to be adopted than a heavy software process change
-
-The MVP uses Telegram for speed and hackathon practicality, but the broader commercial narrative points toward multi-channel expansion, especially WhatsApp.
-
-## Existing repo assets that should remain in the active workspace
-These are useful and current:
-
-- `README.md` — strong MVP summary and setup path
-- `DILBOT_ANALYTICS.md` — useful product/analytics context
-- `bot/` — active bot implementation
-- `frontend/` — active dashboard implementation
-- `supabase/` — schema and seed data
-- `docker-compose.yml` — valuable for local execution/demo readiness
-- `.env.example` — safe template for environment variables
-
-## Things that should not drive the active workspace context
-These should be ignored, archived, or treated as secondary:
-
-- root `CLAUDE.md` — explicitly excluded
-- `frontend/CLAUDE.md` — likely also excluded from active shared context unless manually rewritten later
-- `frontend/README.md` — default Next.js boilerplate, low value for project reasoning
-- any old prompts or instructions that describe previous names, previous IA prompts, or stale UI directions
-
-## Current technical stack
-- **Bot:** Python 3.11 + `python-telegram-bot`
-- **LLM:** OpenAI GPT-4o
-- **Database:** Supabase / PostgreSQL / Realtime
-- **Frontend:** Next.js 16 + Tailwind CSS + Shadcn/UI
-- **Deploy:** Vercel for frontend, Railway for bot, Supabase for DB
-- **Containerization:** Docker Compose available
-
-## What Dilbert is not
-To keep future work focused, Dilbert should not be framed as:
-- a generic chatbot
-- a generic sales dashboard with no workflow intelligence
-- a classical CRM replacement built around manual form entry
-- an email-first sales automation product
-
-## Recommended north star for future docs and design work
-Dilbert is best described as:
-
-> A conversational AI sales agent for chat-first teams that automatically converts live sales conversations into structured CRM intelligence and real-time management visibility.
-
-That should be the anchor sentence for future landing pages, pitches, design prompts, and workspace instructions.
+## Deuda conocida prioritaria
+- **Seguridad:** secrets que se vieron en chats antes (rotar antes del primer
+  cliente real); auth débil en webhook de WhatsApp; RLS no habilitada en todas
+  las tablas core.
+- **Lead form:** el alta manual de lead todavía no expone las columnas
+  inmobiliarias (queda como follow-up: que el vendedor pueda crear una búsqueda
+  a mano con todos los campos).
+- **Zonas en el extractor:** ya cargamos `property_zones`, falta usarlas para
+  validar la zona extraída y marcar como sospechosa una zona que no cubrimos.
+- **Capa de aprobación:** el review queue existe, pero no todo lo que escribe
+  el agente pasa por ahí — para el primer piloto inmobiliario serio conviene
+  forzar "review-everything" antes de auto-apply.

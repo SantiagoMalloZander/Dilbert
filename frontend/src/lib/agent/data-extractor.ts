@@ -87,49 +87,56 @@ export type DealStatus = "new" | "existing" | "unclear";
 export type ConfidenceLevel = "high" | "medium" | "low";
 
 /** Vertical-specific extraction profile. Selects the domain prompt + schema. */
-export type ExtractionProfile = "generic" | "insurance";
+export type ExtractionProfile = "generic" | "real_estate";
 
 /**
- * Insurance-specific structured data. Populated only by the "insurance" profile.
- * Stored in lead metadata.insurance; the premium also feeds deal_info.value.
+ * Real-estate-specific structured data. Populated only by the "real_estate" profile.
+ * The budget feeds deal_info.value/currency; the full object lands on first-class
+ * lead columns via the crm-writer.
  */
-export interface InsuranceInfo {
-  /** Ramo: auto, hogar, vida, salud, comercial, art, caucion, responsabilidad_civil, otros */
-  line_of_business: string | null;
-  /** Aseguradora / compañía que emite la póliza (no el broker) */
-  carrier: string | null;
-  /** Número de póliza si se menciona */
-  policy_number: string | null;
-  /** Prima (monto), tal como se menciona, sin convertir */
-  premium: number | null;
-  /** Moneda de la prima (ISO): ARS, USD… */
-  premium_currency: string | null;
-  /** Frecuencia de pago: mensual, trimestral, semestral, anual, unico */
-  premium_frequency: string | null;
-  /** Suma asegurada / capital asegurado */
-  coverage_amount: number | null;
-  coverage_currency: string | null;
-  /** Franquicia / deducible */
-  deductible: number | null;
-  /** Vigencia desde (YYYY-MM-DD) */
-  effective_date: string | null;
-  /** Vencimiento de la póliza (YYYY-MM-DD) */
-  expiration_date: string | null;
-  /** Fecha de renovación (YYYY-MM-DD) */
-  renewal_date: string | null;
-  /** Bien asegurado: patente/modelo de auto, dirección del inmueble, etc. */
-  insured_item: string | null;
-  /** Beneficiario (seguros de vida) */
-  beneficiary: string | null;
-  /** Estado: cotizacion, emitida, renovacion, siniestro, baja */
-  status: string | null;
+export interface RealEstateInfo {
+  /** Tipo de operación: compra | venta | alquiler | tasacion */
+  operation_type: string | null;
+  /** Rol del cliente: buyer | seller | owner | renter | investor */
+  client_role: string | null;
+  /** Tipo de propiedad: depto | casa | ph | terreno | local | oficina | cochera | galpon | quinta */
+  property_type: string | null;
+  /** Zona/barrio mencionado */
+  zone: string | null;
+  city: string | null;
+  province: string | null;
+  /** Presupuesto: monto mínimo del rango */
+  budget_min: number | null;
+  /** Presupuesto: monto máximo del rango (o el monto único si no hay rango) */
+  budget_max: number | null;
+  budget_currency: string | null;
+  /** Ambientes (incluye living/comedor) */
+  rooms: number | null;
+  /** Dormitorios */
+  bedrooms: number | null;
+  bathrooms: number | null;
+  /** Superficie total en m² */
+  surface_total: number | null;
+  /** Superficie cubierta en m² */
+  surface_covered: number | null;
+  has_garage: boolean | null;
+  /** Urgencia: high | medium | low */
+  urgency: string | null;
+  /** Plazo o momento de compra: "este mes", "antes de fin de año"… */
+  timeline: string | null;
+  /** Referencia a un listing externo (url o id) */
+  listing_ref: string | null;
+  /** Estado de la visita: agendada | realizada | cancelada */
+  visit_status: string | null;
+  /** Forma de pago: contado | credito | mixto */
+  financing: string | null;
 }
 
 export interface ExtractedData {
   contact_info: ContactInfo;
   deal_info: DealInfo;
-  /** Insurance-specific fields — only populated by the "insurance" profile, else null. */
-  insurance: InsuranceInfo | null;
+  /** Real-estate fields — only populated by the "real_estate" profile, else null. */
+  real_estate: RealEstateInfo | null;
   /** Main topics discussed, e.g. ["pricing", "demo", "delivery timeline"] */
   topics: string[];
   sentiment: Sentiment;
@@ -163,7 +170,7 @@ function emptyResult(): ExtractedData {
       product_or_service: null, existing_deal_id: null,
       suggested_stage_keyword: null, mark_as_won: false, mark_as_lost: false,
     },
-    insurance: null,
+    real_estate: null,
     topics: [],
     sentiment: "neutral",
     action_items: [],
@@ -198,42 +205,53 @@ const SOURCE_HINTS: Record<DataSource, string> = {
     "Buscá señales de interés, productos discutidos, precios y próximos pasos.",
 };
 
-// ─── Insurance profile (vertical) ─────────────────────────────────────────────
+// ─── Real-estate profile (vertical) ───────────────────────────────────────────
 
-const INSURANCE_DOMAIN =
-  "DOMINIO: SEGUROS. Estás procesando interacciones de una agencia/broker de seguros. " +
-  "El 'contacto' es el asegurado o prospecto; el 'deal' es una cotización o póliza. " +
+const REAL_ESTATE_DOMAIN =
+  "DOMINIO: INMOBILIARIA. Estás procesando interacciones de una agencia inmobiliaria argentina. " +
+  "El 'contacto' es el cliente (comprador, vendedor, propietario, inquilino o inversor). " +
+  "El 'deal' es una BÚSQUEDA o un INTERÉS por una propiedad. " +
+  "Un mismo cliente puede tener varias búsquedas distintas (cada una es un deal aparte). " +
   "Términos clave (español rioplatense): " +
-  "ramo (tipo de seguro: auto, hogar, vida, salud, comercial, ART, caución, responsabilidad civil), " +
-  "aseguradora/compañía (quien emite la póliza, ej. Sancor, La Caja, Federación Patronal — NO el broker), " +
-  "prima (lo que paga el asegurado), suma asegurada/capital, franquicia/deducible, " +
-  "póliza y su número, vigencia (desde/hasta), vencimiento, renovación, siniestro, bien asegurado (patente, inmueble).";
+  "operación (compra, venta, alquiler, tasación), tipo de propiedad (depto, casa, PH, terreno, local, oficina, cochera, galpón, quinta), " +
+  "ambientes (incluye living/comedor) vs dormitorios (solo cuartos), m² totales vs cubiertos, expensas, " +
+  "barrio/zona, presupuesto (USD vs ARS — fijate qué moneda), urgencia, plazo, financiación (contado, crédito UVA, mixto), " +
+  "visita agendada/realizada, llaves, escritura, hipoteca.";
 
-const INSURANCE_RULES =
-  "\n- insurance.premium: la prima mencionada (sin convertir). insurance.premium_currency: su moneda ISO.\n" +
-  "- Para seguros, deal_info.value = la prima (insurance.premium) y deal_info.currency = insurance.premium_currency.\n" +
-  "- deal_info.title: armalo como \"Seguro {ramo}\" y agregá la aseguradora si se conoce (ej. \"Seguro Auto — Sancor\").\n" +
-  "- insurance.line_of_business: normalizá a uno de: auto, hogar, vida, salud, comercial, art, caucion, responsabilidad_civil, otros.\n" +
-  "- insurance.status: cotizacion (pide presupuesto), emitida (ya contratada), renovacion, siniestro (reclamo), baja (cancela). null si no se infiere.\n" +
-  "- Fechas de vigencia/vencimiento/renovación en YYYY-MM-DD. Si no están, null.";
+const REAL_ESTATE_RULES =
+  "\n- real_estate.operation_type: compra | venta | alquiler | tasacion. compra/alquiler = cliente busca; venta/tasacion = cliente ofrece la propiedad.\n" +
+  "- real_estate.client_role: buyer (compra) | seller (vende propia) | owner (tiene + alquila) | renter (alquila) | investor.\n" +
+  "- real_estate.property_type: normalizá a uno de: depto | casa | ph | terreno | local | oficina | cochera | galpon | quinta.\n" +
+  "- Para inmobiliaria, deal_info.value = real_estate.budget_max (el techo del presupuesto), deal_info.currency = real_estate.budget_currency.\n" +
+  "- deal_info.title: armalo como \"{Operación} {Tipo} {Zona}\" (ej. \"Compra Depto Palermo\"). Si falta info, lo que tengas.\n" +
+  "- Moneda en AR: \"dólares\", \"verdes\", \"USD\", \"U$D\", \"u$s\" → \"USD\". \"pesos\", \"$ AR\" o solo \"$\" → \"ARS\". Default si hay monto sin aclarar: ARS.\n" +
+  "- rooms = ambientes (incluye living). Si dicen \"3 ambientes\", rooms=3. bedrooms = dormitorios solos.\n" +
+  "- urgency: \"high\" si dice \"urgente\", \"ya\", \"esta semana\"; \"low\" si \"sin apuro\", \"para más adelante\"; resto \"medium\".\n" +
+  "- visit_status: agendada (acordaron día), realizada (ya fueron), cancelada. null si no se menciona visita.\n" +
+  "- Si el cliente menciona varias búsquedas claramente distintas, marcá deal_is_new_or_existing=\"new\" para la NUEVA y dejá la otra a la siguiente extracción.";
 
-const INSURANCE_SCHEMA = `,
-  "insurance": {
-    "line_of_business": "auto" | "hogar" | "vida" | "salud" | "comercial" | "art" | "caucion" | "responsabilidad_civil" | "otros" | null,
-    "carrier": string | null,
-    "policy_number": string | null,
-    "premium": number | null,
-    "premium_currency": string | null,
-    "premium_frequency": "mensual" | "trimestral" | "semestral" | "anual" | "unico" | null,
-    "coverage_amount": number | null,
-    "coverage_currency": string | null,
-    "deductible": number | null,
-    "effective_date": string | null,
-    "expiration_date": string | null,
-    "renewal_date": string | null,
-    "insured_item": string | null,
-    "beneficiary": string | null,
-    "status": "cotizacion" | "emitida" | "renovacion" | "siniestro" | "baja" | null
+const REAL_ESTATE_SCHEMA = `,
+  "real_estate": {
+    "operation_type": "compra" | "venta" | "alquiler" | "tasacion" | null,
+    "client_role": "buyer" | "seller" | "owner" | "renter" | "investor" | null,
+    "property_type": "depto" | "casa" | "ph" | "terreno" | "local" | "oficina" | "cochera" | "galpon" | "quinta" | null,
+    "zone": string | null,
+    "city": string | null,
+    "province": string | null,
+    "budget_min": number | null,
+    "budget_max": number | null,
+    "budget_currency": "ARS" | "USD" | null,
+    "rooms": number | null,
+    "bedrooms": number | null,
+    "bathrooms": number | null,
+    "surface_total": number | null,
+    "surface_covered": number | null,
+    "has_garage": boolean | null,
+    "urgency": "high" | "medium" | "low" | null,
+    "timeline": string | null,
+    "listing_ref": string | null,
+    "visit_status": "agendada" | "realizada" | "cancelada" | null,
+    "financing": "contado" | "credito" | "mixto" | null
   }`;
 
 // ─── Main extractor ───────────────────────────────────────────────────────────
@@ -265,7 +283,7 @@ export async function extractStructuredData(
 
   const systemPrompt = `Sos un agente de CRM de precisión. Tu única función es extraer datos estructurados de interacciones comerciales para cargarlos en el CRM. No respondés, no opinás — solo extraés.
 
-${companyContext ? `CONTEXTO DEL NEGOCIO (leé esto primero — define qué interacciones son relevantes y cuáles ignorar):\n${companyContext}\n` : ""}${profile === "insurance" ? INSURANCE_DOMAIN + "\n\n" : ""}${SOURCE_HINTS[source]}
+${companyContext ? `CONTEXTO DEL NEGOCIO (leé esto primero — define qué interacciones son relevantes y cuáles ignorar):\n${companyContext}\n` : ""}${profile === "real_estate" ? REAL_ESTATE_DOMAIN + "\n\n" : ""}${SOURCE_HINTS[source]}
 
 ${vendorName ? `El vendedor se llama: ${vendorName}.` : ""}
 ${knownContactName ? `El contacto ya identificado es: ${knownContactName}.` : ""}
@@ -293,7 +311,7 @@ Reglas estrictas:
   Importante: solo avanzar stages, nunca retroceder. Si el deal ya está en "negociacion" y el email es genérico, poné null.
 - mark_as_won: true SOLO si el cliente confirma explícitamente la compra o cierre (firma, "acepto", "vamos", "trato hecho"). No true si solo "suena positivo".
 - mark_as_lost: true SOLO si el cliente rechaza o cancela explícitamente ("no gracias", "decidimos ir con otro", "cancelamos").
-- is_relevant_for_crm: CRÍTICO. Poné false si el email es: newsletter, notificación automática, alerta de servicio, email de plataforma (Twitch, GitHub, Render, Stripe, etc.), no-reply, email interno del equipo, confirmación de pago/envío, email de proveedor de servicios técnicos, o cualquier cosa que el contexto del negocio indique ignorar. Poné true SOLO si es una persona real con interés comercial real en los productos/servicios de la empresa.${profile === "insurance" ? INSURANCE_RULES : ""}
+- is_relevant_for_crm: CRÍTICO. Poné false si el email es: newsletter, notificación automática, alerta de servicio, email de plataforma (Twitch, GitHub, Render, Stripe, etc.), no-reply, email interno del equipo, confirmación de pago/envío, email de proveedor de servicios técnicos, o cualquier cosa que el contexto del negocio indique ignorar. Poné true SOLO si es una persona real con interés comercial real en los productos/servicios de la empresa.${profile === "real_estate" ? REAL_ESTATE_RULES : ""}
 
 Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
 {
@@ -331,7 +349,7 @@ Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
   "is_relevant_for_crm": boolean,
   "deal_is_new_or_existing": "new" | "existing" | "unclear",
   "confidence_level": "high" | "medium" | "low",
-  "crm_note": string${profile === "insurance" ? INSURANCE_SCHEMA : ""}
+  "crm_note": string${profile === "real_estate" ? REAL_ESTATE_SCHEMA : ""}
 }`;
 
   const userContent = [
@@ -374,9 +392,9 @@ Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
     // Sanitise — make sure required arrays exist
     parsed.topics = Array.isArray(parsed.topics) ? parsed.topics : [];
     parsed.action_items = Array.isArray(parsed.action_items) ? parsed.action_items : [];
-    // insurance present only for the insurance profile; default to null otherwise
-    parsed.insurance =
-      parsed.insurance && typeof parsed.insurance === "object" ? parsed.insurance : null;
+    // real_estate present only for the real-estate profile; default to null otherwise
+    parsed.real_estate =
+      parsed.real_estate && typeof parsed.real_estate === "object" ? parsed.real_estate : null;
 
     return parsed;
   } catch (err) {

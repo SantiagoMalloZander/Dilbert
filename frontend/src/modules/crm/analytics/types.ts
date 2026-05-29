@@ -1,43 +1,51 @@
-export type RenewalItem = {
+export type OperationBreakdown = {
+  operation: string;
+  count: number;
+  totalBudget: number;
+};
+
+export type ZoneBreakdown = {
+  zone: string;
+  count: number;
+};
+
+export type PropertyTypeBreakdown = {
+  propertyType: string;
+  count: number;
+};
+
+export type UpcomingVisit = {
   leadId: string;
   title: string;
   contactName: string | null;
-  ramo: string | null;
-  carrier: string | null;
-  premium: number | null;
+  zone: string | null;
+  propertyType: string | null;
+  expectedCloseDate: string | null;
+};
+
+export type HotLead = {
+  leadId: string;
+  title: string;
+  contactName: string | null;
+  zone: string | null;
+  operation: string | null;
+  budgetMax: number | null;
   currency: string;
-  /** The expiration or renewal date (YYYY-MM-DD) */
-  date: string;
-  kind: "vencimiento" | "renovacion";
-  daysUntil: number;
+  daysOld: number;
 };
 
-export type RamoBreakdown = {
-  ramo: string;
-  count: number;
-  totalPremium: number;
-};
-
-export type CarrierBreakdown = {
-  carrier: string;
-  count: number;
-};
-
-export type StatusBreakdown = {
-  status: string;
-  count: number;
-};
-
-export type InsuranceAnalytics = {
-  /** Whether this tenant has any insurance-tagged leads at all. */
-  hasInsuranceData: boolean;
-  /** Leads carrying insurance metadata (policies/quotes). */
-  policiesCount: number;
-  /** Sum of premiums (lead.value) across insurance leads. */
-  totalPremium: number;
-  byStatus: StatusBreakdown[];
-  /** Upcoming renewals/expirations (next 60 days, plus recently overdue). */
-  renewals: RenewalItem[];
-  byRamo: RamoBreakdown[];
-  byCarrier: CarrierBreakdown[];
+export type RealEstateAnalytics = {
+  /** Whether this tenant has any real-estate-tagged leads at all. */
+  hasRealEstateData: boolean;
+  /** Leads carrying any real-estate attributes (searches/listings). */
+  searchesCount: number;
+  /** Active open searches. */
+  activeSearches: number;
+  /** Pipeline budget value (sum of budget_max for open searches). */
+  pipelineBudget: number;
+  byOperation: OperationBreakdown[];
+  byZone: ZoneBreakdown[];
+  byPropertyType: PropertyTypeBreakdown[];
+  upcomingVisits: UpcomingVisit[];
+  hotLeads: HotLead[];
 };

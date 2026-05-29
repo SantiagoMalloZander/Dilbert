@@ -34,15 +34,14 @@ export type Database = {
   }
   public: {
     Tables: {
-      insurance_providers: {
+      property_zones: {
         Row: {
           id: string
           company_id: string
           name: string
-          categories: string[]
-          logo_url: string | null
+          city: string | null
+          province: string | null
           notes: string | null
-          is_active: boolean
           created_at: string
           updated_at: string
         }
@@ -50,10 +49,9 @@ export type Database = {
           id?: string
           company_id: string
           name: string
-          categories?: string[]
-          logo_url?: string | null
+          city?: string | null
+          province?: string | null
           notes?: string | null
-          is_active?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -61,16 +59,15 @@ export type Database = {
           id?: string
           company_id?: string
           name?: string
-          categories?: string[]
-          logo_url?: string | null
+          city?: string | null
+          province?: string | null
           notes?: string | null
-          is_active?: boolean
           created_at?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "insurance_providers_company_id_fkey"
+            foreignKeyName: "property_zones_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -630,19 +627,26 @@ export type Database = {
           title: string
           updated_at: string
           value: number | null
-          line_of_business: string | null
-          carrier: string | null
-          policy_number: string | null
-          premium_frequency: string | null
-          coverage_amount: number | null
-          coverage_currency: string | null
-          deductible: number | null
-          effective_date: string | null
-          expiration_date: string | null
-          renewal_date: string | null
-          insured_item: string | null
-          beneficiary: string | null
-          policy_status: string | null
+          operation_type: string | null
+          client_role: string | null
+          property_type: string | null
+          zone: string | null
+          city: string | null
+          province: string | null
+          budget_min: number | null
+          budget_max: number | null
+          budget_currency: string | null
+          rooms: number | null
+          bedrooms: number | null
+          bathrooms: number | null
+          surface_total: number | null
+          surface_covered: number | null
+          has_garage: boolean | null
+          urgency: string | null
+          timeline: string | null
+          listing_ref: string | null
+          visit_status: string | null
+          financing: string | null
         }
         Insert: {
           assigned_to: string
@@ -663,19 +667,26 @@ export type Database = {
           title: string
           updated_at?: string
           value?: number | null
-          line_of_business?: string | null
-          carrier?: string | null
-          policy_number?: string | null
-          premium_frequency?: string | null
-          coverage_amount?: number | null
-          coverage_currency?: string | null
-          deductible?: number | null
-          effective_date?: string | null
-          expiration_date?: string | null
-          renewal_date?: string | null
-          insured_item?: string | null
-          beneficiary?: string | null
-          policy_status?: string | null
+          operation_type?: string | null
+          client_role?: string | null
+          property_type?: string | null
+          zone?: string | null
+          city?: string | null
+          province?: string | null
+          budget_min?: number | null
+          budget_max?: number | null
+          budget_currency?: string | null
+          rooms?: number | null
+          bedrooms?: number | null
+          bathrooms?: number | null
+          surface_total?: number | null
+          surface_covered?: number | null
+          has_garage?: boolean | null
+          urgency?: string | null
+          timeline?: string | null
+          listing_ref?: string | null
+          visit_status?: string | null
+          financing?: string | null
         }
         Update: {
           assigned_to?: string
@@ -696,19 +707,26 @@ export type Database = {
           title?: string
           updated_at?: string
           value?: number | null
-          line_of_business?: string | null
-          carrier?: string | null
-          policy_number?: string | null
-          premium_frequency?: string | null
-          coverage_amount?: number | null
-          coverage_currency?: string | null
-          deductible?: number | null
-          effective_date?: string | null
-          expiration_date?: string | null
-          renewal_date?: string | null
-          insured_item?: string | null
-          beneficiary?: string | null
-          policy_status?: string | null
+          operation_type?: string | null
+          client_role?: string | null
+          property_type?: string | null
+          zone?: string | null
+          city?: string | null
+          province?: string | null
+          budget_min?: number | null
+          budget_max?: number | null
+          budget_currency?: string | null
+          rooms?: number | null
+          bedrooms?: number | null
+          bathrooms?: number | null
+          surface_total?: number | null
+          surface_covered?: number | null
+          has_garage?: boolean | null
+          urgency?: string | null
+          timeline?: string | null
+          listing_ref?: string | null
+          visit_status?: string | null
+          financing?: string | null
         }
         Relationships: [
           {

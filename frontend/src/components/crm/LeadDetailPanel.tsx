@@ -10,10 +10,10 @@ import {
   ExternalLink,
   FilePenLine,
   Loader2,
+  Home,
   MessageSquarePlus,
   Milestone,
   NotebookPen,
-  ShieldCheck,
   Trash2,
   X,
 } from "lucide-react";
@@ -82,70 +82,84 @@ function formatCurrency(value: number | null, currency: string | null) {
   }).format(value);
 }
 
-// ─── Insurance vertical: render policy data stored in lead metadata ───────────
+// ─── Real-estate vertical: render search data stored in lead metadata ─────────
 
-type InsuranceView = {
-  line_of_business?: string | null;
-  carrier?: string | null;
-  policy_number?: string | null;
-  premium?: number | null;
-  premium_currency?: string | null;
-  premium_frequency?: string | null;
-  coverage_amount?: number | null;
-  coverage_currency?: string | null;
-  deductible?: number | null;
-  effective_date?: string | null;
-  expiration_date?: string | null;
-  renewal_date?: string | null;
-  insured_item?: string | null;
-  beneficiary?: string | null;
-  status?: string | null;
-};
-
-const RAMO_LABELS: Record<string, string> = {
-  auto: "Automotor", hogar: "Hogar", vida: "Vida", salud: "Salud",
-  comercial: "Comercial", art: "ART", caucion: "Caución",
-  responsabilidad_civil: "Responsabilidad Civil", otros: "Otros",
-};
-const FREQ_LABELS: Record<string, string> = {
-  mensual: "Mensual", trimestral: "Trimestral", semestral: "Semestral",
-  anual: "Anual", unico: "Pago único",
-};
-const POLICY_STATUS_LABELS: Record<string, string> = {
-  cotizacion: "Cotización", emitida: "Emitida", renovacion: "Renovación",
-  siniestro: "Siniestro", baja: "Baja",
+type RealEstateView = {
+  operation_type?: string | null;
+  client_role?: string | null;
+  property_type?: string | null;
+  zone?: string | null;
+  city?: string | null;
+  province?: string | null;
+  budget_min?: number | null;
+  budget_max?: number | null;
+  budget_currency?: string | null;
+  rooms?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  surface_total?: number | null;
+  surface_covered?: number | null;
+  has_garage?: boolean | null;
+  urgency?: string | null;
+  timeline?: string | null;
+  listing_ref?: string | null;
+  visit_status?: string | null;
+  financing?: string | null;
 };
 
-function getInsurance(metadata: unknown): InsuranceView | null {
+const OPERATION_LABELS: Record<string, string> = {
+  compra: "Compra", venta: "Venta", alquiler: "Alquiler", tasacion: "Tasación",
+};
+const ROLE_LABELS: Record<string, string> = {
+  buyer: "Comprador", seller: "Vendedor", owner: "Propietario", renter: "Inquilino", investor: "Inversor",
+};
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  depto: "Departamento", casa: "Casa", ph: "PH", terreno: "Terreno",
+  local: "Local", oficina: "Oficina", cochera: "Cochera", galpon: "Galpón", quinta: "Quinta",
+};
+const URGENCY_LABELS: Record<string, string> = { high: "Alta", medium: "Media", low: "Baja" };
+const VISIT_LABELS: Record<string, string> = {
+  agendada: "Visita agendada", realizada: "Visita realizada", cancelada: "Visita cancelada",
+};
+const FINANCING_LABELS: Record<string, string> = { contado: "Contado", credito: "Crédito", mixto: "Mixto" };
+
+function getRealEstate(metadata: unknown): RealEstateView | null {
   if (!metadata || typeof metadata !== "object") return null;
-  const ins = (metadata as Record<string, unknown>).insurance;
-  if (!ins || typeof ins !== "object") return null;
-  return ins as InsuranceView;
+  const re = (metadata as Record<string, unknown>).real_estate;
+  if (!re || typeof re !== "object") return null;
+  return re as RealEstateView;
+}
+
+function formatBudget(min: number | null | undefined, max: number | null | undefined, currency: string | null | undefined): string | null {
+  if (min == null && max == null) return null;
+  if (min != null && max != null && min !== max) {
+    return `${formatCurrency(min, currency ?? null)} – ${formatCurrency(max, currency ?? null)}`;
+  }
+  return formatCurrency((max ?? min) ?? null, currency ?? null);
 }
 
 /** Only the populated fields, formatted for display. */
-function insuranceFields(ins: InsuranceView): Array<{ label: string; value: string }> {
+function realEstateFields(re: RealEstateView): Array<{ label: string; value: string }> {
   const out: Array<{ label: string; value: string }> = [];
   const push = (label: string, value: string | null | undefined) => {
     if (value != null && value !== "") out.push({ label, value });
   };
-  push("Ramo", ins.line_of_business ? RAMO_LABELS[ins.line_of_business] ?? ins.line_of_business : null);
-  push("Aseguradora", ins.carrier);
-  if (ins.premium != null) {
-    const freq = ins.premium_frequency ? ` · ${FREQ_LABELS[ins.premium_frequency] ?? ins.premium_frequency}` : "";
-    push("Prima", formatCurrency(ins.premium, ins.premium_currency ?? null) + freq);
-  }
-  if (ins.coverage_amount != null)
-    push("Suma asegurada", formatCurrency(ins.coverage_amount, ins.coverage_currency ?? ins.premium_currency ?? null));
-  if (ins.deductible != null)
-    push("Franquicia", formatCurrency(ins.deductible, ins.premium_currency ?? null));
-  push("Vencimiento", ins.expiration_date ? formatDate(ins.expiration_date) : null);
-  push("Vigencia desde", ins.effective_date ? formatDate(ins.effective_date) : null);
-  push("Renovación", ins.renewal_date ? formatDate(ins.renewal_date) : null);
-  push("N° de póliza", ins.policy_number);
-  push("Bien asegurado", ins.insured_item);
-  push("Beneficiario", ins.beneficiary);
-  push("Estado", ins.status ? POLICY_STATUS_LABELS[ins.status] ?? ins.status : null);
+  push("Operación", re.operation_type ? OPERATION_LABELS[re.operation_type] ?? re.operation_type : null);
+  push("Rol del cliente", re.client_role ? ROLE_LABELS[re.client_role] ?? re.client_role : null);
+  push("Tipo de propiedad", re.property_type ? PROPERTY_TYPE_LABELS[re.property_type] ?? re.property_type : null);
+  push("Zona", [re.zone, re.city, re.province].filter(Boolean).join(", ") || null);
+  push("Presupuesto", formatBudget(re.budget_min, re.budget_max, re.budget_currency));
+  if (re.rooms != null) push("Ambientes", String(re.rooms));
+  if (re.bedrooms != null) push("Dormitorios", String(re.bedrooms));
+  if (re.bathrooms != null) push("Baños", String(re.bathrooms));
+  if (re.surface_total != null) push("Sup. total", `${re.surface_total} m²`);
+  if (re.surface_covered != null) push("Sup. cubierta", `${re.surface_covered} m²`);
+  if (re.has_garage != null) push("Cochera", re.has_garage ? "Sí" : "No");
+  push("Urgencia", re.urgency ? URGENCY_LABELS[re.urgency] ?? re.urgency : null);
+  push("Plazo", re.timeline);
+  push("Visita", re.visit_status ? VISIT_LABELS[re.visit_status] ?? re.visit_status : null);
+  push("Financiación", re.financing ? FINANCING_LABELS[re.financing] ?? re.financing : null);
+  push("Referencia", re.listing_ref);
   return out;
 }
 
@@ -201,7 +215,7 @@ export function LeadDetailPanel({
     return null;
   }
 
-  const insurance = getInsurance(lead.metadata);
+  const realEstate = getRealEstate(lead.metadata);
 
   const closePanel = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -432,14 +446,14 @@ export function LeadDetailPanel({
             </div>
           </section>
 
-          {insurance && insuranceFields(insurance).length > 0 ? (
+          {realEstate && realEstateFields(realEstate).length > 0 ? (
             <section className="space-y-3">
               <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Datos de la póliza
+                <Home className="h-3.5 w-3.5" />
+                Datos de la búsqueda
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                {insuranceFields(insurance).map((field) => (
+                {realEstateFields(realEstate).map((field) => (
                   <div
                     key={field.label}
                     className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4"

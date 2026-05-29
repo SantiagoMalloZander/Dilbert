@@ -43,7 +43,8 @@ async function getCompanyConfig(companyId: string): Promise<CompanyConfig> {
   const vertical = settings.vertical ?? settings.extraction_profile;
   return {
     agentContext: (settings.agent_context as string) || undefined,
-    profile: vertical === "insurance" ? "insurance" : "generic",
+    // Real-estate is the default vertical. Generic is opt-out for non-real-estate tenants.
+    profile: vertical === "generic" ? "generic" : "real_estate",
   };
 }
 

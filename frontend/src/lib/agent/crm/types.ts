@@ -94,21 +94,28 @@ export interface LeadStageInfo {
   position: number;
 }
 
-/** Insurance attributes promoted to first-class lead columns (insurance vertical). */
-export interface InsuranceFields {
-  line_of_business: string | null;
-  carrier: string | null;
-  policy_number: string | null;
-  premium_frequency: string | null;
-  coverage_amount: number | null;
-  coverage_currency: string | null;
-  deductible: number | null;
-  effective_date: string | null;
-  expiration_date: string | null;
-  renewal_date: string | null;
-  insured_item: string | null;
-  beneficiary: string | null;
-  policy_status: string | null;
+/** Real-estate attributes promoted to first-class lead columns. */
+export interface RealEstateFields {
+  operation_type: string | null;   // compra | venta | alquiler | tasacion
+  client_role: string | null;      // buyer | seller | owner | renter | investor
+  property_type: string | null;    // depto | casa | ph | terreno | local | oficina | cochera | galpon | quinta
+  zone: string | null;
+  city: string | null;
+  province: string | null;
+  budget_min: number | null;
+  budget_max: number | null;
+  budget_currency: string | null;
+  rooms: number | null;            // ambientes
+  bedrooms: number | null;         // dormitorios
+  bathrooms: number | null;
+  surface_total: number | null;
+  surface_covered: number | null;
+  has_garage: boolean | null;
+  urgency: string | null;          // high | medium | low
+  timeline: string | null;
+  listing_ref: string | null;
+  visit_status: string | null;     // agendada | realizada | cancelada
+  financing: string | null;        // contado | credito | mixto
 }
 
 export interface NewDealInput {
@@ -124,8 +131,8 @@ export interface NewDealInput {
   expectedCloseDate: string | null;
   source: CrmSource;
   metadata: Record<string, unknown>;
-  /** Insurance-vertical fields (null for generic tenants). */
-  insurance?: InsuranceFields | null;
+  /** Real-estate fields (null for generic tenants). */
+  real_estate?: RealEstateFields | null;
 }
 
 /** Canonical, destination-neutral deal status vocabulary. */

@@ -3,57 +3,37 @@ import "server-only";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr";
 import { requireAuth } from "@/lib/workspace-auth";
 import type {
-  InsuranceAnalytics,
-  RenewalItem,
-  RamoBreakdown,
-  CarrierBreakdown,
-  StatusBreakdown,
+  RealEstateAnalytics,
+  OperationBreakdown,
+  ZoneBreakdown,
+  PropertyTypeBreakdown,
+  UpcomingVisit,
+  HotLead,
 } from "@/modules/crm/analytics/types";
 
-interface InsuranceMeta {
-  line_of_business?: string | null;
-  carrier?: string | null;
-  premium?: number | null;
-  premium_currency?: string | null;
-  expiration_date?: string | null;
-  renewal_date?: string | null;
-  status?: string | null;
-}
-
-function readInsurance(metadata: unknown): InsuranceMeta | null {
-  if (!metadata || typeof metadata !== "object") return null;
-  const ins = (metadata as Record<string, unknown>).insurance;
-  if (!ins || typeof ins !== "object") return null;
-  return ins as InsuranceMeta;
-}
-
-function daysFromToday(date: string): number {
-  const target = new Date(`${date}T00:00:00.000Z`).getTime();
-  if (Number.isNaN(target)) return NaN;
-  const today = new Date();
-  const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
-  return Math.ceil((target - todayUtc) / 86_400_000);
+function daysSince(dateStr: string): number {
+  const target = new Date(dateStr).getTime();
+  if (Number.isNaN(target)) return 0;
+  return Math.floor((Date.now() - target) / 86_400_000);
 }
 
 /**
- * Insurance intelligence for the analytics page. Reads each lead's
- * metadata.insurance (written by the insurance extraction profile) and computes
- * upcoming renewals/expirations and book-of-business breakdowns. Company-scoped.
+ * Real-estate intelligence for the analytics page. Reads each lead's structured
+ * real-estate columns and computes pipeline by operation/zone/type, upcoming
+ * visits and hot leads (urgent, recently opened). Company-scoped.
  */
-export async function getInsuranceAnalytics(): Promise<InsuranceAnalytics> {
+export async function getRealEstateAnalytics(): Promise<RealEstateAnalytics> {
   const { company_id } = await requireAuth();
   const supabase = await createServerSupabaseClient();
 
   const { data: leads } = await supabase
     .from("leads")
-    .select(
-      "id, title, value, currency, status, contact_id, line_of_business, carrier, expiration_date, renewal_date, policy_status, metadata"
-    )
+    .select("id, title, status, currency, value, contact_id, created_at, expected_close_date, operation_type, property_type, zone, city, budget_min, budget_max, budget_currency, urgency, visit_status")
     .eq("company_id", company_id);
 
   const rows = leads ?? [];
 
-  // Resolve contact names for the renewal list.
+  // Resolve contact names for the visit/hot-leads lists.
   const contactIds = [...new Set(rows.map((r) => r.contact_id).filter(Boolean))] as string[];
   const contactName = new Map<string, string>();
   if (contactIds.length) {
@@ -66,82 +46,89 @@ export async function getInsuranceAnalytics(): Promise<InsuranceAnalytics> {
     }
   }
 
-  const renewals: RenewalItem[] = [];
-  const ramoMap = new Map<string, { count: number; totalPremium: number }>();
-  const carrierMap = new Map<string, number>();
-  const statusMap = new Map<string, number>();
-  let policiesCount = 0;
-  let totalPremium = 0;
+  const opMap = new Map<string, { count: number; totalBudget: number }>();
+  const zoneMap = new Map<string, number>();
+  const typeMap = new Map<string, number>();
+  const upcomingVisits: UpcomingVisit[] = [];
+  const hotLeads: HotLead[] = [];
+
+  let searchesCount = 0;
+  let activeSearches = 0;
+  let pipelineBudget = 0;
 
   for (const lead of rows) {
-    // Prefer first-class columns, fall back to the legacy metadata.insurance blob.
-    const meta = readInsurance(lead.metadata);
-    const ins: InsuranceMeta = {
-      line_of_business: lead.line_of_business ?? meta?.line_of_business ?? null,
-      carrier: lead.carrier ?? meta?.carrier ?? null,
-      expiration_date: lead.expiration_date ?? meta?.expiration_date ?? null,
-      renewal_date: lead.renewal_date ?? meta?.renewal_date ?? null,
-      status: lead.policy_status ?? meta?.status ?? null,
-    };
-    const isInsurance = Boolean(
-      ins.line_of_business || ins.carrier || ins.expiration_date || ins.renewal_date || ins.status || meta
+    const isRealEstate = Boolean(
+      lead.operation_type || lead.property_type || lead.zone || lead.budget_max || lead.urgency || lead.visit_status
     );
-    if (!isInsurance) continue;
+    if (!isRealEstate) continue;
 
-    policiesCount += 1;
-    totalPremium += Number(lead.value ?? 0) || 0;
-
-    if (ins.line_of_business) {
-      const cur = ramoMap.get(ins.line_of_business) ?? { count: 0, totalPremium: 0 };
-      cur.count += 1;
-      cur.totalPremium += Number(lead.value ?? 0) || 0;
-      ramoMap.set(ins.line_of_business, cur);
+    searchesCount += 1;
+    const isOpen = lead.status === "open" || lead.status === "paused";
+    if (isOpen) {
+      activeSearches += 1;
+      pipelineBudget += Number(lead.budget_max ?? lead.value ?? 0) || 0;
     }
-    if (ins.carrier) carrierMap.set(ins.carrier, (carrierMap.get(ins.carrier) ?? 0) + 1);
-    if (ins.status) statusMap.set(ins.status, (statusMap.get(ins.status) ?? 0) + 1);
 
-    // Renewals/expirations: prefer the explicit renewal date, else expiration.
-    const dateStr = ins.renewal_date || ins.expiration_date;
-    if (dateStr) {
-      const d = daysFromToday(dateStr);
-      if (!Number.isNaN(d) && d <= 60 && d >= -30) {
-        renewals.push({
-          leadId: lead.id,
-          title: lead.title,
-          contactName: lead.contact_id ? contactName.get(lead.contact_id) ?? null : null,
-          ramo: ins.line_of_business ?? null,
-          carrier: ins.carrier ?? null,
-          premium: lead.value == null ? null : Number(lead.value),
-          currency: lead.currency || "ARS",
-          date: dateStr,
-          kind: ins.renewal_date ? "renovacion" : "vencimiento",
-          daysUntil: d,
-        });
-      }
+    if (lead.operation_type) {
+      const cur = opMap.get(lead.operation_type) ?? { count: 0, totalBudget: 0 };
+      cur.count += 1;
+      cur.totalBudget += Number(lead.budget_max ?? lead.value ?? 0) || 0;
+      opMap.set(lead.operation_type, cur);
+    }
+    if (lead.zone) zoneMap.set(lead.zone, (zoneMap.get(lead.zone) ?? 0) + 1);
+    if (lead.property_type) typeMap.set(lead.property_type, (typeMap.get(lead.property_type) ?? 0) + 1);
+
+    // Upcoming visits: scheduled but not yet realised.
+    if (lead.visit_status === "agendada" && isOpen) {
+      upcomingVisits.push({
+        leadId: lead.id,
+        title: lead.title,
+        contactName: lead.contact_id ? contactName.get(lead.contact_id) ?? null : null,
+        zone: lead.zone,
+        propertyType: lead.property_type,
+        expectedCloseDate: lead.expected_close_date,
+      });
+    }
+
+    // Hot leads: high urgency, open, with budget.
+    if (lead.urgency === "high" && isOpen) {
+      hotLeads.push({
+        leadId: lead.id,
+        title: lead.title,
+        contactName: lead.contact_id ? contactName.get(lead.contact_id) ?? null : null,
+        zone: lead.zone,
+        operation: lead.operation_type,
+        budgetMax: lead.budget_max ?? lead.value ?? null,
+        currency: lead.budget_currency || lead.currency || "ARS",
+        daysOld: daysSince(lead.created_at),
+      });
     }
   }
 
-  renewals.sort((a, b) => a.daysUntil - b.daysUntil);
-
-  const byRamo: RamoBreakdown[] = [...ramoMap.entries()]
-    .map(([ramo, v]) => ({ ramo, count: v.count, totalPremium: v.totalPremium }))
+  const byOperation: OperationBreakdown[] = [...opMap.entries()]
+    .map(([operation, v]) => ({ operation, count: v.count, totalBudget: v.totalBudget }))
     .sort((a, b) => b.count - a.count);
 
-  const byCarrier: CarrierBreakdown[] = [...carrierMap.entries()]
-    .map(([carrier, count]) => ({ carrier, count }))
+  const byZone: ZoneBreakdown[] = [...zoneMap.entries()]
+    .map(([zone, count]) => ({ zone, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  const byPropertyType: PropertyTypeBreakdown[] = [...typeMap.entries()]
+    .map(([propertyType, count]) => ({ propertyType, count }))
     .sort((a, b) => b.count - a.count);
 
-  const byStatus: StatusBreakdown[] = [...statusMap.entries()]
-    .map(([status, count]) => ({ status, count }))
-    .sort((a, b) => b.count - a.count);
+  hotLeads.sort((a, b) => a.daysOld - b.daysOld);
 
   return {
-    hasInsuranceData: policiesCount > 0,
-    policiesCount,
-    totalPremium,
-    byStatus,
-    renewals,
-    byRamo,
-    byCarrier,
+    hasRealEstateData: searchesCount > 0,
+    searchesCount,
+    activeSearches,
+    pipelineBudget,
+    byOperation,
+    byZone,
+    byPropertyType,
+    upcomingVisits,
+    hotLeads,
   };
 }

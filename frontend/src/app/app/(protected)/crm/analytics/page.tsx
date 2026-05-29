@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { ShieldCheck, CalendarClock, TrendingUp } from "lucide-react";
+import { Home, CalendarClock, Flame, TrendingUp } from "lucide-react";
 import {
   DashboardSectionSkeleton,
   KpiCardsSection,
@@ -9,17 +9,15 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireSession } from "@/lib/workspace-auth";
 import { getDashboardKpis, getLeadsByStageMetrics } from "@/modules/crm/leads/queries";
-import { getInsuranceAnalytics } from "@/modules/crm/analytics/queries";
-import type { InsuranceAnalytics } from "@/modules/crm/analytics/types";
+import { getRealEstateAnalytics } from "@/modules/crm/analytics/queries";
+import type { RealEstateAnalytics } from "@/modules/crm/analytics/types";
 
-const RAMO_LABELS: Record<string, string> = {
-  auto: "Automotor", hogar: "Hogar", vida: "Vida", salud: "Salud",
-  comercial: "Comercial", art: "ART", caucion: "Caución",
-  responsabilidad_civil: "Resp. Civil", otros: "Otros",
+const OPERATION_LABELS: Record<string, string> = {
+  compra: "Compra", venta: "Venta", alquiler: "Alquiler", tasacion: "Tasación",
 };
-const STATUS_LABELS: Record<string, string> = {
-  cotizacion: "Cotización", emitida: "Emitida", renovacion: "Renovación",
-  siniestro: "Siniestro", baja: "Baja",
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  depto: "Departamento", casa: "Casa", ph: "PH", terreno: "Terreno",
+  local: "Local", oficina: "Oficina", cochera: "Cochera", galpon: "Galpón", quinta: "Quinta",
 };
 
 function money(value: number | null, currency: string) {
@@ -45,33 +43,23 @@ async function StageBlock({ promise }: { promise: ReturnType<typeof getLeadsBySt
   return <LeadsByStageSection data={await promise} />;
 }
 
-function RenewalBadge({ days }: { days: number }) {
-  const tone =
-    days < 0
-      ? "border-red-400/30 bg-red-500/10 text-red-200"
-      : days <= 15
-      ? "border-amber-400/30 bg-amber-500/10 text-amber-200"
-      : "border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground";
-  const label = days < 0 ? `Vencido hace ${Math.abs(days)}d` : days === 0 ? "Hoy" : `En ${days}d`;
-  return <Badge className={tone}>{label}</Badge>;
-}
-
-async function InsuranceBlock({ promise }: { promise: Promise<InsuranceAnalytics> }) {
+async function RealEstateBlock({ promise }: { promise: Promise<RealEstateAnalytics> }) {
   const data = await promise;
 
-  if (!data.hasInsuranceData) {
+  if (!data.hasRealEstateData) {
     return (
       <Card className="bg-card/90">
         <CardContent className="pt-5">
           <div className="flex items-start gap-3">
             <div className="rounded-2xl bg-primary/10 p-3 text-primary">
-              <ShieldCheck className="h-5 w-5" />
+              <Home className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Inteligencia de seguros</h2>
+              <h2 className="text-lg font-semibold">Inteligencia inmobiliaria</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Todavía no hay pólizas cargadas. Cuando el agente procese cotizaciones o pólizas
-                (con el vertical de seguros activo), acá vas a ver renovaciones próximas y cartera por ramo.
+                Todavía no hay búsquedas cargadas con datos inmobiliarios. Cuando el agente procese
+                conversaciones (zonas, presupuestos, tipos de propiedad), acá vas a ver pipeline por
+                operación, zonas calientes, próximas visitas y leads urgentes.
               </p>
             </div>
           </div>
@@ -86,53 +74,54 @@ async function InsuranceBlock({ promise }: { promise: Promise<InsuranceAnalytics
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="bg-card/90">
           <CardContent className="pt-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Pólizas / cotizaciones</p>
-            <p className="mt-2 text-3xl font-semibold">{data.policiesCount}</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Búsquedas totales</p>
+            <p className="mt-2 text-3xl font-semibold">{data.searchesCount}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{data.activeSearches} activas</p>
           </CardContent>
         </Card>
         <Card className="bg-card/90">
           <CardContent className="pt-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Prima total (cartera)</p>
-            <p className="mt-2 text-3xl font-semibold">{money(data.totalPremium, "ARS")}</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Pipeline de presupuesto</p>
+            <p className="mt-2 text-3xl font-semibold">{money(data.pipelineBudget, "ARS")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Suma de techos de búsquedas abiertas</p>
           </CardContent>
         </Card>
         <Card className="bg-card/90">
           <CardContent className="pt-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Renovaciones próximas (60d)</p>
-            <p className="mt-2 text-3xl font-semibold">{data.renewals.length}</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Leads urgentes</p>
+            <p className="mt-2 text-3xl font-semibold">{data.hotLeads.length}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{data.upcomingVisits.length} visitas agendadas</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Renewals */}
+      {/* Upcoming visits */}
       <Card className="bg-card/90">
         <CardContent className="pt-5">
           <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
             <CalendarClock className="h-4 w-4 text-primary" />
-            Renovaciones y vencimientos próximos
+            Próximas visitas
           </div>
-          {data.renewals.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sin vencimientos en los próximos 60 días.</p>
+          {data.upcomingVisits.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No hay visitas agendadas todavía.</p>
           ) : (
             <div className="space-y-2">
-              {data.renewals.map((r) => (
+              {data.upcomingVisits.map((v) => (
                 <div
-                  key={r.leadId}
+                  key={v.leadId}
                   className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-3"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-medium">{r.title}</p>
+                    <p className="truncate font-medium">{v.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {[r.contactName, r.ramo ? RAMO_LABELS[r.ramo] ?? r.ramo : null, r.carrier]
+                      {[v.contactName, v.propertyType ? PROPERTY_TYPE_LABELS[v.propertyType] ?? v.propertyType : null, v.zone]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <span className="text-muted-foreground">{formatDate(r.date)}</span>
-                    <span className="font-medium">{money(r.premium, r.currency)}</span>
-                    <RenewalBadge days={r.daysUntil} />
-                  </div>
+                  {v.expectedCloseDate ? (
+                    <span className="text-sm text-muted-foreground">{formatDate(v.expectedCloseDate)}</span>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -140,17 +129,52 @@ async function InsuranceBlock({ promise }: { promise: Promise<InsuranceAnalytics
         </CardContent>
       </Card>
 
-      {/* Book of business */}
-      <div className="grid gap-6 xl:grid-cols-2">
+      {/* Hot leads (urgent) */}
+      {data.hotLeads.length > 0 ? (
         <Card className="bg-card/90">
           <CardContent className="pt-5">
-            <div className="mb-4 text-sm font-semibold">Cartera por ramo</div>
+            <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
+              <Flame className="h-4 w-4 text-amber-500" />
+              Leads urgentes
+            </div>
             <div className="space-y-2">
-              {data.byRamo.map((r) => (
-                <div key={r.ramo} className="flex items-center justify-between text-sm">
-                  <span>{RAMO_LABELS[r.ramo] ?? r.ramo}</span>
+              {data.hotLeads.map((h) => (
+                <div
+                  key={h.leadId}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-400/40 bg-amber-500/10 p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{h.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {[h.contactName, h.operation ? OPERATION_LABELS[h.operation] ?? h.operation : null, h.zone]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="font-medium">{money(h.budgetMax, h.currency)}</span>
+                    <Badge className="border-amber-400/40 bg-amber-500/15 text-amber-700">
+                      {h.daysOld === 0 ? "Hoy" : `${h.daysOld}d`}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* Breakdowns */}
+      <div className="grid gap-6 xl:grid-cols-3">
+        <Card className="bg-card/90">
+          <CardContent className="pt-5">
+            <div className="mb-4 text-sm font-semibold">Por operación</div>
+            <div className="space-y-2">
+              {data.byOperation.map((o) => (
+                <div key={o.operation} className="flex items-center justify-between text-sm">
+                  <span>{OPERATION_LABELS[o.operation] ?? o.operation}</span>
                   <span className="text-muted-foreground">
-                    {r.count} · {money(r.totalPremium, "ARS")}
+                    {o.count} · {money(o.totalBudget, "ARS")}
                   </span>
                 </div>
               ))}
@@ -159,24 +183,28 @@ async function InsuranceBlock({ promise }: { promise: Promise<InsuranceAnalytics
         </Card>
         <Card className="bg-card/90">
           <CardContent className="pt-5">
-            <div className="mb-4 text-sm font-semibold">Por aseguradora</div>
+            <div className="mb-4 text-sm font-semibold">Zonas calientes</div>
             <div className="space-y-2">
-              {data.byCarrier.map((c) => (
-                <div key={c.carrier} className="flex items-center justify-between text-sm">
-                  <span>{c.carrier}</span>
-                  <span className="text-muted-foreground">{c.count}</span>
+              {data.byZone.map((z) => (
+                <div key={z.zone} className="flex items-center justify-between text-sm">
+                  <span>{z.zone}</span>
+                  <span className="text-muted-foreground">{z.count}</span>
                 </div>
               ))}
             </div>
-            {data.byStatus.length > 0 ? (
-              <div className="mt-4 flex flex-wrap gap-2 border-t border-[#2A1A0A]/10 pt-4">
-                {data.byStatus.map((s) => (
-                  <Badge key={s.status} className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground">
-                    {(STATUS_LABELS[s.status] ?? s.status)}: {s.count}
-                  </Badge>
-                ))}
-              </div>
-            ) : null}
+          </CardContent>
+        </Card>
+        <Card className="bg-card/90">
+          <CardContent className="pt-5">
+            <div className="mb-4 text-sm font-semibold">Por tipo de propiedad</div>
+            <div className="space-y-2">
+              {data.byPropertyType.map((t) => (
+                <div key={t.propertyType} className="flex items-center justify-between text-sm">
+                  <span>{PROPERTY_TYPE_LABELS[t.propertyType] ?? t.propertyType}</span>
+                  <span className="text-muted-foreground">{t.count}</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -189,7 +217,7 @@ export default async function AnalyticsPage() {
 
   const kpiPromise = getDashboardKpis();
   const stagePromise = getLeadsByStageMetrics();
-  const insurancePromise = getInsuranceAnalytics();
+  const realEstatePromise = getRealEstateAnalytics();
 
   return (
     <div className="space-y-6">
@@ -202,8 +230,8 @@ export default async function AnalyticsPage() {
             </Badge>
             <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Inteligencia comercial</h1>
             <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
-              Conversión del pipeline, distribución por etapa y, para seguros, renovaciones próximas y
-              cartera por ramo y aseguradora.
+              Conversión del pipeline, distribución por etapa y, para inmobiliarias, próximas visitas,
+              leads urgentes y cartera por operación, zona y tipo de propiedad.
             </p>
           </div>
         </CardContent>
@@ -218,7 +246,7 @@ export default async function AnalyticsPage() {
       </Suspense>
 
       <Suspense fallback={<DashboardSectionSkeleton rows={5} />}>
-        <InsuranceBlock promise={insurancePromise} />
+        <RealEstateBlock promise={realEstatePromise} />
       </Suspense>
     </div>
   );

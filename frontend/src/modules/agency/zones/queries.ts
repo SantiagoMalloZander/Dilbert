@@ -3,29 +3,28 @@ import "server-only";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr";
 import { requireAuth } from "@/lib/workspace-auth";
 import type { Database } from "@/lib/supabase/database.types";
-import type { ProviderRecord } from "@/modules/insurance/providers/types";
+import type { ZoneRecord } from "@/modules/agency/zones/types";
 
-type ProviderRow = Database["public"]["Tables"]["insurance_providers"]["Row"];
+type ZoneRow = Database["public"]["Tables"]["property_zones"]["Row"];
 
-export function mapProviderRow(row: ProviderRow): ProviderRecord {
+export function mapZoneRow(row: ZoneRow): ZoneRecord {
   return {
     id: row.id,
     name: row.name,
-    categories: row.categories ?? [],
-    logoUrl: row.logo_url,
+    city: row.city,
+    province: row.province,
     notes: row.notes,
-    isActive: row.is_active,
     createdAt: row.created_at,
   };
 }
 
-export async function listProviders(): Promise<ProviderRecord[]> {
+export async function listZones(): Promise<ZoneRecord[]> {
   const { company_id } = await requireAuth();
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
-    .from("insurance_providers")
+    .from("property_zones")
     .select("*")
     .eq("company_id", company_id)
     .order("name", { ascending: true });
-  return (data ?? []).map(mapProviderRow);
+  return (data ?? []).map(mapZoneRow);
 }

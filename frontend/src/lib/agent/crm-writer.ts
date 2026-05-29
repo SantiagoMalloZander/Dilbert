@@ -22,25 +22,32 @@ import { registerLink, type Channel } from "@/lib/agent/identity-resolver";
 import type { ExtractedData, DataSource } from "@/lib/agent/data-extractor";
 import { detectDeal } from "@/lib/agent/deal-detector";
 import { resolveStageByKeyword } from "@/lib/agent/stage-resolver";
-import type { CRMConnector, CrmSource, ActivityType, DealPatch, InsuranceFields } from "@/lib/agent/crm/types";
+import type { CRMConnector, CrmSource, ActivityType, DealPatch, RealEstateFields } from "@/lib/agent/crm/types";
 
-/** Map the extractor's insurance block to the first-class lead columns. */
-function toInsuranceFields(ins: ExtractedData["insurance"]): InsuranceFields | null {
-  if (!ins) return null;
+/** Map the extractor's real-estate block to the first-class lead columns. */
+function toRealEstateFields(re: ExtractedData["real_estate"]): RealEstateFields | null {
+  if (!re) return null;
   return {
-    line_of_business: ins.line_of_business ?? null,
-    carrier: ins.carrier ?? null,
-    policy_number: ins.policy_number ?? null,
-    premium_frequency: ins.premium_frequency ?? null,
-    coverage_amount: ins.coverage_amount ?? null,
-    coverage_currency: ins.coverage_currency ?? null,
-    deductible: ins.deductible ?? null,
-    effective_date: ins.effective_date ?? null,
-    expiration_date: ins.expiration_date ?? null,
-    renewal_date: ins.renewal_date ?? null,
-    insured_item: ins.insured_item ?? null,
-    beneficiary: ins.beneficiary ?? null,
-    policy_status: ins.status ?? null,
+    operation_type: re.operation_type ?? null,
+    client_role: re.client_role ?? null,
+    property_type: re.property_type ?? null,
+    zone: re.zone ?? null,
+    city: re.city ?? null,
+    province: re.province ?? null,
+    budget_min: re.budget_min ?? null,
+    budget_max: re.budget_max ?? null,
+    budget_currency: re.budget_currency ?? null,
+    rooms: re.rooms ?? null,
+    bedrooms: re.bedrooms ?? null,
+    bathrooms: re.bathrooms ?? null,
+    surface_total: re.surface_total ?? null,
+    surface_covered: re.surface_covered ?? null,
+    has_garage: re.has_garage ?? null,
+    urgency: re.urgency ?? null,
+    timeline: re.timeline ?? null,
+    listing_ref: re.listing_ref ?? null,
+    visit_status: re.visit_status ?? null,
+    financing: re.financing ?? null,
   };
 }
 
@@ -367,11 +374,11 @@ async function manageLead(
       product_or_service: di.product_or_service,
       topics: extracted.topics,
       sentiment: extracted.sentiment,
-      // Insurance vertical: structured policy/quote data (null for generic tenants)
-      ...(extracted.insurance ? { insurance: extracted.insurance } : {}),
+      // Real-estate vertical: keep the original blob for traceability.
+      ...(extracted.real_estate ? { real_estate: extracted.real_estate } : {}),
     },
-    // Promote insurance attributes to first-class columns (queryable/indexable).
-    insurance: toInsuranceFields(extracted.insurance),
+    // Promote real-estate attributes to first-class columns (queryable/indexable).
+    real_estate: toRealEstateFields(extracted.real_estate),
   });
   if (newId) created.push(newId);
   return { created, updated };
