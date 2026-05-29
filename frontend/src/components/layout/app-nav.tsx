@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
 import {
   Activity,
-  BarChart3,
   Bot,
   Building2,
   FolderCog,
@@ -46,12 +45,6 @@ export function AppNav({
 
   const items: NavItem[] = [
     { href: "/app/crm", label: "CRM", icon: Activity, visible: hasWorkspaceAccess },
-    {
-      href: "/app/crm/analytics",
-      label: "Analytics",
-      icon: BarChart3,
-      visible: hasWorkspaceAccess,
-    },
     {
       href: "/app/agente",
       label: "Agente IA",

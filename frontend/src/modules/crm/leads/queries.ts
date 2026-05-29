@@ -230,7 +230,10 @@ async function getLeadsForBoard(params: {
     .eq("pipeline_id", params.pipelineId)
     .order("updated_at", { ascending: false });
 
-  if (params.filters.assignedTo) {
+  // Vendors only ever see their own leads — even if the filter says otherwise.
+  if (params.role === "vendor") {
+    query = query.eq("assigned_to", params.userId);
+  } else if (params.filters.assignedTo) {
     query = query.eq("assigned_to", params.filters.assignedTo);
   }
 
@@ -380,6 +383,8 @@ async function getLeadDetail(params: {
     .eq("company_id", params.companyId)
     .eq("id", params.leadId)
     .limit(1);
+  // Vendors can only open their own leads, even via direct URL.
+  if (params.role === "vendor") query = query.eq("assigned_to", params.userId);
 
   const { data, error } = await query;
   if (error) {
@@ -553,9 +558,11 @@ export async function getDashboardKpis(): Promise<DashboardKpiData> {
   const { user, company_id } = await requireAuth();
   const supabase = await createServerSupabaseClient();
   const month = getCurrentMonthRange();
+  const isVendor = user.role === "vendor";
 
   const scopedBase = () => {
-    return supabase.from("leads").select("*").eq("company_id", company_id);
+    const q = supabase.from("leads").select("*").eq("company_id", company_id);
+    return isVendor ? q.eq("assigned_to", user.id) : q;
   };
 
   const [openResult, wonMonthResult, monthTotalResult, pipelineValueResult] =
@@ -630,7 +637,7 @@ export async function getLeadsByStageMetrics(): Promise<LeadsByStageMetric[]> {
         .select("stage_id")
         .eq("company_id", company_id)
         .eq("pipeline_id", pipeline.id);
-
+      if (user.role === "vendor") query = query.eq("assigned_to", user.id);
       return query;
     })(),
   ]);
@@ -655,10 +662,12 @@ export async function getLeadsByStageMetrics(): Promise<LeadsByStageMetric[]> {
 export async function getLeadsBySourceMetrics(): Promise<LeadsBySourceMetric[]> {
   const { user, company_id } = await requireAuth();
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("leads")
     .select("source")
     .eq("company_id", company_id);
+  if (user.role === "vendor") query = query.eq("assigned_to", user.id);
+  const { data, error } = await query;
 
   if (error) {
     throw error;
@@ -703,6 +712,7 @@ export async function getUpcomingClosingLeads(): Promise<UpcomingLeadRecord[]> {
     .lte("expected_close_date", end.toISOString().slice(0, 10))
     .order("expected_close_date", { ascending: true })
     .limit(8);
+  if (user.role === "vendor") query = query.eq("assigned_to", user.id);
 
   const { data, error } = await query;
   if (error) {

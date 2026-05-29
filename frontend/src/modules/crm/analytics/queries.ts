@@ -23,13 +23,15 @@ function daysSince(dateStr: string): number {
  * visits and hot leads (urgent, recently opened). Company-scoped.
  */
 export async function getRealEstateAnalytics(): Promise<RealEstateAnalytics> {
-  const { company_id } = await requireAuth();
+  const { user, company_id } = await requireAuth();
   const supabase = await createServerSupabaseClient();
 
-  const { data: leads } = await supabase
+  let query = supabase
     .from("leads")
     .select("id, title, status, currency, value, contact_id, created_at, expected_close_date, operation_type, property_type, zone, city, budget_min, budget_max, budget_currency, urgency, visit_status")
     .eq("company_id", company_id);
+  if (user.role === "vendor") query = query.eq("assigned_to", user.id);
+  const { data: leads } = await query;
 
   const rows = leads ?? [];
 

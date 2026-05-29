@@ -86,6 +86,8 @@ async function SellerPerformanceBlock({
 
 export default async function CrmPage() {
   const session = await requireSession();
+  const isVendor = session.user.role === "vendor";
+  const firstName = (session.user.name || "equipo").split(" ")[0];
 
   const kpiPromise = getDashboardKpis();
   const stageMetricsPromise = getLeadsByStageMetrics();
@@ -105,10 +107,14 @@ export default async function CrmPage() {
               </Badge>
               <div className="space-y-2">
                 <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                  Bienvenido, {(session.user.name || "equipo").split(" ")[0]}.
+                  {isVendor
+                    ? `Tu pipeline, ${firstName}.`
+                    : `Hola ${firstName}, así está el equipo.`}
                 </h1>
                 <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
-                  Este es tu centro operativo. Acá ves salud del pipeline, distribución de leads y la actividad comercial más reciente sin salir del CRM.
+                  {isVendor
+                    ? "Solo se muestra tu cartera: tus leads, tus actividades y tus próximos cierres."
+                    : "Vista del equipo: performance por vendedor y por dónde vienen los leads."}
                 </p>
               </div>
             </div>
@@ -141,47 +147,63 @@ export default async function CrmPage() {
         <KpiSection promise={kpiPromise} />
       </Suspense>
 
-      <div className="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
-        <Suspense fallback={<DashboardSectionSkeleton rows={4} />}>
-          <StageChartSection promise={stageMetricsPromise} />
-        </Suspense>
-        <Suspense fallback={<DashboardSectionSkeleton rows={4} />}>
-          <SourceChartSection promise={sourceMetricsPromise} />
-        </Suspense>
-      </div>
+      {isVendor ? (
+        <>
+          {/* VENDOR: foco en su propio pipeline */}
+          <Suspense fallback={<DashboardSectionSkeleton rows={4} />}>
+            <StageChartSection promise={stageMetricsPromise} />
+          </Suspense>
 
-      <div className="grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
-        <Suspense fallback={<DashboardSectionSkeleton rows={5} />}>
-          <RecentActivityBlock
-            promise={recentActivitiesPromise}
-            isVendor={session.user.role === "vendor"}
-          />
-        </Suspense>
-        <Suspense fallback={<DashboardSectionSkeleton rows={4} />}>
-          <UpcomingLeadsBlock promise={upcomingLeadsPromise} />
-        </Suspense>
-      </div>
+          <div className="grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
+            <Suspense fallback={<DashboardSectionSkeleton rows={5} />}>
+              <RecentActivityBlock promise={recentActivitiesPromise} isVendor />
+            </Suspense>
+            <Suspense fallback={<DashboardSectionSkeleton rows={4} />}>
+              <UpcomingLeadsBlock promise={upcomingLeadsPromise} />
+            </Suspense>
+          </div>
 
-      {session.user.role !== "vendor" ? (
-        <Suspense fallback={<DashboardSectionSkeleton rows={5} />}>
-          <SellerPerformanceBlock promise={sellerPerformancePromise} />
-        </Suspense>
+          <Card className="bg-card/90">
+            <CardContent className="pt-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Benchmark del equipo</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Tus cards de KPI ya muestran la referencia del equipo para que compares tu volumen y conversión sin perder foco en tus propias oportunidades.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
       ) : (
-        <Card className="bg-card/90">
-          <CardContent className="pt-5">
-            <div className="flex items-start gap-3">
-              <div className="rounded-2xl bg-primary/10 p-3 text-primary">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold">Benchmark del equipo</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Tus cards de KPI ya muestran la referencia del equipo para que compares tu volumen y conversión sin perder foco en tus propias oportunidades.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <>
+          {/* OWNER / ANALYST: performance por vendedor + entrada de leads, prominentes */}
+          <Suspense fallback={<DashboardSectionSkeleton rows={5} />}>
+            <SellerPerformanceBlock promise={sellerPerformancePromise} />
+          </Suspense>
+
+          <div className="grid gap-6 xl:grid-cols-[1fr_1.25fr]">
+            <Suspense fallback={<DashboardSectionSkeleton rows={4} />}>
+              <SourceChartSection promise={sourceMetricsPromise} />
+            </Suspense>
+            <Suspense fallback={<DashboardSectionSkeleton rows={4} />}>
+              <StageChartSection promise={stageMetricsPromise} />
+            </Suspense>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
+            <Suspense fallback={<DashboardSectionSkeleton rows={5} />}>
+              <RecentActivityBlock promise={recentActivitiesPromise} isVendor={false} />
+            </Suspense>
+            <Suspense fallback={<DashboardSectionSkeleton rows={4} />}>
+              <UpcomingLeadsBlock promise={upcomingLeadsPromise} />
+            </Suspense>
+          </div>
+        </>
       )}
     </div>
   );

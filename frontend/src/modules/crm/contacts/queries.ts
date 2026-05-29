@@ -126,6 +126,26 @@ export async function getContacts(
     );
   }
 
+  // Vendors only see contacts they are assigned to OR contacts that have a lead
+  // assigned to them.
+  if (user?.role === "vendor") {
+    const { data: leadsContacts } = await supabase
+      .from("leads")
+      .select("contact_id")
+      .eq("company_id", companyId)
+      .eq("assigned_to", user.id);
+    const scopedContactIds = [
+      ...new Set((leadsContacts ?? []).map((l) => l.contact_id).filter(Boolean)),
+    ] as string[];
+    if (scopedContactIds.length === 0) {
+      query = query.eq("assigned_to", user.id);
+    } else {
+      query = query.or(
+        `assigned_to.eq.${user.id},id.in.(${scopedContactIds.join(",")})`
+      );
+    }
+  }
+
   const { data, count, error } = await query;
   if (error) {
     throw error;
@@ -169,6 +189,9 @@ async function getActiveLeadCounts(
     .eq("company_id", companyId)
     .in("contact_id", contactIds)
     .in("status", ["open", "paused"]);
+  // The "active leads" count shown next to each contact should reflect what
+  // the current user owns — vendors only count their own.
+  if (user?.role === "vendor") query = query.eq("assigned_to", user.id);
 
   const { data, error } = await query;
   if (error) {
@@ -205,21 +228,38 @@ export async function getContactById(
     return null;
   }
 
+  // Access check for vendors: they can only see contacts assigned to them OR
+  // contacts that have at least one of their leads.
+  if (user?.role === "vendor" && contact.assigned_to !== user.id) {
+    const { data: ownLead } = await supabase
+      .from("leads")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("contact_id", contact.id)
+      .eq("assigned_to", user.id)
+      .limit(1);
+    if (!ownLead || ownLead.length === 0) return null;
+  }
+
   let leadsQuery = supabase
     .from("leads")
     .select("*")
     .eq("company_id", companyId)
     .eq("contact_id", contact.id)
     .order("created_at", { ascending: false });
+  if (user?.role === "vendor") leadsQuery = leadsQuery.eq("assigned_to", user.id);
+
+  let activitiesQuery = supabase
+    .from("activities")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("contact_id", contact.id)
+    .order("created_at", { ascending: false });
+  if (user?.role === "vendor") activitiesQuery = activitiesQuery.eq("user_id", user.id);
 
   const [leadsResult, activitiesResult, stagesResult, usersResult] = await Promise.all([
     leadsQuery,
-    supabase
-      .from("activities")
-      .select("*")
-      .eq("company_id", companyId)
-      .eq("contact_id", contact.id)
-      .order("created_at", { ascending: false }),
+    activitiesQuery,
     supabase.from("pipeline_stages").select("id,name,color").eq("company_id", companyId),
     supabase.from("users").select("id,name").eq("company_id", companyId),
   ]);
