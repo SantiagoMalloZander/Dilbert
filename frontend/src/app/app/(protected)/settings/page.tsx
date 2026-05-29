@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireSession } from "@/lib/workspace-auth";
 import { listZones } from "@/modules/agency/zones/queries";
-import { ZonesManager } from "@/components/settings/ZonesManager";
+import { listProperties } from "@/modules/agency/properties/queries";
+import { SettingsTabs } from "@/components/settings/SettingsTabs";
 
 export default async function SettingsPage() {
   const session = await requireSession();
@@ -14,7 +15,7 @@ export default async function SettingsPage() {
     redirect("/app/crm");
   }
 
-  const zones = await listZones();
+  const [zones, properties] = await Promise.all([listZones(), listProperties()]);
 
   return (
     <div className="space-y-6">
@@ -27,14 +28,13 @@ export default async function SettingsPage() {
             </Badge>
             <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Configuración de la agencia</h1>
             <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
-              Definí las zonas en las que opera tu inmobiliaria. El agente las usa para clasificar
-              búsquedas y marcar como sospechosas las consultas por zonas que no cubrís.
+              Catálogo de propiedades, zonas que cubrís y configuración del bot de WhatsApp.
             </p>
           </div>
         </CardContent>
       </Card>
 
-      <ZonesManager initialZones={zones} />
+      <SettingsTabs initialZones={zones} initialProperties={properties} />
     </div>
   );
 }

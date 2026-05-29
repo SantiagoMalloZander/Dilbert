@@ -75,6 +75,119 @@ export type Database = {
           },
         ]
       }
+      properties: {
+        Row: {
+          id: string
+          company_id: string
+          title: string
+          internal_code: string | null
+          listing_url: string | null
+          property_type: string
+          operation_type: string
+          status: string
+          address: string | null
+          zone: string | null
+          city: string | null
+          province: string | null
+          floor: string | null
+          apartment: string | null
+          rooms: number | null
+          bedrooms: number | null
+          bathrooms: number | null
+          surface_total: number | null
+          surface_covered: number | null
+          year_built: number | null
+          price: number | null
+          currency: string | null
+          expenses: number | null
+          expenses_currency: string | null
+          has_garage: boolean | null
+          garage_count: number | null
+          mortgage_eligible: boolean | null
+          amenities: string[]
+          description: string | null
+          assigned_to: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          title: string
+          internal_code?: string | null
+          listing_url?: string | null
+          property_type: string
+          operation_type: string
+          status?: string
+          address?: string | null
+          zone?: string | null
+          city?: string | null
+          province?: string | null
+          floor?: string | null
+          apartment?: string | null
+          rooms?: number | null
+          bedrooms?: number | null
+          bathrooms?: number | null
+          surface_total?: number | null
+          surface_covered?: number | null
+          year_built?: number | null
+          price?: number | null
+          currency?: string | null
+          expenses?: number | null
+          expenses_currency?: string | null
+          has_garage?: boolean | null
+          garage_count?: number | null
+          mortgage_eligible?: boolean | null
+          amenities?: string[]
+          description?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          title?: string
+          internal_code?: string | null
+          listing_url?: string | null
+          property_type?: string
+          operation_type?: string
+          status?: string
+          address?: string | null
+          zone?: string | null
+          city?: string | null
+          province?: string | null
+          floor?: string | null
+          apartment?: string | null
+          rooms?: number | null
+          bedrooms?: number | null
+          bathrooms?: number | null
+          surface_total?: number | null
+          surface_covered?: number | null
+          year_built?: number | null
+          price?: number | null
+          currency?: string | null
+          expenses?: number | null
+          expenses_currency?: string | null
+          has_garage?: boolean | null
+          garage_count?: number | null
+          mortgage_eligible?: boolean | null
+          amenities?: string[]
+          description?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activities: {
         Row: {
           company_id: string
