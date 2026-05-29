@@ -97,6 +97,24 @@ export type LeadStageOption = {
   isLostStage: boolean;
 };
 
+/** Compact view of a property from the catalog, shown when a lead is linked. */
+export type LinkedPropertyView = {
+  id: string;
+  title: string;
+  internalCode: string | null;
+  propertyType: string;
+  operationType: string;
+  status: string;
+  zone: string | null;
+  city: string | null;
+  address: string | null;
+  price: number | null;
+  currency: string | null;
+  rooms: number | null;
+  bedrooms: number | null;
+  surfaceTotal: number | null;
+};
+
 export type LeadDetailRecord = {
   id: string;
   title: string;
@@ -117,6 +135,8 @@ export type LeadDetailRecord = {
   stageOptions: LeadStageOption[];
   timeline: LeadTimelineItem[];
   notes: LeadNoteItem[];
+  /** Property from the internal catalog this lead is linked to, if any. */
+  linkedProperty: LinkedPropertyView | null;
   permissions: {
     canEdit: boolean;
     canMarkOutcome: boolean;

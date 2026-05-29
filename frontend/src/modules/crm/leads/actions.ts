@@ -680,3 +680,73 @@ export async function markLeadAsLost(input: {
 }): Promise<Result<LeadMutationRecord>> {
   return closeLead(input.leadId, "lost", input.lostReason);
 }
+
+// ─── Link to property catalog ────────────────────────────────────────────────
+
+export async function linkLeadToProperty(
+  leadId: string,
+  propertyId: string
+): Promise<Result<{ id: string }>> {
+  try {
+    const { lead, user, company_id, supabase } = await getLeadForMutation(leadId);
+
+    // The property must belong to the same company.
+    const { data: property } = await supabase
+      .from("properties")
+      .select("id")
+      .eq("id", propertyId)
+      .eq("company_id", company_id)
+      .maybeSingle();
+    if (!property) throw new Error("Propiedad no encontrada en el catálogo.");
+
+    const { error } = await supabase
+      .from("leads")
+      .update({ listing_id: propertyId, updated_at: new Date().toISOString() })
+      .eq("id", leadId)
+      .eq("company_id", company_id);
+    if (error) throw new Error(error.message);
+
+    await insertLeadAudit({
+      companyId: company_id,
+      userId: user.id,
+      action: "lead.linked_to_property",
+      entityId: leadId,
+      before: { listing_id: lead.listing_id },
+      after: { listing_id: propertyId },
+    });
+
+    revalidatePath("/app/crm/leads");
+    return { data: { id: leadId }, error: null };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "No se pudo vincular la propiedad." };
+  }
+}
+
+export async function unlinkLeadFromProperty(
+  leadId: string
+): Promise<Result<{ id: string }>> {
+  try {
+    const { lead, user, company_id, supabase } = await getLeadForMutation(leadId);
+
+    const { error } = await supabase
+      .from("leads")
+      .update({ listing_id: null, updated_at: new Date().toISOString() })
+      .eq("id", leadId)
+      .eq("company_id", company_id);
+    if (error) throw new Error(error.message);
+
+    await insertLeadAudit({
+      companyId: company_id,
+      userId: user.id,
+      action: "lead.unlinked_from_property",
+      entityId: leadId,
+      before: { listing_id: lead.listing_id },
+      after: { listing_id: null },
+    });
+
+    revalidatePath("/app/crm/leads");
+    return { data: { id: leadId }, error: null };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "No se pudo desvincular la propiedad." };
+  }
+}

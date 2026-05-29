@@ -19,6 +19,7 @@ import type {
   LeadsByStageMetric,
   LeadStageOption,
   LeadTimelineItem,
+  LinkedPropertyView,
   PipelineStageRecord,
   SellerPerformanceRecord,
   UpcomingLeadRecord,
@@ -369,6 +370,37 @@ function buildNoteItems(notes: NoteRow[], usersById: Map<string, UserRow>): Lead
   }));
 }
 
+async function getLinkedProperty(
+  companyId: string,
+  listingId: string | null
+): Promise<LinkedPropertyView | null> {
+  if (!listingId) return null;
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase
+    .from("properties")
+    .select("id, title, internal_code, property_type, operation_type, status, zone, city, address, price, currency, rooms, bedrooms, surface_total")
+    .eq("id", listingId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    id: data.id,
+    title: data.title,
+    internalCode: data.internal_code,
+    propertyType: data.property_type,
+    operationType: data.operation_type,
+    status: data.status,
+    zone: data.zone,
+    city: data.city,
+    address: data.address,
+    price: data.price == null ? null : Number(data.price),
+    currency: data.currency,
+    rooms: data.rooms,
+    bedrooms: data.bedrooms,
+    surfaceTotal: data.surface_total == null ? null : Number(data.surface_total),
+  };
+}
+
 async function getLeadDetail(params: {
   leadId: string;
   companyId: string;
@@ -396,11 +428,12 @@ async function getLeadDetail(params: {
     return null;
   }
 
-  const [contactsById, usersById, activities, notes] = await Promise.all([
+  const [contactsById, usersById, activities, notes, linkedProperty] = await Promise.all([
     getContactsMap(params.companyId, [lead.contact_id]),
     getUsersMap(params.companyId, [lead.assigned_to, lead.created_by]),
     getLeadActivities(params.companyId, lead.id),
     getLeadNotes(params.companyId, lead.id),
+    getLinkedProperty(params.companyId, lead.listing_id),
   ]);
 
   const actorIds = [
@@ -433,6 +466,7 @@ async function getLeadDetail(params: {
     stageOptions: params.stageOptions,
     timeline: buildTimelineItems(activities, activityUsersById),
     notes: buildNoteItems(notes, activityUsersById),
+    linkedProperty,
     permissions: {
       canEdit:
         canEditLeads(params.role) &&

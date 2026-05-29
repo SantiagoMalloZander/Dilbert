@@ -760,6 +760,7 @@ export type Database = {
           listing_ref: string | null
           visit_status: string | null
           financing: string | null
+          listing_id: string | null
         }
         Insert: {
           assigned_to: string
@@ -800,6 +801,7 @@ export type Database = {
           listing_ref?: string | null
           visit_status?: string | null
           financing?: string | null
+          listing_id?: string | null
         }
         Update: {
           assigned_to?: string
@@ -840,6 +842,7 @@ export type Database = {
           listing_ref?: string | null
           visit_status?: string | null
           financing?: string | null
+          listing_id?: string | null
         }
         Relationships: [
           {

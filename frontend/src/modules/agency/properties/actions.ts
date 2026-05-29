@@ -117,3 +117,23 @@ export async function deleteProperty(id: string): Promise<Result<{ id: string }>
     return { data: null, error: err instanceof Error ? err.message : "No se pudo eliminar la propiedad." };
   }
 }
+
+/**
+ * Returns the property catalog for any workspace user — used by the lead detail
+ * picker. Owner gate doesn't apply: vendors need to link properties to leads.
+ */
+export async function listLinkableProperties(): Promise<Result<PropertyRecord[]>> {
+  try {
+    const { company_id } = await requireAuth();
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from("properties")
+      .select("*")
+      .eq("company_id", company_id)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { data: (data ?? []).map(mapPropertyRow), error: null };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "No se pudo cargar el catálogo." };
+  }
+}
