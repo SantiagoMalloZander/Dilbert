@@ -50,6 +50,8 @@ export function resolveStageByKeyword(
   // Intermediate stages — substring match on normalized name
   const KEYWORD_SUBSTRINGS: Record<string, string[]> = {
     en_contacto: ["contact", "contacto"],
+    calificado: ["calific", "qualif"],
+    visita_agendada: ["visita", "visit", "agendad", "tour", "showing"],
     propuesta: ["propuest", "proposal", "cotiz"],
     negociacion: ["negoci", "negot"],
   };
@@ -67,6 +69,8 @@ export function resolveStageByKeyword(
     const nonTerminal = stages.filter((s) => !s.is_won_stage && !s.is_lost_stage);
     const heuristic: Record<string, number> = {
       en_contacto: 0,
+      calificado: Math.floor(nonTerminal.length * 0.3),
+      visita_agendada: Math.floor(nonTerminal.length * 0.55),
       propuesta: Math.floor(nonTerminal.length * 0.4),
       negociacion: Math.floor(nonTerminal.length * 0.7),
     };

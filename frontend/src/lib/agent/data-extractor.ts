@@ -50,6 +50,8 @@ export interface ContactInfo {
 export type StageKeyword =
   | "nuevo"
   | "en_contacto"
+  | "calificado"
+  | "visita_agendada"
   | "propuesta"
   | "negociacion"
   | "ganado"
@@ -301,13 +303,15 @@ Reglas estrictas:
 - existing_deal_id: solo si podés matchear con certeza uno de los deals abiertos listados arriba.
 - has_purchase_intent: true solo si hay señales claras (pidió precio, preguntó por disponibilidad, quiere avanzar, confirmó compra, etc.).
 - suggested_stage_keyword: etapa del pipeline que mejor refleja este email. Valores posibles:
-    "nuevo"       → sin señal suficiente para calificar, primer acercamiento sin intención clara
-    "en_contacto" → primer contacto real, respuesta de interés general, pidió más info
-    "propuesta"   → cliente pide cotización, presupuesto, propuesta formal, quiere ver números
-    "negociacion" → negocia precio/términos/condiciones, dice "queremos avanzar", pide cambios al contrato
-    "ganado"      → confirma la compra, firma, acepta la propuesta, da OK final explícito
-    "perdido"     → declina, cancela, dice que no va a seguir, elige otro proveedor
-    null          → el email no está relacionado con ningún deal (irrelevante, interno, automático)
+    "nuevo"           → sin señal suficiente para calificar, primer acercamiento sin intención clara
+    "en_contacto"     → primer contacto real, respuesta de interés general, pidió más info
+    "calificado"      → (real estate) presupuesto y zona confirmados, cliente busca opciones puntuales
+    "visita_agendada" → (real estate) acordaron día/horario para visitar la propiedad
+    "propuesta"       → (genérico) cliente pide cotización, presupuesto, propuesta formal, quiere ver números
+    "negociacion"     → negocia precio/términos/condiciones, dice "queremos avanzar", pide cambios al contrato
+    "ganado"          → confirma la compra, firma, acepta la propuesta, da OK final explícito
+    "perdido"         → declina, cancela, dice que no va a seguir, elige otro proveedor
+    null              → el email no está relacionado con ningún deal (irrelevante, interno, automático)
   Importante: solo avanzar stages, nunca retroceder. Si el deal ya está en "negociacion" y el email es genérico, poné null.
 - mark_as_won: true SOLO si el cliente confirma explícitamente la compra o cierre (firma, "acepto", "vamos", "trato hecho"). No true si solo "suena positivo".
 - mark_as_lost: true SOLO si el cliente rechaza o cancela explícitamente ("no gracias", "decidimos ir con otro", "cancelamos").
@@ -338,7 +342,7 @@ Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
     "expected_close_date": string | null,
     "product_or_service": string | null,
     "existing_deal_id": string | null,
-    "suggested_stage_keyword": "nuevo" | "en_contacto" | "propuesta" | "negociacion" | "ganado" | "perdido" | null,
+    "suggested_stage_keyword": "nuevo" | "en_contacto" | "calificado" | "visita_agendada" | "propuesta" | "negociacion" | "ganado" | "perdido" | null,
     "mark_as_won": boolean,
     "mark_as_lost": boolean
   },
