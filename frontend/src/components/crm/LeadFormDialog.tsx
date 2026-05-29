@@ -6,6 +6,8 @@ import { Loader2, Search } from "lucide-react";
 import { createContact, searchContactsAction } from "@/modules/crm/contacts/actions";
 import type { ContactFormInput, ContactSearchResult } from "@/modules/crm/contacts/types";
 import { createLead } from "@/modules/crm/leads/actions";
+import { EMPTY_LEAD_REAL_ESTATE, type LeadRealEstateFields } from "@/modules/crm/leads/types";
+import { LeadRealEstateFormSection } from "@/components/crm/LeadRealEstateFormSection";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +73,7 @@ export function LeadFormDialog({
     stageId: pipelines[0]?.stages[0]?.id || "",
     assignedTo: assignees[0]?.id || "",
   });
+  const [realEstate, setRealEstate] = useState<LeadRealEstateFields>(EMPTY_LEAD_REAL_ESTATE);
   const [inlineContact, setInlineContact] = useState<ContactFormInput>({
     firstName: "",
     lastName: "",
@@ -163,6 +166,7 @@ export function LeadFormDialog({
       stageId: form.stageId,
       assignedTo: isOwner ? form.assignedTo || null : null,
       source: "manual",
+      realEstate,
     });
 
     if (response.error) {
@@ -179,7 +183,7 @@ export function LeadFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-[3px] border-[#2A1A0A] bg-background text-foreground sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto border-[3px] border-[#2A1A0A] bg-background text-foreground sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Nuevo lead</DialogTitle>
           <DialogDescription>
@@ -480,6 +484,12 @@ export function LeadFormDialog({
             ) : null}
           </div>
         </div>
+
+        <LeadRealEstateFormSection
+          values={realEstate}
+          onChange={(patch) => setRealEstate((prev) => ({ ...prev, ...patch }))}
+          idPrefix="create-re"
+        />
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

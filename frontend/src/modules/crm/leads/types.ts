@@ -137,6 +137,8 @@ export type LeadDetailRecord = {
   notes: LeadNoteItem[];
   /** Property from the internal catalog this lead is linked to, if any. */
   linkedProperty: LinkedPropertyView | null;
+  /** Real-estate fields stored on the lead row (editable from the form). */
+  realEstate: LeadRealEstateFields;
   permissions: {
     canEdit: boolean;
     canMarkOutcome: boolean;
@@ -221,6 +223,40 @@ export type LeadMutationRecord = {
   status: LeadStatus;
 };
 
+/** Real-estate fields editable from the lead form. Mirrors the lead columns. */
+export type LeadRealEstateFields = {
+  operationType: string | null;
+  clientRole: string | null;
+  propertyType: string | null;
+  zone: string | null;
+  city: string | null;
+  province: string | null;
+  budgetMin: number | null;
+  budgetMax: number | null;
+  budgetCurrency: string | null;
+  rooms: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  surfaceTotal: number | null;
+  surfaceCovered: number | null;
+  hasGarage: boolean | null;
+  urgency: string | null;
+  timeline: string | null;
+  listingRef: string | null;
+  visitStatus: string | null;
+  financing: string | null;
+};
+
+export const EMPTY_LEAD_REAL_ESTATE: LeadRealEstateFields = {
+  operationType: null, clientRole: null, propertyType: null,
+  zone: null, city: null, province: null,
+  budgetMin: null, budgetMax: null, budgetCurrency: null,
+  rooms: null, bedrooms: null, bathrooms: null,
+  surfaceTotal: null, surfaceCovered: null,
+  hasGarage: null, urgency: null, timeline: null,
+  listingRef: null, visitStatus: null, financing: null,
+};
+
 export type LeadUpsertPayload = {
   title: string;
   contactId: string;
@@ -232,6 +268,7 @@ export type LeadUpsertPayload = {
   stageId: string;
   assignedTo: string | null;
   source: CrmSource;
+  realEstate?: LeadRealEstateFields | null;
 };
 
 export type CreateLeadInput = LeadUpsertPayload;

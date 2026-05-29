@@ -467,6 +467,28 @@ async function getLeadDetail(params: {
     timeline: buildTimelineItems(activities, activityUsersById),
     notes: buildNoteItems(notes, activityUsersById),
     linkedProperty,
+    realEstate: {
+      operationType: lead.operation_type ?? null,
+      clientRole: lead.client_role ?? null,
+      propertyType: lead.property_type ?? null,
+      zone: lead.zone ?? null,
+      city: lead.city ?? null,
+      province: lead.province ?? null,
+      budgetMin: lead.budget_min == null ? null : Number(lead.budget_min),
+      budgetMax: lead.budget_max == null ? null : Number(lead.budget_max),
+      budgetCurrency: lead.budget_currency ?? null,
+      rooms: lead.rooms ?? null,
+      bedrooms: lead.bedrooms ?? null,
+      bathrooms: lead.bathrooms ?? null,
+      surfaceTotal: lead.surface_total == null ? null : Number(lead.surface_total),
+      surfaceCovered: lead.surface_covered == null ? null : Number(lead.surface_covered),
+      hasGarage: lead.has_garage ?? null,
+      urgency: lead.urgency ?? null,
+      timeline: lead.timeline ?? null,
+      listingRef: lead.listing_ref ?? null,
+      visitStatus: lead.visit_status ?? null,
+      financing: lead.financing ?? null,
+    },
     permissions: {
       canEdit:
         canEditLeads(params.role) &&

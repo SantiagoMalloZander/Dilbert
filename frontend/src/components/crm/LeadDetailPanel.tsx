@@ -34,12 +34,15 @@ import {
   updateLead,
 } from "@/modules/crm/leads/actions";
 import { PropertyPickerDialog } from "@/components/crm/PropertyPickerDialog";
-import type {
-  ActivityType,
-  CrmSource,
-  LeadDetailRecord,
-  LeadStageOption,
+import {
+  EMPTY_LEAD_REAL_ESTATE,
+  type ActivityType,
+  type CrmSource,
+  type LeadDetailRecord,
+  type LeadRealEstateFields,
+  type LeadStageOption,
 } from "@/modules/crm/leads/types";
+import { LeadRealEstateFormSection } from "@/components/crm/LeadRealEstateFormSection";
 import { emitGlobalToast } from "@/lib/global-toast";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -207,6 +210,9 @@ export function LeadDetailPanel({
     expectedCloseDate: lead?.expectedCloseDate || "",
     source: (lead?.source || "manual") as CrmSource,
   });
+  const [editRealEstate, setEditRealEstate] = useState<LeadRealEstateFields>(
+    lead?.realEstate || EMPTY_LEAD_REAL_ESTATE
+  );
   const [noteContent, setNoteContent] = useState("");
   const [activityForm, setActivityForm] = useState({
     type: "call" as ActivityType,
@@ -278,6 +284,7 @@ export function LeadDetailPanel({
       stageId: lead.stage?.id || stageId,
       assignedTo: lead.assignedUser?.id || null,
       source: editForm.source,
+      realEstate: editRealEstate,
     });
 
     if (response.error) {
@@ -723,7 +730,7 @@ export function LeadDetailPanel({
       </aside>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="border-[3px] border-[#2A1A0A] bg-[#F5F0E8] text-[#1A1A1A] sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto border-[3px] border-[#2A1A0A] bg-[#F5F0E8] text-[#1A1A1A] sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Editar lead</DialogTitle>
             <DialogDescription>Actualizá la información principal de la oportunidad.</DialogDescription>
@@ -801,6 +808,12 @@ export function LeadDetailPanel({
                 </Select>
               </div>
             </div>
+
+            <LeadRealEstateFormSection
+              values={editRealEstate}
+              onChange={(patch) => setEditRealEstate((prev) => ({ ...prev, ...patch }))}
+              idPrefix="edit-re"
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>

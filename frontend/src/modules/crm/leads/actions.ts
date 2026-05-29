@@ -11,10 +11,38 @@ import type {
   AddLeadNoteInput,
   CreateLeadInput,
   LeadMutationRecord,
+  LeadRealEstateFields,
   LeadStatus,
   Result,
   UpdateLeadInput,
 } from "@/modules/crm/leads/types";
+
+/** Map the form's real-estate block to the lead column payload (snake_case). */
+function realEstatePayload(re: LeadRealEstateFields | null | undefined) {
+  if (!re) return {};
+  return {
+    operation_type: re.operationType,
+    client_role: re.clientRole,
+    property_type: re.propertyType,
+    zone: re.zone,
+    city: re.city,
+    province: re.province,
+    budget_min: re.budgetMin,
+    budget_max: re.budgetMax,
+    budget_currency: re.budgetCurrency,
+    rooms: re.rooms,
+    bedrooms: re.bedrooms,
+    bathrooms: re.bathrooms,
+    surface_total: re.surfaceTotal,
+    surface_covered: re.surfaceCovered,
+    has_garage: re.hasGarage,
+    urgency: re.urgency,
+    timeline: re.timeline,
+    listing_ref: re.listingRef,
+    visit_status: re.visitStatus,
+    financing: re.financing,
+  };
+}
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 
@@ -246,6 +274,7 @@ export async function createLead(input: CreateLeadInput): Promise<Result<LeadMut
         status: initialStatus,
         source: input.source,
         created_by: user.id,
+        ...realEstatePayload(input.realEstate),
       })
       .select("*")
       .limit(1);
@@ -339,6 +368,7 @@ export async function updateLead(
         source: payload.source,
         status,
         lost_reason: status === "lost" ? lead.lost_reason : null,
+        ...realEstatePayload(payload.realEstate),
       })
       .eq("company_id", company_id)
       .eq("id", lead.id)
