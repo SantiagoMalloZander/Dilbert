@@ -45,6 +45,8 @@ import {
 } from "@/modules/crm/leads/types";
 import { LeadRealEstateFormSection } from "@/components/crm/LeadRealEstateFormSection";
 import { emitGlobalToast } from "@/lib/global-toast";
+import { useBlueRate } from "@/lib/use-blue-rate";
+import { usdEquivalent } from "@/lib/money-format";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -224,6 +226,7 @@ export function LeadDetailPanel({
   const [stageId, setStageId] = useState(lead?.stage?.id || "");
   const [lostReason, setLostReason] = useState("");
   const [isPropertyPickerOpen, setIsPropertyPickerOpen] = useState(false);
+  const blueRate = useBlueRate();
 
   if (!lead) {
     return null;
@@ -550,7 +553,12 @@ export function LeadDetailPanel({
                         </div>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-2">
-                        <p className="font-semibold">{formatCurrency(s.price, s.currency)}</p>
+                        <div className="text-right">
+                          <p className="font-semibold">{formatCurrency(s.price, s.currency)}</p>
+                          {usdEquivalent(s.price, s.currency, blueRate) ? (
+                            <p className="text-[10px] text-muted-foreground">≈ {usdEquivalent(s.price, s.currency, blueRate)}</p>
+                          ) : null}
+                        </div>
                         {lead.permissions.canEdit ? (
                           <Button
                             size="sm"
@@ -610,6 +618,9 @@ export function LeadDetailPanel({
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="font-semibold">{formatCurrency(lead.linkedProperty.price, lead.linkedProperty.currency)}</p>
+                    {usdEquivalent(lead.linkedProperty.price, lead.linkedProperty.currency, blueRate) ? (
+                      <p className="text-[10px] text-muted-foreground">≈ {usdEquivalent(lead.linkedProperty.price, lead.linkedProperty.currency, blueRate)}</p>
+                    ) : null}
                     {lead.permissions.canEdit ? (
                       <button
                         type="button"

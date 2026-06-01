@@ -289,26 +289,6 @@ export function LeadFormDialog({
                       <p className="text-xs text-red-600">{inlineErrors.phone}</p>
                     ) : null}
                   </div>
-                  <Input
-                    placeholder="Empresa del contacto"
-                    value={inlineContact.companyName || ""}
-                    onChange={(event) =>
-                      setInlineContact((current) => ({
-                        ...current,
-                        companyName: event.target.value,
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Cargo"
-                    value={inlineContact.position || ""}
-                    onChange={(event) =>
-                      setInlineContact((current) => ({
-                        ...current,
-                        position: event.target.value,
-                      }))
-                    }
-                  />
                 </div>
               ) : (
                 <div className="space-y-3 rounded-2xl border border-[#2A1A0A]/10 bg-card p-4">
@@ -470,7 +450,9 @@ export function LeadFormDialog({
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue />
+                    <span className="flex-1 truncate text-left text-sm">
+                      {assignees.find((a) => a.id === form.assignedTo)?.name || "Seleccioná vendedor"}
+                    </span>
                   </SelectTrigger>
                   <SelectContent>
                     {assignees.map((assignee) => (

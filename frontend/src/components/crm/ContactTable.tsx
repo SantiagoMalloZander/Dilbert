@@ -210,26 +210,6 @@ function ContactFormDialog({
             />
             {errors.phone ? <p className="text-xs text-red-600">{errors.phone}</p> : null}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="contact-company">Empresa del contacto</Label>
-            <Input
-              id="contact-company"
-              value={form.companyName || ""}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, companyName: event.target.value }))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="contact-position">Cargo</Label>
-            <Input
-              id="contact-position"
-              value={form.position || ""}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, position: event.target.value }))
-              }
-            />
-          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -492,26 +472,6 @@ function LeadFormDialog({
                       <p className="text-xs text-red-600">{inlineErrors.phone}</p>
                     ) : null}
                   </div>
-                  <Input
-                    placeholder="Empresa del contacto"
-                    value={inlineContact.companyName || ""}
-                    onChange={(event) =>
-                      setInlineContact((current) => ({
-                        ...current,
-                        companyName: event.target.value,
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Cargo"
-                    value={inlineContact.position || ""}
-                    onChange={(event) =>
-                      setInlineContact((current) => ({
-                        ...current,
-                        position: event.target.value,
-                      }))
-                    }
-                  />
                 </div>
               ) : (
                 <div className="space-y-3 rounded-2xl border border-white/10 bg-background/50 p-4">
@@ -628,7 +588,9 @@ function LeadFormDialog({
               <Label>Pipeline</Label>
               <Select value={form.pipelineId} onValueChange={handlePipelineChange}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <span className="flex-1 truncate text-left text-sm">
+                    {pipelines.find((p) => p.id === form.pipelineId)?.name || "Seleccioná pipeline"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {pipelines.map((pipeline) => (
@@ -648,7 +610,9 @@ function LeadFormDialog({
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <span className="flex-1 truncate text-left text-sm">
+                    {stageOptions.find((s) => s.id === form.stageId)?.name || "Seleccioná stage"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {stageOptions.map((stage) => (
@@ -669,7 +633,9 @@ function LeadFormDialog({
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue />
+                    <span className="flex-1 truncate text-left text-sm">
+                      {assignees.find((a) => a.id === form.assignedTo)?.name || "Seleccioná vendedor"}
+                    </span>
                   </SelectTrigger>
                   <SelectContent>
                     {assignees.map((assignee) => (

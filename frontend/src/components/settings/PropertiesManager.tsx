@@ -13,6 +13,8 @@ import {
   type PropertyFormInput, type PropertyRecord,
 } from "@/modules/agency/properties/types";
 import { emitGlobalToast } from "@/lib/global-toast";
+import { useBlueRate } from "@/lib/use-blue-rate";
+import { usdEquivalent } from "@/lib/money-format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -153,6 +155,7 @@ function ChipSelect<T extends string>({
 export function PropertiesManager({ initialProperties }: { initialProperties: PropertyRecord[] }) {
   const [list, setList] = useState<PropertyRecord[]>(initialProperties);
   const [isPending, startTransition] = useTransition();
+  const blueRate = useBlueRate();
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<PropertyRecord | null>(null);
@@ -307,7 +310,12 @@ export function PropertiesManager({ initialProperties }: { initialProperties: Pr
                   <Badge className={cn("font-medium", STATUS_TONE[p.status] ?? STATUS_TONE.pausada)}>
                     {STATUS_LABELS[p.status] ?? p.status}
                   </Badge>
-                  <p className="text-lg font-semibold">{money(p.price, p.currency)}</p>
+                  <div className="text-right">
+                    <p className="text-lg font-semibold">{money(p.price, p.currency)}</p>
+                    {usdEquivalent(p.price, p.currency, blueRate) ? (
+                      <p className="text-[10px] text-muted-foreground">≈ {usdEquivalent(p.price, p.currency, blueRate)}</p>
+                    ) : null}
+                  </div>
                 </div>
 
                 {/* title + classification */}

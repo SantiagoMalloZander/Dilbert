@@ -9,6 +9,8 @@ import {
   STATUS_LABELS,
   type PropertyRecord,
 } from "@/modules/agency/properties/types";
+import { useBlueRate } from "@/lib/use-blue-rate";
+import { usdEquivalent } from "@/lib/money-format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +53,7 @@ export function PropertyPickerDialog({
   const [list, setList] = useState<PropertyRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const blueRate = useBlueRate();
 
   useEffect(() => {
     if (!open) return;
@@ -137,7 +140,12 @@ export function PropertyPickerDialog({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <p className="truncate font-medium">{p.title}</p>
-                      <p className="shrink-0 font-semibold">{money(p.price, p.currency)}</p>
+                      <div className="shrink-0 text-right">
+                        <p className="font-semibold">{money(p.price, p.currency)}</p>
+                        {usdEquivalent(p.price, p.currency, blueRate) ? (
+                          <p className="text-[10px] text-muted-foreground">≈ {usdEquivalent(p.price, p.currency, blueRate)}</p>
+                        ) : null}
+                      </div>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       <Badge className={STATUS_TONE[p.status] ?? STATUS_TONE.pausada}>
