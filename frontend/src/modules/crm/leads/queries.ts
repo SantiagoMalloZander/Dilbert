@@ -21,9 +21,12 @@ import type {
   LeadTimelineItem,
   LinkedPropertyView,
   PipelineStageRecord,
+  PropertyMatchSuggestion,
   SellerPerformanceRecord,
   UpcomingLeadRecord,
 } from "@/modules/crm/leads/types";
+import { mapPropertyRow } from "@/modules/agency/properties/queries";
+import { findPropertyMatches } from "@/modules/agency/properties/matcher";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type ContactRow = Database["public"]["Tables"]["contacts"]["Row"];
@@ -370,6 +373,57 @@ function buildNoteItems(notes: NoteRow[], usersById: Map<string, UserRow>): Lead
   }));
 }
 
+async function computeSuggestedProperties(
+  companyId: string,
+  lead: LeadRow
+): Promise<PropertyMatchSuggestion[]> {
+  if (lead.listing_id) return []; // Already linked → no suggestions.
+  if (lead.operation_type !== "compra" && lead.operation_type !== "alquiler") return [];
+  // Need at least one strong criterion to make a meaningful match.
+  const hasCriteria = Boolean(lead.zone || lead.property_type || lead.budget_max || lead.budget_min);
+  if (!hasCriteria) return [];
+
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase
+    .from("properties")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("status", "disponible");
+  if (!data?.length) return [];
+
+  const matches = findPropertyMatches(
+    {
+      operationType: lead.operation_type,
+      propertyType: lead.property_type,
+      zone: lead.zone,
+      budgetMin: lead.budget_min == null ? null : Number(lead.budget_min),
+      budgetMax: lead.budget_max == null ? null : Number(lead.budget_max),
+      rooms: lead.rooms,
+      bedrooms: lead.bedrooms,
+      financing: lead.financing,
+    },
+    data.map(mapPropertyRow)
+  );
+
+  return matches.map((m) => ({
+    id: m.property.id,
+    title: m.property.title,
+    internalCode: m.property.internalCode,
+    propertyType: m.property.propertyType,
+    operationType: m.property.operationType,
+    status: m.property.status,
+    zone: m.property.zone,
+    city: m.property.city,
+    address: m.property.address,
+    price: m.property.price,
+    currency: m.property.currency,
+    rooms: m.property.rooms,
+    bedrooms: m.property.bedrooms,
+    surfaceTotal: m.property.surfaceTotal,
+    matchReasons: m.reasons,
+  }));
+}
+
 async function getLinkedProperty(
   companyId: string,
   listingId: string | null
@@ -428,12 +482,13 @@ async function getLeadDetail(params: {
     return null;
   }
 
-  const [contactsById, usersById, activities, notes, linkedProperty] = await Promise.all([
+  const [contactsById, usersById, activities, notes, linkedProperty, suggestedProperties] = await Promise.all([
     getContactsMap(params.companyId, [lead.contact_id]),
     getUsersMap(params.companyId, [lead.assigned_to, lead.created_by]),
     getLeadActivities(params.companyId, lead.id),
     getLeadNotes(params.companyId, lead.id),
     getLinkedProperty(params.companyId, lead.listing_id),
+    computeSuggestedProperties(params.companyId, lead),
   ]);
 
   const actorIds = [
@@ -467,6 +522,7 @@ async function getLeadDetail(params: {
     timeline: buildTimelineItems(activities, activityUsersById),
     notes: buildNoteItems(notes, activityUsersById),
     linkedProperty,
+    suggestedProperties,
     realEstate: {
       operationType: lead.operation_type ?? null,
       clientRole: lead.client_role ?? null,

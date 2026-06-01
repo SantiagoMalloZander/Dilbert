@@ -16,6 +16,7 @@ import {
   MessageSquarePlus,
   Milestone,
   NotebookPen,
+  Sparkles,
   Trash2,
   Unlink,
   X,
@@ -499,6 +500,68 @@ export function LeadDetailPanel({
                   >
                     <p className="text-xs text-muted-foreground">{field.label}</p>
                     <p className="mt-2 font-medium">{field.value}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {lead.suggestedProperties.length > 0 && !lead.linkedProperty ? (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                Sugerencias del catálogo
+                <span className="text-[10px] font-normal normal-case tracking-normal text-muted-foreground">
+                  · matches con la búsqueda
+                </span>
+              </div>
+              <div className="space-y-2">
+                {lead.suggestedProperties.map((s) => (
+                  <div
+                    key={s.id}
+                    className="rounded-2xl border border-primary/30 bg-primary/5 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold">{s.title}</p>
+                        {(s.address || s.zone || s.city) ? (
+                          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            <span className="truncate">
+                              {[s.address, s.zone, s.city].filter(Boolean).join(" · ")}
+                            </span>
+                          </p>
+                        ) : null}
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {s.matchReasons.map((r) => (
+                            <Badge
+                              key={r}
+                              className="border-emerald-400/40 bg-emerald-500/10 text-emerald-700"
+                            >
+                              {r}
+                            </Badge>
+                          ))}
+                        </div>
+                        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                          {s.rooms != null ? <span>{s.rooms} amb.</span> : null}
+                          {s.bedrooms != null ? <span>{s.bedrooms} dorm.</span> : null}
+                          {s.surfaceTotal != null ? <span>{s.surfaceTotal} m²</span> : null}
+                          {s.internalCode ? <span>· {s.internalCode}</span> : null}
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        <p className="font-semibold">{formatCurrency(s.price, s.currency)}</p>
+                        {lead.permissions.canEdit ? (
+                          <Button
+                            size="sm"
+                            disabled={isPending}
+                            onClick={() => handlePickProperty(s.id)}
+                          >
+                            Vincular
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

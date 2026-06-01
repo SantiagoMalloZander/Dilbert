@@ -115,6 +115,12 @@ export type LinkedPropertyView = {
   surfaceTotal: number | null;
 };
 
+/** A catalog property the agent thinks matches the lead's search. */
+export type PropertyMatchSuggestion = LinkedPropertyView & {
+  /** Reasons the property scored, e.g. ["Zona","Presupuesto","Tipo"]. */
+  matchReasons: string[];
+};
+
 export type LeadDetailRecord = {
   id: string;
   title: string;
@@ -137,6 +143,11 @@ export type LeadDetailRecord = {
   notes: LeadNoteItem[];
   /** Property from the internal catalog this lead is linked to, if any. */
   linkedProperty: LinkedPropertyView | null;
+  /**
+   * Catalog matches for the lead's search criteria (top 3). Empty when the
+   * lead is already linked, has no criteria, or the client isn't buying/renting.
+   */
+  suggestedProperties: PropertyMatchSuggestion[];
   /** Real-estate fields stored on the lead row (editable from the form). */
   realEstate: LeadRealEstateFields;
   permissions: {
