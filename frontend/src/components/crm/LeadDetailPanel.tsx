@@ -427,7 +427,7 @@ export function LeadDetailPanel({
         <div className="border-b border-[#2A1A0A]/10 px-6 py-5">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-3">
-              <Badge className={getStageTone(lead.stage)}>{lead.stage?.name || "Sin etapa"}</Badge>
+              <Badge className={getStageTone(lead.stage)}>{lead.stage?.name || "Sin estado"}</Badge>
               <div>
                 <h2 className="text-2xl font-semibold leading-tight">{lead.title}</h2>
                 <button
@@ -444,14 +444,13 @@ export function LeadDetailPanel({
             </Button>
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
+          <div className="mt-5 text-sm">
             <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Valor</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Valor estimado</p>
               <p className="mt-2 text-lg font-semibold">{formatCurrency(lead.value, lead.currency)}</p>
-            </div>
-            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Probabilidad</p>
-              <p className="mt-2 text-lg font-semibold">{lead.probability}%</p>
+              {usdEquivalent(lead.value, lead.currency, blueRate) ? (
+                <p className="text-[11px] text-muted-foreground">≈ {usdEquivalent(lead.value, lead.currency, blueRate)}</p>
+              ) : null}
             </div>
           </div>
         </div>
@@ -460,7 +459,7 @@ export function LeadDetailPanel({
           <section className="space-y-3">
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <CalendarClock className="h-3.5 w-3.5" />
-              Datos del lead
+              Datos del seguimiento
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <button
@@ -475,11 +474,10 @@ export function LeadDetailPanel({
                 <p className="mt-1 text-sm text-muted-foreground">{lead.contact.companyName || "Sin empresa"}</p>
               </button>
               <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
-                <p className="text-xs text-muted-foreground">Cierre esperado</p>
+                <p className="text-xs text-muted-foreground">Cierre estimado</p>
                 <p className="mt-2 font-medium">
                   {lead.expectedCloseDate ? formatDate(lead.expectedCloseDate) : "Sin fecha"}
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">Fuente: {lead.source}</p>
               </div>
               <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
                 <p className="text-xs text-muted-foreground">Vendedor asignado</p>
@@ -685,7 +683,7 @@ export function LeadDetailPanel({
                 className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground"
               >
                 <Milestone className="mr-2 h-4 w-4" />
-                Cambiar stage
+                Cambiar estado
               </Button>
             </div>
 
@@ -828,7 +826,7 @@ export function LeadDetailPanel({
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="lead-value">Valor</Label>
+                <Label htmlFor="lead-value">Valor estimado</Label>
                 <Input
                   id="lead-value"
                   type="number"
@@ -839,22 +837,7 @@ export function LeadDetailPanel({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lead-probability">Probabilidad</Label>
-                <Input
-                  id="lead-probability"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={editForm.probability}
-                  onChange={(event) =>
-                    setEditForm((current) => ({ ...current, probability: event.target.value }))
-                  }
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="lead-close-date">Cierre esperado</Label>
+                <Label htmlFor="lead-close-date">Cierre estimado</Label>
                 <Input
                   id="lead-close-date"
                   type="date"
@@ -866,26 +849,6 @@ export function LeadDetailPanel({
                     }))
                   }
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>Fuente</Label>
-                <Select
-                  value={editForm.source}
-                  onValueChange={(value) =>
-                    setEditForm((current) => ({ ...current, source: value as CrmSource }))
-                  }
-                >
-                  <SelectTrigger className="w-full bg-[#F5F0E8]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SOURCE_OPTIONS.map((source) => (
-                      <SelectItem key={source.value} value={source.value}>
-                        {source.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
@@ -1015,7 +978,7 @@ export function LeadDetailPanel({
       <Dialog open={isStageOpen} onOpenChange={setIsStageOpen}>
         <DialogContent className="border-[3px] border-[#2A1A0A] bg-[#F5F0E8] text-[#1A1A1A] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Cambiar stage</DialogTitle>
+            <DialogTitle>Cambiar estado</DialogTitle>
             <DialogDescription>Mové esta oportunidad a otra etapa del pipeline.</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -1039,7 +1002,7 @@ export function LeadDetailPanel({
             </Button>
             <Button disabled={isPending || !stageId} onClick={handleStageChange}>
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Cambiar etapa
+              Cambiar estado
             </Button>
           </DialogFooter>
         </DialogContent>

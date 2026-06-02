@@ -277,11 +277,6 @@ function LeadFormDialog({
   });
   const [realEstate, setRealEstate] = useState<LeadRealEstateFields>(EMPTY_LEAD_REAL_ESTATE);
 
-  const selectedPipeline = useMemo(
-    () => pipelines.find((pipeline) => pipeline.id === form.pipelineId) || pipelines[0],
-    [form.pipelineId, pipelines]
-  );
-
   useEffect(() => {
     if (!open || createInlineContact) {
       return;
@@ -305,17 +300,6 @@ function LeadFormDialog({
   }, [createInlineContact, open, presetContact, query]);
 
   const inlineErrors = validateContactForm(inlineContact);
-  const stageOptions = selectedPipeline?.stages || [];
-
-  const handlePipelineChange = (pipelineId: string | null) => {
-    const nextPipelineId = pipelineId || pipelines[0]?.id || "";
-    const pipeline = pipelines.find((item) => item.id === nextPipelineId) || null;
-    setForm((current) => ({
-      ...current,
-      pipelineId: nextPipelineId,
-      stageId: pipeline?.stages[0]?.id || "",
-    }));
-  };
 
   const handleSubmit = async () => {
     if (!form.title.trim()) {
@@ -569,28 +553,8 @@ function LeadFormDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 sm:col-span-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="lead-probability">Probabilidad</Label>
-                <span className="text-sm font-medium">{form.probability}%</span>
-              </div>
-              <input
-                id="lead-probability"
-                type="range"
-                min="0"
-                max="100"
-                value={form.probability}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    probability: Number(event.target.value),
-                  }))
-                }
-                className="w-full accent-[#D4420A]"
-              />
-            </div>
             <div className="space-y-2">
-              <Label htmlFor="lead-close-date">Fecha de cierre</Label>
+              <Label htmlFor="lead-close-date">Fecha estimada de cierre</Label>
               <Input
                 id="lead-close-date"
                 type="date"
@@ -602,45 +566,6 @@ function LeadFormDialog({
                   }))
                 }
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Pipeline</Label>
-              <Select value={form.pipelineId} onValueChange={handlePipelineChange}>
-                <SelectTrigger className="w-full">
-                  <span className="flex-1 truncate text-left text-sm">
-                    {pipelines.find((p) => p.id === form.pipelineId)?.name || "Seleccioná pipeline"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  {pipelines.map((pipeline) => (
-                    <SelectItem key={pipeline.id} value={pipeline.id}>
-                      {pipeline.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Stage inicial</Label>
-              <Select
-                value={form.stageId}
-                onValueChange={(value) =>
-                  setForm((current) => ({ ...current, stageId: value || current.stageId }))
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <span className="flex-1 truncate text-left text-sm">
-                    {stageOptions.find((s) => s.id === form.stageId)?.name || "Seleccioná stage"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  {stageOptions.map((stage) => (
-                    <SelectItem key={stage.id} value={stage.id}>
-                      {stage.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             {isOwner ? (
               <div className="space-y-2">

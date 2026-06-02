@@ -168,7 +168,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
   return (
     <>
       <div className="mb-6">
-        <Breadcrumbs items={[{ label: "Pipeline", href: "/app/crm/leads" }]} />
+        <Breadcrumbs items={[{ label: "Seguimiento", href: "/app/crm/leads" }]} />
       </div>
       <div className="space-y-6">
         <Card className="bg-card/90">
@@ -177,16 +177,16 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-foreground">
                 <Sparkles className="h-3.5 w-3.5" />
-                Pipeline activo
+                Seguimiento
               </div>
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight">{data.pipeline.name}</h1>
+                <h1 className="text-3xl font-semibold tracking-tight">Seguimiento de clientes</h1>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                  Mové oportunidades entre etapas, abrí el detalle lateral y actualizá el estado sin salir del board.
+                  Arrastrá cada cliente a la columna según en qué anda. Tocá una tarjeta para ver el detalle.
                 </p>
                 {activeStage ? (
                   <p className="mt-3 text-xs uppercase tracking-[0.18em] text-foreground">
-                    Filtrado por etapa: {activeStage.name}
+                    Filtrado por estado: {activeStage.name}
                   </p>
                 ) : null}
               </div>
@@ -194,11 +194,11 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
 
             <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[360px]">
               <div className="rounded-2xl border border-white/10 bg-background/50 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Leads visibles</p>
+                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Clientes en pantalla</p>
                 <p className="mt-2 text-2xl font-semibold">{summary.leadCount}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-background/50 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Valor total</p>
+                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Valor estimado total</p>
                 <p className="mt-2 text-2xl font-semibold">{formatCurrency(summary.totalValue)}</p>
               </div>
             </div>
@@ -235,7 +235,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
                 )}
               </div>
             </div>
-            <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr_1fr_auto]">
+            <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr_auto]">
               {data.currentUser.canManageAssigneeFilter ? (
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">Vendedor</Label>
@@ -244,7 +244,9 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
                   onValueChange={(value) => updateSearchParam("assignedTo", value)}
                 >
                   <SelectTrigger className="w-full border-white/10 bg-background/50 text-foreground">
-                    <SelectValue />
+                    <span className="flex-1 truncate text-left text-sm">
+                      {data.assignees.find((a) => a.id === data.filters.assignedTo)?.name || "Todos los vendedores"}
+                    </span>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos los vendedores</SelectItem>
@@ -257,26 +259,6 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
                 </Select>
               </div>
             ) : null}
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">Fuente</Label>
-              <Select
-                value={data.filters.source || "all"}
-                onValueChange={(value) => updateSearchParam("source", value)}
-              >
-                <SelectTrigger className="w-full border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las fuentes</SelectItem>
-                  {data.sources.map((source) => (
-                    <SelectItem key={source} value={source}>
-                      {getSourceLabel(source)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
               <div className="space-y-2">

@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Kanban, LayoutDashboard, Users } from "lucide-react";
+import { Home, ListChecks, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
-  { href: "/app/crm", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/app/crm/leads", label: "Pipeline", icon: Kanban },
-  { href: "/app/crm/contacts", label: "Contactos", icon: Users },
-  { href: "/app/crm/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/app/crm", label: "Inicio", icon: Home, exact: true },
+  { href: "/app/crm/leads", label: "Seguimiento", icon: ListChecks },
+  { href: "/app/crm/contacts", label: "Clientes", icon: Users },
 ];
 
 export function CrmSubNav() {

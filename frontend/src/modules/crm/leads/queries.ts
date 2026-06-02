@@ -677,56 +677,43 @@ export async function getDashboardKpis(): Promise<DashboardKpiData> {
     return isVendor ? q.eq("assigned_to", user.id) : q;
   };
 
-  const [openResult, wonMonthResult, monthTotalResult, pipelineValueResult] =
-    await Promise.all([
-      scopedBase().eq("status", "open"),
-      scopedBase().eq("status", "won").gte("updated_at", month.start).lte("updated_at", month.end),
-      scopedBase().gte("created_at", month.start).lte("created_at", month.end),
-      scopedBase().in("status", ["open", "paused"]),
-    ]);
+  // Simple, jargon-free counts a non-technical broker understands at a glance.
+  const [openResult, visitsResult, wonMonthResult] = await Promise.all([
+    scopedBase().eq("status", "open"),
+    scopedBase().eq("status", "open").eq("visit_status", "agendada"),
+    scopedBase().eq("status", "won").gte("updated_at", month.start).lte("updated_at", month.end),
+  ]);
 
-  [openResult, wonMonthResult, monthTotalResult, pipelineValueResult].forEach((result) => {
+  [openResult, visitsResult, wonMonthResult].forEach((result) => {
     if (result.error) {
       throw result.error;
     }
   });
 
   const openCount = openResult.data?.length || 0;
+  const visitsCount = visitsResult.data?.length || 0;
   const wonMonthCount = wonMonthResult.data?.length || 0;
-  const monthTotalCount = monthTotalResult.data?.length || 0;
-  const conversionRate = monthTotalCount > 0 ? (wonMonthCount / monthTotalCount) * 100 : 0;
-  const pipelineValue = (pipelineValueResult.data || []).reduce(
-    (sum, lead) => sum + (parseNumericValue(lead.value) || 0),
-    0
-  );
 
   const metrics: DashboardKpiMetric[] = [
     {
-      label: "Leads totales abiertos",
+      label: "Clientes activos",
       value: openCount,
       formattedValue: formatNumber(openCount),
-      description: "Total de leads abiertos del pipeline.",
+      description: "Búsquedas en curso ahora mismo.",
       benchmark: null,
     },
     {
-      label: "Ganados este mes",
+      label: "Visitas agendadas",
+      value: visitsCount,
+      formattedValue: formatNumber(visitsCount),
+      description: "Clientes con una visita coordinada.",
+      benchmark: null,
+    },
+    {
+      label: "Cerrados este mes",
       value: wonMonthCount,
       formattedValue: formatNumber(wonMonthCount),
-      description: "Leads cerrados como ganados durante el mes actual.",
-      benchmark: null,
-    },
-    {
-      label: "Tasa de conversión del mes",
-      value: conversionRate,
-      formattedValue: formatPercent(conversionRate),
-      description: "Won / leads creados en el mes actual.",
-      benchmark: null,
-    },
-    {
-      label: "Valor total del pipeline",
-      value: pipelineValue,
-      formattedValue: formatCurrency(pipelineValue),
-      description: "Suma de oportunidades abiertas y pausadas.",
+      description: "Operaciones cerradas en el mes.",
       benchmark: null,
     },
   ];
