@@ -8,6 +8,7 @@ import type { ContactFormInput, ContactSearchResult } from "@/modules/crm/contac
 import { createLead } from "@/modules/crm/leads/actions";
 import { EMPTY_LEAD_REAL_ESTATE, type LeadRealEstateFields } from "@/modules/crm/leads/types";
 import { LeadRealEstateFormSection } from "@/components/crm/LeadRealEstateFormSection";
+import { useSubmitGuard } from "@/lib/use-submit-guard";
 import {
   Dialog,
   DialogContent,
@@ -180,6 +181,8 @@ export function LeadFormDialog({
       router.refresh();
     });
   };
+
+  const [submitLead, isSubmitting] = useSubmitGuard(handleSubmit);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -477,8 +480,8 @@ export function LeadFormDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button disabled={isPending} onClick={handleSubmit}>
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          <Button disabled={isSubmitting} onClick={submitLead}>
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Crear lead
           </Button>
         </DialogFooter>

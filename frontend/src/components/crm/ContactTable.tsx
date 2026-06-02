@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useSubmitGuard } from "@/lib/use-submit-guard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
@@ -155,6 +156,8 @@ function ContactFormDialog({
     });
   };
 
+  const [submitContact, isSubmitting] = useSubmitGuard(handleSubmit);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-[3px] border-[#2A1A0A] bg-card text-foreground sm:max-w-lg">
@@ -215,8 +218,8 @@ function ContactFormDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button disabled={isPending || hasErrors} onClick={handleSubmit}>
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          <Button disabled={isSubmitting || hasErrors} onClick={submitContact}>
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Guardar contacto
           </Button>
         </DialogFooter>
@@ -363,6 +366,8 @@ function LeadFormDialog({
       router.refresh();
     });
   };
+
+  const [submitLead, isSubmitting] = useSubmitGuard(handleSubmit);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -654,8 +659,8 @@ function LeadFormDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button disabled={isPending} onClick={handleSubmit}>
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          <Button disabled={isSubmitting} onClick={submitLead}>
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Crear lead
           </Button>
         </DialogFooter>

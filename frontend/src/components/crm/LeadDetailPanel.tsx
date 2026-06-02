@@ -46,6 +46,7 @@ import {
 import { LeadRealEstateFormSection } from "@/components/crm/LeadRealEstateFormSection";
 import { emitGlobalToast } from "@/lib/global-toast";
 import { useBlueRate } from "@/lib/use-blue-rate";
+import { useSubmitGuard } from "@/lib/use-submit-guard";
 import { usdEquivalent } from "@/lib/money-format";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -336,6 +337,9 @@ export function LeadDetailPanel({
     emitGlobalToast({ tone: "success", text: "Actividad registrada." });
     refreshView();
   };
+
+  const [submitNote, isSubmittingNote] = useSubmitGuard(handleAddNote);
+  const [submitActivity, isSubmittingActivity] = useSubmitGuard(handleAddActivity);
 
   const handleStageChange = async () => {
     const response = await moveLeadToStage({
@@ -920,8 +924,8 @@ export function LeadDetailPanel({
             <Button variant="outline" onClick={() => setIsNoteOpen(false)}>
               Cancelar
             </Button>
-            <Button disabled={isPending} onClick={handleAddNote}>
-              {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            <Button disabled={isSubmittingNote} onClick={submitNote}>
+              {isSubmittingNote ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Guardar nota
             </Button>
           </DialogFooter>
@@ -998,8 +1002,8 @@ export function LeadDetailPanel({
             <Button variant="outline" onClick={() => setIsActivityOpen(false)}>
               Cancelar
             </Button>
-            <Button disabled={isPending} onClick={handleAddActivity}>
-              {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            <Button disabled={isSubmittingActivity} onClick={submitActivity}>
+              {isSubmittingActivity ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Guardar actividad
             </Button>
           </DialogFooter>
