@@ -1,15 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return {
-      // Serve the static landing at "/" while keeping the clean URL
-      // (no visible /landing.html). Runs before the filesystem check.
-      beforeFiles: [{ source: "/", destination: "/landing.html" }],
-      afterFiles: [],
-      fallback: [],
-    };
-  },
+  // "/" is rewritten to /landing.html at the CDN level in netlify.toml
+  // (status 200), which the Netlify adapter resolves to the static file.
   async redirects() {
     // Legacy single-tenant CRM routes → workspace app equivalents.
     // Soft (307) so old bookmarks land in the right place instead of 404ing.
