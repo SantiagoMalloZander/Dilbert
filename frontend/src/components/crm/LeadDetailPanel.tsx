@@ -513,14 +513,11 @@ export function LeadDetailPanel({
             </section>
           ) : null}
 
-          {lead.suggestedProperties.length > 0 && !lead.linkedProperty ? (
+          {lead.suggestedProperties.length > 0 ? (
             <section className="space-y-3">
               <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
-                Sugerencias del catálogo
-                <span className="text-[10px] font-normal normal-case tracking-normal text-muted-foreground">
-                  · matches con la búsqueda
-                </span>
+                {lead.linkedProperty ? "Otras parecidas para ofrecerle" : "Propiedades similares para ofrecerle"}
               </div>
               <div className="space-y-2">
                 {lead.suggestedProperties.map((s) => (
@@ -566,10 +563,11 @@ export function LeadDetailPanel({
                         {lead.permissions.canEdit ? (
                           <Button
                             size="sm"
+                            variant={lead.linkedProperty ? "outline" : "default"}
                             disabled={isPending}
                             onClick={() => handlePickProperty(s.id)}
                           >
-                            Vincular
+                            {lead.linkedProperty ? "Hacer base" : "Elegir"}
                           </Button>
                         ) : null}
                       </div>
@@ -584,7 +582,7 @@ export function LeadDetailPanel({
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 <Building2 className="h-3.5 w-3.5" />
-                Propiedad vinculada
+                Inmueble que consultó
               </div>
               {lead.linkedProperty && lead.permissions.canEdit ? (
                 <button
@@ -647,7 +645,7 @@ export function LeadDetailPanel({
                 className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#2A1A0A]/15 bg-[#F5F0E8]/50 p-4 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A] disabled:opacity-50"
               >
                 <Building2 className="h-4 w-4" />
-                Vincular propiedad del catálogo
+                Asignar el inmueble que consultó
               </button>
             )}
           </section>
@@ -1067,7 +1065,7 @@ export function LeadDetailPanel({
       <PropertyPickerDialog
         open={isPropertyPickerOpen}
         onOpenChange={setIsPropertyPickerOpen}
-        onPick={handlePickProperty}
+        onPick={(property) => handlePickProperty(property.id)}
         disabled={isPending}
       />
     </>

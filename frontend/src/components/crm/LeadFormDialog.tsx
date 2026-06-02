@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Search } from "lucide-react";
+import { Building2, Loader2, Search, X } from "lucide-react";
 import { createContact, searchContactsAction } from "@/modules/crm/contacts/actions";
 import type { ContactFormInput, ContactSearchResult } from "@/modules/crm/contacts/types";
 import { createLead } from "@/modules/crm/leads/actions";
 import { EMPTY_LEAD_REAL_ESTATE, validateLeadSearchFields, type LeadRealEstateFields } from "@/modules/crm/leads/types";
 import { LeadRealEstateFormSection } from "@/components/crm/LeadRealEstateFormSection";
+import { PropertyPickerDialog } from "@/components/crm/PropertyPickerDialog";
 import { useSubmitGuard } from "@/lib/use-submit-guard";
 import {
   Dialog,
@@ -75,6 +76,8 @@ export function LeadFormDialog({
     assignedTo: assignees[0]?.id || "",
   });
   const [realEstate, setRealEstate] = useState<LeadRealEstateFields>(EMPTY_LEAD_REAL_ESTATE);
+  const [baseProperty, setBaseProperty] = useState<{ id: string; title: string } | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [inlineContact, setInlineContact] = useState<ContactFormInput>({
     firstName: "",
     lastName: "",
@@ -158,6 +161,7 @@ export function LeadFormDialog({
       assignedTo: isOwner ? form.assignedTo || null : null,
       source: "manual",
       realEstate,
+      listingId: baseProperty?.id ?? null,
     });
 
     if (response.error) {
@@ -407,6 +411,34 @@ export function LeadFormDialog({
           idPrefix="create-re"
         />
 
+        <div className="space-y-2">
+          <Label>Inmueble que consultó (opcional)</Label>
+          {baseProperty ? (
+            <div className="flex items-center justify-between gap-2 rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-3">
+              <span className="flex items-center gap-2 truncate text-sm font-medium">
+                <Building2 className="h-4 w-4 shrink-0 text-primary" />
+                <span className="truncate">{baseProperty.title}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setBaseProperty(null)}
+                className="shrink-0 text-muted-foreground hover:text-[#D4420A]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#2A1A0A]/15 bg-[#F5F0E8]/50 p-3 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A]"
+            >
+              <Building2 className="h-4 w-4" />
+              Elegir del catálogo
+            </button>
+          )}
+        </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
@@ -417,6 +449,15 @@ export function LeadFormDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <PropertyPickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onPick={(property) => {
+          setBaseProperty({ id: property.id, title: property.title });
+          setPickerOpen(false);
+        }}
+      />
     </Dialog>
   );
 }

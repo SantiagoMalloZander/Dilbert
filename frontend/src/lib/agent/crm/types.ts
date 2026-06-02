@@ -133,6 +133,8 @@ export interface NewDealInput {
   metadata: Record<string, unknown>;
   /** Real-estate fields (null for generic tenants). */
   real_estate?: RealEstateFields | null;
+  /** Base property the lead is about, when the agent could resolve it. */
+  listingId?: string | null;
 }
 
 /** Canonical, destination-neutral deal status vocabulary. */

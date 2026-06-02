@@ -274,6 +274,7 @@ export async function createLead(input: CreateLeadInput): Promise<Result<LeadMut
         status: initialStatus,
         source: input.source,
         created_by: user.id,
+        listing_id: input.listingId ?? null,
         ...realEstatePayload(input.realEstate),
       })
       .select("*")

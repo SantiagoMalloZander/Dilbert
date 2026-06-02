@@ -193,6 +193,7 @@ export class NativeSupabaseConnector implements CRMConnector {
         source: input.source,
         status: "open" as const,
         metadata: input.metadata as Json,
+        listing_id: input.listingId ?? null,
         ...(input.real_estate ?? {}),
       })
       .select("id")

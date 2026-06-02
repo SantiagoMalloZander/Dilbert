@@ -257,6 +257,7 @@ async function buildStageUpdates(
 
 async function manageLead(
   connector: CRMConnector,
+  companyId: string,
   userId: string,
   contactId: string,
   extracted: ExtractedData,
@@ -357,6 +358,10 @@ async function manageLead(
   }
 
   // ── Branch 3: create new lead ──────────────────────────────────────────────
+  // The agent tries to deduce the base property from the listing reference it
+  // extracted (a portal URL or the agency's internal code).
+  const listingId = await resolveBasePropertyId(companyId, extracted.real_estate?.listing_ref ?? null);
+
   const newId = await connector.createDeal({
     createdBy: userId,
     assignedTo: userId,
@@ -379,9 +384,44 @@ async function manageLead(
     },
     // Promote real-estate attributes to first-class columns (queryable/indexable).
     real_estate: toRealEstateFields(extracted.real_estate),
+    listingId,
   });
   if (newId) created.push(newId);
   return { created, updated };
+}
+
+/**
+ * Resolves the base property from a listing reference the agent extracted —
+ * matches against the catalog by internal code or listing URL. Returns null
+ * when there's no ref or no confident match (then we just show suggestions).
+ */
+async function resolveBasePropertyId(
+  companyId: string,
+  listingRef: string | null
+): Promise<string | null> {
+  const ref = listingRef?.trim();
+  if (!ref) return null;
+  const supabase = createAdminSupabaseClient();
+
+  // Exact internal code first.
+  const byCode = await supabase
+    .from("properties")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("internal_code", ref)
+    .limit(1)
+    .maybeSingle();
+  if (byCode.data?.id) return byCode.data.id;
+
+  // Then the listing URL (the portal link the lead clicked).
+  const byUrl = await supabase
+    .from("properties")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("listing_url", ref)
+    .limit(1)
+    .maybeSingle();
+  return byUrl.data?.id ?? null;
 }
 
 // ─── Activity creator ─────────────────────────────────────────────────────────
@@ -480,7 +520,7 @@ export async function writeTocrm(input: WriterInput, connector: CRMConnector): P
 
   // 3. Manage leads
   const { created, updated: updatedLeads } = await manageLead(
-    connector, userId, contactId, extracted, source
+    connector, companyId, userId, contactId, extracted, source
   );
   result.leadsCreated = created;
   result.leadsUpdated = updatedLeads;

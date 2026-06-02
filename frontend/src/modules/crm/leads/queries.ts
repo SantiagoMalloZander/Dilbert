@@ -27,6 +27,7 @@ import type {
 } from "@/modules/crm/leads/types";
 import { mapPropertyRow } from "@/modules/agency/properties/queries";
 import { findPropertyMatches } from "@/modules/agency/properties/matcher";
+import type { PropertyRecord } from "@/modules/agency/properties/types";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type ContactRow = Database["public"]["Tables"]["contacts"]["Row"];
@@ -373,17 +374,59 @@ function buildNoteItems(notes: NoteRow[], usersById: Map<string, UserRow>): Lead
   }));
 }
 
+/** venta/alquiler of the base property → the lead-side operation it satisfies. */
+function deriveLeadOperation(baseOp: string | null): string | null {
+  if (baseOp === "venta") return "compra";
+  if (baseOp === "alquiler" || baseOp === "alquiler_temporario") return "alquiler";
+  return null;
+}
+
 async function computeSuggestedProperties(
   companyId: string,
   lead: LeadRow
 ): Promise<PropertyMatchSuggestion[]> {
-  if (lead.listing_id) return []; // Already linked → no suggestions.
-  if (lead.operation_type !== "compra" && lead.operation_type !== "alquiler") return [];
-  // Need at least one strong criterion to make a meaningful match.
-  const hasCriteria = Boolean(lead.zone || lead.property_type || lead.budget_max || lead.budget_min);
-  if (!hasCriteria) return [];
-
   const supabase = await createServerSupabaseClient();
+
+  // Combine the lead's own search criteria with criteria derived from its base
+  // property (leads.listing_id). The lead's explicit data wins; the base fills
+  // the gaps and provides a price range (±25%) when the client gave none.
+  let base: PropertyRecord | null = null;
+  if (lead.listing_id) {
+    const { data: baseRow } = await supabase
+      .from("properties")
+      .select("*")
+      .eq("id", lead.listing_id)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    base = baseRow ? mapPropertyRow(baseRow) : null;
+  }
+
+  const operationType =
+    lead.operation_type || (base ? deriveLeadOperation(base.operationType) : null);
+  if (operationType !== "compra" && operationType !== "alquiler") return [];
+
+  const basePrice = base?.price ?? null;
+  const budgetMin =
+    lead.budget_min != null ? Number(lead.budget_min) : basePrice ? Math.round(basePrice * 0.75) : null;
+  const budgetMax =
+    lead.budget_max != null ? Number(lead.budget_max) : basePrice ? Math.round(basePrice * 1.25) : null;
+
+  const criteria = {
+    operationType,
+    propertyType: lead.property_type || base?.propertyType || null,
+    zone: lead.zone || base?.zone || null,
+    budgetMin,
+    budgetMax,
+    rooms: lead.rooms ?? base?.rooms ?? null,
+    bedrooms: lead.bedrooms ?? base?.bedrooms ?? null,
+    financing: lead.financing,
+  };
+
+  // Need at least one meaningful criterion.
+  if (!criteria.zone && !criteria.propertyType && !criteria.budgetMax && !criteria.budgetMin) {
+    return [];
+  }
+
   const { data } = await supabase
     .from("properties")
     .select("*")
@@ -391,19 +434,7 @@ async function computeSuggestedProperties(
     .eq("status", "disponible");
   if (!data?.length) return [];
 
-  const matches = findPropertyMatches(
-    {
-      operationType: lead.operation_type,
-      propertyType: lead.property_type,
-      zone: lead.zone,
-      budgetMin: lead.budget_min == null ? null : Number(lead.budget_min),
-      budgetMax: lead.budget_max == null ? null : Number(lead.budget_max),
-      rooms: lead.rooms,
-      bedrooms: lead.bedrooms,
-      financing: lead.financing,
-    },
-    data.map(mapPropertyRow)
-  );
+  const matches = findPropertyMatches(criteria, data.map(mapPropertyRow), lead.listing_id);
 
   return matches.map((m) => ({
     id: m.property.id,

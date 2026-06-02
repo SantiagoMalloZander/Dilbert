@@ -297,6 +297,8 @@ export type LeadUpsertPayload = {
   assignedTo: string | null;
   source: CrmSource;
   realEstate?: LeadRealEstateFields | null;
+  /** Base property the lead came in for (the listing that originated it). */
+  listingId?: string | null;
 };
 
 export type CreateLeadInput = LeadUpsertPayload;

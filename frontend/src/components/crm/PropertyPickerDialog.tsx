@@ -46,7 +46,7 @@ export function PropertyPickerDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onPick: (propertyId: string) => void;
+  onPick: (property: PropertyRecord) => void;
   disabled?: boolean;
 }) {
   const [loading, setLoading] = useState(false);
@@ -131,7 +131,7 @@ export function PropertyPickerDialog({
                   key={p.id}
                   type="button"
                   disabled={disabled}
-                  onClick={() => onPick(p.id)}
+                  onClick={() => onPick(p)}
                   className="flex w-full items-start gap-3 rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-3 text-left transition-all hover:border-[#D4420A]/30 disabled:opacity-50"
                 >
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-xs font-semibold text-primary">

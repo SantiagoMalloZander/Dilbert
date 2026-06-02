@@ -59,7 +59,8 @@ function zoneMatches(leadZone: string | null, propertyZone: string | null): bool
 
 export function findPropertyMatches(
   criteria: PropertyMatcherCriteria,
-  properties: PropertyRecord[]
+  properties: PropertyRecord[],
+  excludeId?: string | null
 ): PropertyMatch[] {
   // Only buyers / renters trigger suggestions. Sellers, owners offering and
   // tasaciones are on the other side of the trade.
@@ -67,6 +68,7 @@ export function findPropertyMatches(
 
   const matches: PropertyMatch[] = [];
   for (const property of properties) {
+    if (excludeId && property.id === excludeId) continue; // never recommend the base property
     if (property.status !== "disponible") continue;
     if (!isOperationCompatible(criteria.operationType, property.operationType)) continue;
 
