@@ -258,6 +258,23 @@ export type LeadRealEstateFields = {
   financing: string | null;
 };
 
+/**
+ * Validates that a lead carries enough of the client's search criteria for the
+ * agent to recommend properties. Returns an error message or null if OK.
+ * Buyers/renters must also have a budget; sellers/valuations describe the
+ * property they offer, so budget is optional there.
+ */
+export function validateLeadSearchFields(re: LeadRealEstateFields): string | null {
+  if (!re.operationType) return "Elegí la operación que busca el cliente (compra, alquiler, venta o tasación).";
+  if (!re.propertyType) return "Elegí el tipo de propiedad.";
+  if (!re.zone || !re.zone.trim()) return "Indicá la zona o barrio.";
+  const isBuyerSide = re.operationType === "compra" || re.operationType === "alquiler";
+  if (isBuyerSide && re.budgetMin == null && re.budgetMax == null) {
+    return "Cargá el presupuesto del cliente (al menos un tope) para poder recomendar propiedades.";
+  }
+  return null;
+}
+
 export const EMPTY_LEAD_REAL_ESTATE: LeadRealEstateFields = {
   operationType: null, clientRole: null, propertyType: null,
   zone: null, city: null, province: null,

@@ -127,7 +127,9 @@ const ROLE_LABELS: Record<string, string> = {
   buyer: "Comprador", seller: "Vendedor", owner: "Propietario", renter: "Inquilino", investor: "Inversor",
 };
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
-  depto: "Departamento", casa: "Casa", ph: "PH", terreno: "Terreno",
+  depto: "Departamento", casa: "Casa", ph: "PH",
+  terreno: "Terreno", terreno_industrial: "Terreno industrial",
+  terreno_barrio: "Lote en barrio cerrado", terreno_complejo: "Lote en complejo",
   local: "Local", oficina: "Oficina", cochera: "Cochera", galpon: "Galpón", quinta: "Quinta",
 };
 const URGENCY_LABELS: Record<string, string> = { high: "Alta", medium: "Media", low: "Baja" };

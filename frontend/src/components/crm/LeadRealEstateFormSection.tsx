@@ -26,10 +26,13 @@ const PROPERTY_TYPES = [
   { value: "casa", label: "Casa" },
   { value: "ph", label: "PH" },
   { value: "terreno", label: "Terreno" },
+  { value: "terreno_industrial", label: "Terreno industrial" },
+  { value: "terreno_barrio", label: "Lote en barrio" },
+  { value: "terreno_complejo", label: "Lote en complejo" },
   { value: "local", label: "Local" },
   { value: "oficina", label: "Oficina" },
-  { value: "cochera", label: "Cochera" },
   { value: "galpon", label: "Galpón" },
+  { value: "cochera", label: "Cochera" },
   { value: "quinta", label: "Quinta" },
 ] as const;
 

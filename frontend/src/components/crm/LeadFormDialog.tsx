@@ -6,7 +6,7 @@ import { Loader2, Search } from "lucide-react";
 import { createContact, searchContactsAction } from "@/modules/crm/contacts/actions";
 import type { ContactFormInput, ContactSearchResult } from "@/modules/crm/contacts/types";
 import { createLead } from "@/modules/crm/leads/actions";
-import { EMPTY_LEAD_REAL_ESTATE, type LeadRealEstateFields } from "@/modules/crm/leads/types";
+import { EMPTY_LEAD_REAL_ESTATE, validateLeadSearchFields, type LeadRealEstateFields } from "@/modules/crm/leads/types";
 import { LeadRealEstateFormSection } from "@/components/crm/LeadRealEstateFormSection";
 import { useSubmitGuard } from "@/lib/use-submit-guard";
 import {
@@ -127,6 +127,12 @@ export function LeadFormDialog({
   const handleSubmit = async () => {
     if (!form.title.trim()) {
       emitGlobalToast({ tone: "error", text: "El lead necesita un título." });
+      return;
+    }
+
+    const searchError = validateLeadSearchFields(realEstate);
+    if (searchError) {
+      emitGlobalToast({ tone: "error", text: searchError });
       return;
     }
 

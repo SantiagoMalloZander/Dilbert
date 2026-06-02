@@ -16,7 +16,9 @@ const OPERATION_LABELS: Record<string, string> = {
   compra: "Compra", venta: "Venta", alquiler: "Alquiler", tasacion: "Tasación",
 };
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
-  depto: "Departamento", casa: "Casa", ph: "PH", terreno: "Terreno",
+  depto: "Departamento", casa: "Casa", ph: "PH",
+  terreno: "Terreno", terreno_industrial: "Terreno industrial",
+  terreno_barrio: "Lote en barrio cerrado", terreno_complejo: "Lote en complejo",
   local: "Local", oficina: "Oficina", cochera: "Cochera", galpon: "Galpón", quinta: "Quinta",
 };
 

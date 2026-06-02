@@ -223,7 +223,8 @@ const REAL_ESTATE_DOMAIN =
 const REAL_ESTATE_RULES =
   "\n- real_estate.operation_type: compra | venta | alquiler | tasacion. compra/alquiler = cliente busca; venta/tasacion = cliente ofrece la propiedad.\n" +
   "- real_estate.client_role: buyer (compra) | seller (vende propia) | owner (tiene + alquila) | renter (alquila) | investor.\n" +
-  "- real_estate.property_type: normalizá a uno de: depto | casa | ph | terreno | local | oficina | cochera | galpon | quinta.\n" +
+  "- real_estate.property_type: normalizá a uno de: depto | casa | ph | terreno | terreno_industrial | terreno_barrio | terreno_complejo | local | oficina | galpon | cochera | quinta. " +
+  "Para terrenos: terreno_industrial = lote en parque/zona industrial; terreno_barrio = lote en barrio cerrado/country; terreno_complejo = lote en complejo/condominio; terreno = lote común sin especificar.\n" +
   "- Para inmobiliaria, deal_info.value = real_estate.budget_max (el techo del presupuesto), deal_info.currency = real_estate.budget_currency.\n" +
   "- deal_info.title: armalo como \"{Operación} {Tipo} {Zona}\" (ej. \"Compra Depto Palermo\"). Si falta info, lo que tengas.\n" +
   "- Moneda en AR: \"dólares\", \"verdes\", \"USD\", \"U$D\", \"u$s\" → \"USD\". \"pesos\", \"$ AR\" o solo \"$\" → \"ARS\". Default si hay monto sin aclarar: ARS.\n" +
@@ -236,7 +237,7 @@ const REAL_ESTATE_SCHEMA = `,
   "real_estate": {
     "operation_type": "compra" | "venta" | "alquiler" | "tasacion" | null,
     "client_role": "buyer" | "seller" | "owner" | "renter" | "investor" | null,
-    "property_type": "depto" | "casa" | "ph" | "terreno" | "local" | "oficina" | "cochera" | "galpon" | "quinta" | null,
+    "property_type": "depto" | "casa" | "ph" | "terreno" | "terreno_industrial" | "terreno_barrio" | "terreno_complejo" | "local" | "oficina" | "galpon" | "cochera" | "quinta" | null,
     "zone": string | null,
     "city": string | null,
     "province": string | null,

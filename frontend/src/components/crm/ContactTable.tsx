@@ -20,6 +20,12 @@ import type {
   ContactSource,
 } from "@/modules/crm/contacts/types";
 import { createLead } from "@/modules/crm/leads/actions";
+import {
+  EMPTY_LEAD_REAL_ESTATE,
+  validateLeadSearchFields,
+  type LeadRealEstateFields,
+} from "@/modules/crm/leads/types";
+import { LeadRealEstateFormSection } from "@/components/crm/LeadRealEstateFormSection";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/crm/Breadcrumbs";
 import { Button } from "@/components/ui/button";
@@ -269,6 +275,7 @@ function LeadFormDialog({
     companyName: "",
     position: "",
   });
+  const [realEstate, setRealEstate] = useState<LeadRealEstateFields>(EMPTY_LEAD_REAL_ESTATE);
 
   const selectedPipeline = useMemo(
     () => pipelines.find((pipeline) => pipeline.id === form.pipelineId) || pipelines[0],
@@ -316,6 +323,12 @@ function LeadFormDialog({
       return;
     }
 
+    const searchError = validateLeadSearchFields(realEstate);
+    if (searchError) {
+      emitGlobalToast({ tone: "error", text: searchError });
+      return;
+    }
+
     let contactId = selectedContact?.id || null;
 
     if (createInlineContact) {
@@ -353,6 +366,7 @@ function LeadFormDialog({
       stageId: form.stageId,
       assignedTo: isOwner ? form.assignedTo || null : null,
       source: "manual",
+      realEstate,
     });
 
     if (response.error) {
@@ -371,7 +385,7 @@ function LeadFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-[3px] border-[#2A1A0A] bg-card text-foreground sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto border-[3px] border-[#2A1A0A] bg-card text-foreground sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Nuevo lead</DialogTitle>
           <DialogDescription>
@@ -653,6 +667,12 @@ function LeadFormDialog({
               </div>
             ) : null}
           </div>
+
+          <LeadRealEstateFormSection
+            values={realEstate}
+            onChange={(patch) => setRealEstate((prev) => ({ ...prev, ...patch }))}
+            idPrefix="contact-lead-re"
+          />
         </div>
 
         <DialogFooter>

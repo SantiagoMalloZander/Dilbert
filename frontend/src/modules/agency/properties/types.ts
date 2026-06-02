@@ -1,7 +1,9 @@
 export type Result<T> = { data: T | null; error: string | null };
 
 export const PROPERTY_TYPES = [
-  "depto", "casa", "ph", "terreno", "local", "oficina", "cochera", "galpon", "quinta",
+  "depto", "casa", "ph",
+  "terreno", "terreno_industrial", "terreno_barrio", "terreno_complejo",
+  "local", "oficina", "galpon", "cochera", "quinta",
 ] as const;
 
 export const OPERATION_TYPES = ["venta", "alquiler", "alquiler_temporario"] as const;
@@ -16,9 +18,11 @@ export const COMMON_AMENITIES = [
 ] as const;
 
 export const PROPERTY_TYPE_LABELS: Record<string, string> = {
-  depto: "Departamento", casa: "Casa", ph: "PH", terreno: "Terreno",
-  local: "Local", oficina: "Oficina", cochera: "Cochera",
-  galpon: "Galpón", quinta: "Quinta",
+  depto: "Departamento", casa: "Casa", ph: "PH",
+  terreno: "Terreno", terreno_industrial: "Terreno industrial",
+  terreno_barrio: "Lote en barrio cerrado", terreno_complejo: "Lote en complejo",
+  local: "Local", oficina: "Oficina", galpon: "Galpón",
+  cochera: "Cochera", quinta: "Quinta",
 };
 
 export const OPERATION_LABELS: Record<string, string> = {
