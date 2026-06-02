@@ -36,6 +36,15 @@ export type AdminVendorRecord = {
   status: "active" | "inactive";
 };
 
+export type AdminUserRecord = {
+  id: string;
+  email: string;
+  name: string;
+  role: "owner" | "analyst" | "vendor";
+  createdAt: string;
+  status: "active" | "inactive";
+};
+
 export type AdminCompanyRecord = {
   id: string;
   name: string;
@@ -51,6 +60,7 @@ export type AdminCompanyRecord = {
     state: "active" | "pending";
   } | null;
   vendors: AdminVendorRecord[];
+  users: AdminUserRecord[];
 };
 
 function normalizeEmail(email: string) {
@@ -119,6 +129,17 @@ export async function listAdminCompanies() {
         createdAt: user.created_at,
         status: user.is_active ? ("active" as const) : ("inactive" as const),
       }));
+    const roleOrder: Record<UserRow["role"], number> = { owner: 0, analyst: 1, vendor: 2 };
+    const allUsers = [...companyUsers]
+      .sort((a, b) => roleOrder[a.role] - roleOrder[b.role])
+      .map((user) => ({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        createdAt: user.created_at,
+        status: user.is_active ? ("active" as const) : ("inactive" as const),
+      }));
 
     return {
       id: company.id,
@@ -137,6 +158,7 @@ export async function listAdminCompanies() {
           }
         : fallbackOwner,
       vendors,
+      users: allUsers,
     } satisfies AdminCompanyRecord;
   });
 }

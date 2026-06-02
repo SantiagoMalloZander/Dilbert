@@ -52,6 +52,8 @@ function buildOwnerInviteEmail(params: {
   `;
 }
 
+const PASSWORD_REGEX = /^(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
+
 async function requireAdminAction() {
   const { user, company_id } = await requireAuth({
     requireCompany: false,
@@ -374,4 +376,52 @@ export async function demoteVendor(params: {
   }
 
   await revokeAuthSessionsByUserId(params.userId);
+}
+
+export async function setUserPassword(params: {
+  userId: string;
+  newPassword: string;
+}) {
+  await requireAdminAction();
+
+  const newPassword = params.newPassword.trim();
+
+  if (newPassword.length < 8) {
+    throw new Error("PASSWORD_TOO_SHORT");
+  }
+
+  if (!PASSWORD_REGEX.test(newPassword)) {
+    throw new Error("PASSWORD_WEAK");
+  }
+
+  const supabase = createAdminSupabaseClient();
+
+  // Confirm the target is a real workspace user (don't let the panel touch
+  // arbitrary auth ids). users.id === the Supabase auth user id.
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("id, email")
+    .eq("id", params.userId)
+    .maybeSingle();
+
+  if (userError) {
+    throw userError;
+  }
+
+  if (!user) {
+    throw new Error("USER_NOT_FOUND");
+  }
+
+  const { error } = await supabase.auth.admin.updateUserById(params.userId, {
+    password: newPassword,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  // Force a re-login everywhere so the new password takes effect.
+  await revokeAuthSessionsByUserId(params.userId);
+
+  return { email: user.email as string };
 }

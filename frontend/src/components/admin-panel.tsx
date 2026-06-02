@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Building2,
+  KeyRound,
   Loader2,
   Shield,
   UserMinus,
   Users,
 } from "lucide-react";
-import type { AdminCompanyRecord } from "@/modules/admin/queries";
+import type { AdminCompanyRecord, AdminUserRecord } from "@/modules/admin/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +46,14 @@ function getStatusLabel(status: AdminCompanyRecord["status"]) {
   return status === "inactive" ? "Inactiva" : "Suspendida";
 }
 
+function getUserRoleLabel(role: AdminUserRecord["role"]) {
+  if (role === "owner") {
+    return "Owner";
+  }
+
+  return role === "analyst" ? "Analista" : "Vendedor";
+}
+
 export function AdminPanel({
   companies,
 }: {
@@ -55,6 +64,8 @@ export function AdminPanel({
   const [flashMessage, setFlashMessage] = useState<FlashMessage>(null);
   const [actionKey, setActionKey] = useState<string | null>(null);
   const [vendorLimitDrafts, setVendorLimitDrafts] = useState<Record<string, string>>({});
+  const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>({});
+  const [openPasswordUser, setOpenPasswordUser] = useState<string | null>(null);
   const [createForm, setCreateForm] = useState({
     companyName: "",
     ownerEmail: "",
@@ -315,15 +326,67 @@ export function AdminPanel({
     }
   }
 
+  async function handleSetPassword(user: AdminUserRecord) {
+    const newPassword = (passwordDrafts[user.id] || "").trim();
+
+    if (newPassword.length < 8) {
+      setFlashMessage({
+        tone: "error",
+        text: "La contraseña debe tener al menos 8 caracteres.",
+      });
+      return;
+    }
+
+    setFlashMessage(null);
+    setActionKey(`password:${user.id}`);
+
+    try {
+      const response = await fetch(`${APP_ADMIN_API_BASE}/users/${user.id}/password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFlashMessage({
+          tone: "error",
+          text: data.error || "No pude cambiar la contraseña.",
+        });
+        return;
+      }
+
+      setFlashMessage({
+        tone: "success",
+        text: `Listo. ${user.email} ya puede entrar con la nueva contraseña.`,
+      });
+      setPasswordDrafts((current) => ({ ...current, [user.id]: "" }));
+      setOpenPasswordUser(null);
+    } catch {
+      emitGlobalToast({
+        tone: "error",
+        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
+      });
+      setFlashMessage({
+        tone: "error",
+        text: "No pude cambiar la contraseña.",
+      });
+    } finally {
+      setActionKey(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
-          <Badge>Solo dilbert@gmail.com</Badge>
+          <Badge>Portal del super-admin</Badge>
           <h2 className="text-3xl font-semibold tracking-tight">Panel de administración</h2>
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Alta de empresas, control de límites comerciales, baja de vendedores e
-            impersonación segura por empresa.
+            Alta de empresas, límites comerciales, baja de vendedores, cambio de
+            contraseña de cualquier usuario y acceso a cada empresa.
           </p>
         </div>
 
@@ -558,6 +621,79 @@ export function AdminPanel({
                           )}
                           Dar de baja vendedor
                         </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-[22px] border border-white/10">
+                <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <KeyRound className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-medium">Usuarios y contraseñas</p>
+                  </div>
+                  <Badge variant="secondary">{company.users.length}</Badge>
+                </div>
+
+                {company.users.length === 0 ? (
+                  <div className="px-4 py-6 text-sm text-muted-foreground">
+                    Esta empresa todavía no tiene usuarios registrados.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/10">
+                    {company.users.map((user) => (
+                      <div key={user.id} className="px-4 py-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-foreground">{user.name}</p>
+                              <Badge variant="outline">{getUserRoleLabel(user.role)}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                          </div>
+
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() =>
+                              setOpenPasswordUser((current) =>
+                                current === user.id ? null : user.id
+                              )
+                            }
+                            disabled={actionKey !== null}
+                          >
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            Cambiar contraseña
+                          </Button>
+                        </div>
+
+                        {openPasswordUser === user.id ? (
+                          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                            <Input
+                              type="text"
+                              autoComplete="off"
+                              placeholder="Nueva contraseña (mín. 8, con número y símbolo)"
+                              value={passwordDrafts[user.id] || ""}
+                              onChange={(event) =>
+                                setPasswordDrafts((current) => ({
+                                  ...current,
+                                  [user.id]: event.target.value,
+                                }))
+                              }
+                              className="border-white/10 bg-background"
+                            />
+                            <Button
+                              onClick={() => handleSetPassword(user)}
+                              disabled={actionKey !== null}
+                            >
+                              {actionKey === `password:${user.id}` ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : null}
+                              Guardar
+                            </Button>
+                          </div>
+                        ) : null}
                       </div>
                     ))}
                   </div>
