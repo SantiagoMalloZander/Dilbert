@@ -7,7 +7,6 @@ import {
   Activity,
   Bot,
   Building2,
-  FolderCog,
   Loader2,
   Settings,
   Shield,
@@ -15,7 +14,6 @@ import {
 } from "lucide-react";
 import {
   canAccessAdmin,
-  canConnectChannels,
   canManageUsers,
 } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils";
@@ -56,12 +54,6 @@ export function AppNav({
       label: "Centro de Usuarios",
       icon: Users,
       visible: hasWorkspaceAccess && canManageUsers(role),
-    },
-    {
-      href: "/app/integrations",
-      label: role === "vendor" ? "Mis Integraciones" : "Integraciones",
-      icon: FolderCog,
-      visible: hasWorkspaceAccess && (role === "owner" || canConnectChannels(role)),
     },
     {
       href: "/app/settings",

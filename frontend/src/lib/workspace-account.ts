@@ -2,11 +2,6 @@ import { randomUUID } from "crypto";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr";
 import { getRoleLabel, type AppRole } from "@/lib/workspace-roles";
-import {
-  INTEGRATION_DEFINITIONS,
-  fromDatabaseChannelType,
-  type IntegrationChannelType,
-} from "@/lib/workspace-integrations";
 import { revokeAuthSessionsByUserId } from "@/lib/workspace-session-security";
 import { getCompanyById } from "@/modules/admin/queries";
 
@@ -25,19 +20,6 @@ type UserRow = {
   created_at: string;
 };
 
-type ChannelCredentialRow = {
-  channel_type: string;
-  connected_at: string;
-  status: "pending" | "connected" | null;
-};
-
-export type AccountChannelRecord = {
-  type: IntegrationChannelType;
-  label: string;
-  status: "connected" | "disconnected";
-  connectedAt: string | null;
-};
-
 export type AccountPageData = {
   name: string;
   email: string;
@@ -49,7 +31,6 @@ export type AccountPageData = {
   createdAt: string;
   hasPassword: boolean;
   oauthOnly: boolean;
-  channels: AccountChannelRecord[];
 };
 
 function sanitizeFileName(fileName: string) {
@@ -202,41 +183,8 @@ export async function getAccountPageData(params: {
     // auth.admin may fail in some contexts; fall back to userRow data
   }
 
-  let channelRows: ChannelCredentialRow[] = [];
-  try {
-    // @ts-ignore - Supabase types may not reflect latest schema; runtime query is correct
-    const { data: channelData, error: channelError } = await supabase
-      .from("channel_credentials")
-      .select("channel_type, connected_at, status")
-      .eq("user_id", params.userId);
-
-    if (!channelError && channelData) {
-      channelRows = (channelData as unknown as ChannelCredentialRow[]) || [];
-    }
-  } catch {
-    // If channel_credentials query fails, continue without channels (not a critical field)
-  }
-
   const providers = authUser ? readProviders(authUser) : [];
   const hasPassword = providers.includes("email");
-  const channelMap = new Map(
-    ((channelRows || []).flatMap((channel) => {
-      const channelType = fromDatabaseChannelType(channel.channel_type);
-      return channelType ? [[channelType, channel] as const] : [];
-    }) || [])
-  );
-
-  const channels = INTEGRATION_DEFINITIONS.map((channel) => {
-    const row = channelMap.get(channel.channelType);
-    return {
-      type: channel.channelType,
-      label: channel.name,
-      status: row && (row.status === "pending" || row.status === "connected")
-        ? "connected"
-        : "disconnected",
-      connectedAt: row?.connected_at || null,
-    } satisfies AccountChannelRecord;
-  });
 
   return {
     name:
@@ -254,7 +202,6 @@ export async function getAccountPageData(params: {
     createdAt: userRow?.created_at || (authUser?.created_at) || new Date().toISOString(),
     hasPassword,
     oauthOnly: !hasPassword,
-    channels,
   } satisfies AccountPageData;
 }
 

@@ -449,41 +449,6 @@ export function AccountSettings({
             </CardContent>
           </Card>
 
-          {initialData.role === "vendor" ? (
-            <Card className="bg-card/90">
-              <CardHeader>
-                <CardTitle>Mis canales conectados</CardTitle>
-                <CardDescription>
-                  Estado actual de tus canales y accesos comerciales.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {initialData.channels.map((channel) => (
-                  <div
-                    key={channel.type}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-background/50 px-4 py-3"
-                  >
-                    <div>
-                      <p className="font-medium text-foreground">{channel.label}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {channel.connectedAt
-                          ? `Conectado el ${formatDate(channel.connectedAt)}`
-                          : "Todavía no conectado"}
-                      </p>
-                    </div>
-                    <Badge variant={channel.status === "connected" ? "default" : "outline"}>
-                      {channel.status === "connected" ? "Conectado" : "Desconectado"}
-                    </Badge>
-                  </div>
-                ))}
-
-                <Button variant="outline" onClick={() => router.push("/app/integrations")}>
-                  <PlugZap className="mr-2 h-4 w-4" />
-                  Ir a Integraciones
-                </Button>
-              </CardContent>
-            </Card>
-          ) : null}
         </div>
 
         <div className="space-y-6">
