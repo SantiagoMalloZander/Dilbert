@@ -7,5 +7,10 @@ export function middleware(request: Parameters<typeof proxy>[0]) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // Skip Next internals, the favicon, and any request for a static asset with a
+  // file extension (svg/png/woff/css/js/landing.html…). Those don't need auth
+  // and were needlessly running the (Oregon-bound) middleware on every page.
+  matcher: [
+    "/((?!_next/static|_next/image|_next/data|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff|woff2|ttf|otf|css|js|map|txt|xml|html)$).*)",
+  ],
 };

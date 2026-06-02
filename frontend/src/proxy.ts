@@ -16,6 +16,12 @@ import {
   IMPERSONATION_COOKIE,
   parseImpersonationCookieValue,
 } from "@/lib/workspace-impersonation";
+import {
+  WORKSPACE_SNAPSHOT_COOKIE,
+  readWorkspaceSnapshot,
+  signWorkspaceSnapshot,
+  type WorkspaceSnapshot,
+} from "@/lib/workspace-snapshot-cache";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY =
@@ -63,6 +69,7 @@ function clearAllAuthCookies(response: NextResponse, request?: NextRequest) {
   response.cookies.delete(BROWSER_SESSION_COOKIE);
   response.cookies.delete(REMEMBER_COOKIE);
   response.cookies.delete(IMPERSONATION_COOKIE);
+  response.cookies.delete(WORKSPACE_SNAPSHOT_COOKIE);
 
   const authCookieNames = new Set<string>([
     "dilbert-sb-auth",
@@ -297,23 +304,59 @@ export async function proxy(request: NextRequest) {
     const impersonation = isSuperAdmin
       ? parseImpersonationCookieValue(request.cookies.get(IMPERSONATION_COOKIE)?.value)
       : null;
-    const workspaceUser = !isSuperAdmin ? await fetchWorkspaceUserSnapshot(user.id) : null;
-    const authControl = !isSuperAdmin ? await fetchWorkspaceAuthControl(user.id) : null;
+
+    // Workspace snapshot (company / role / is_active / session_revoked_at).
+    // Cached in a signed cookie for 60s so we don't hit Supabase (Oregon) on
+    // every navigation + prefetch. Only non-super-admins need it.
+    let snapshot: WorkspaceSnapshot | null = null;
+    if (!isSuperAdmin) {
+      const cached = await readWorkspaceSnapshot(
+        request.cookies.get(WORKSPACE_SNAPSHOT_COOKIE)?.value,
+        user.id
+      );
+      if (cached) {
+        snapshot = cached;
+      } else {
+        // Cache miss → refresh both checks in parallel (was sequential before).
+        const [workspaceUser, authControl] = await Promise.all([
+          fetchWorkspaceUserSnapshot(user.id),
+          fetchWorkspaceAuthControl(user.id),
+        ]);
+        snapshot = {
+          uid: user.id,
+          companyId: workspaceUser?.company_id ?? null,
+          role: workspaceUser?.role ?? null,
+          isActive: workspaceUser?.is_active !== false,
+          revokedAt: authControl?.sessionRevokedAt ?? null,
+        };
+        const token = await signWorkspaceSnapshot(snapshot);
+        if (token) {
+          response.cookies.set(WORKSPACE_SNAPSHOT_COOKIE, token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60,
+          });
+        }
+      }
+    }
+
     const sessionIssuedAt = getSessionIssuedAt(session?.access_token);
 
-    if (authControl?.sessionRevokedAt && sessionIssuedAt) {
-      const revokedAtMs = new Date(authControl.sessionRevokedAt).getTime();
+    if (snapshot?.revokedAt && sessionIssuedAt) {
+      const revokedAtMs = new Date(snapshot.revokedAt).getTime();
       if (Number.isFinite(revokedAtMs) && revokedAtMs > sessionIssuedAt) {
         return redirectToWorkspaceRevoked(request);
       }
     }
 
-    if (workspaceUser && workspaceUser.is_active === false) {
+    if (snapshot && snapshot.isActive === false) {
       return redirectToWorkspaceRevoked(request);
     }
 
-    const role = String(impersonation ? "owner" : workspaceUser?.role || "").toLowerCase();
-    const companyId = impersonation?.companyId || String(workspaceUser?.company_id || "");
+    const role = String(impersonation ? "owner" : snapshot?.role || "").toLowerCase();
+    const companyId = impersonation?.companyId || String(snapshot?.companyId || "");
 
     if (!companyId) {
       if (isSuperAdmin) {
@@ -358,5 +401,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|_next/data|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff|woff2|ttf|otf|css|js|map|txt|xml|html)$).*)",
+  ],
 };
