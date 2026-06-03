@@ -453,6 +453,57 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_message_queue: {
+        Row: {
+          id: string
+          company_id: string
+          user_id: string
+          instance_name: string
+          remote_jid: string
+          phone: string
+          message_id: string
+          from_me: boolean
+          push_name: string | null
+          raw_text: string
+          occurred_at: string
+          status: string
+          created_at: string
+          processed_at: string | null
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          user_id: string
+          instance_name: string
+          remote_jid: string
+          phone: string
+          message_id: string
+          from_me?: boolean
+          push_name?: string | null
+          raw_text: string
+          occurred_at: string
+          status?: string
+          created_at?: string
+          processed_at?: string | null
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          user_id?: string
+          instance_name?: string
+          remote_jid?: string
+          phone?: string
+          message_id?: string
+          from_me?: boolean
+          push_name?: string | null
+          raw_text?: string
+          occurred_at?: string
+          status?: string
+          created_at?: string
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
       authorized_emails: {
         Row: {
           added_by: string | null
@@ -502,11 +553,14 @@ export type Database = {
         Row: {
           channel: Database["public"]["Enums"]["channel_type"]
           company_id: string
+          connected_at: string
           created_at: string
           credentials: Json
           id: string
           instance_name: string | null
           last_sync_at: string | null
+          phone: string | null
+          backfilled_at: string | null
           status: Database["public"]["Enums"]["channel_connection_status"]
           updated_at: string
           user_id: string
@@ -514,11 +568,14 @@ export type Database = {
         Insert: {
           channel: Database["public"]["Enums"]["channel_type"]
           company_id: string
+          connected_at?: string
           created_at?: string
           credentials?: Json
           id?: string
           instance_name?: string | null
           last_sync_at?: string | null
+          phone?: string | null
+          backfilled_at?: string | null
           status?: Database["public"]["Enums"]["channel_connection_status"]
           updated_at?: string
           user_id: string
@@ -526,11 +583,14 @@ export type Database = {
         Update: {
           channel?: Database["public"]["Enums"]["channel_type"]
           company_id?: string
+          connected_at?: string
           created_at?: string
           credentials?: Json
           id?: string
           instance_name?: string | null
           last_sync_at?: string | null
+          phone?: string | null
+          backfilled_at?: string | null
           status?: Database["public"]["Enums"]["channel_connection_status"]
           updated_at?: string
           user_id?: string

@@ -4,6 +4,8 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { AgentInbox } from "@/components/agent-inbox";
 import { AgentCompanyContext } from "@/components/agent-company-context";
 import { AgentVoiceButton } from "@/components/agent-voice-button";
+import { WhatsAppConnect } from "@/components/whatsapp-connect";
+import { getWhatsAppConnection } from "@/modules/whatsapp/queries";
 
 async function getCompanyContext(companyId: string): Promise<string> {
   const supabase = createAdminSupabaseClient();
@@ -69,10 +71,11 @@ export default async function AgentePage() {
 
   const isOwner = session.user.role === "owner";
 
-  const [questions, activities, companyContext] = await Promise.all([
+  const [questions, activities, companyContext, whatsappConnection] = await Promise.all([
     getQuestions(session.user.companyId, session.user.id),
     getRecentActivity(session.user.companyId, session.user.id),
     isOwner ? getCompanyContext(session.user.companyId) : Promise.resolve(""),
+    getWhatsAppConnection(session.user.id),
   ]);
 
   return (
@@ -84,6 +87,9 @@ export default async function AgentePage() {
           Acá te muestra lo que necesita tu confirmación y un log de lo que hizo.
         </p>
       </div>
+
+      {/* WhatsApp connection (per vendor) */}
+      <WhatsAppConnect initial={whatsappConnection} />
 
       {/* Voice recording */}
       <div className="rounded-2xl border border-white/10 bg-card/90 p-6">
