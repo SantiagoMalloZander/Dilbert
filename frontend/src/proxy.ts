@@ -188,6 +188,48 @@ async function fetchWorkspaceAuthControl(userId: string) {
   };
 }
 
+const BILLING_ACTIVE_STATUSES = ["active", "trialing", "free"];
+
+/** Company name + whether billing grants access. Two cheap REST reads (only on
+ *  the 60s snapshot refresh). Defensive: failures degrade to "active" so we
+ *  never wrongly lock a paying/exempt company out. */
+async function fetchCompanyBilling(companyId: string) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    return { name: null as string | null, billingActive: true };
+  }
+  const headers = {
+    apikey: SUPABASE_SERVICE_KEY,
+    Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+  };
+  try {
+    const companyUrl = new URL(`${SUPABASE_URL}/rest/v1/companies`);
+    companyUrl.searchParams.set("select", "name,billing_exempt");
+    companyUrl.searchParams.set("id", `eq.${companyId}`);
+    companyUrl.searchParams.set("limit", "1");
+
+    const subUrl = new URL(`${SUPABASE_URL}/rest/v1/subscriptions`);
+    subUrl.searchParams.set("select", "status");
+    subUrl.searchParams.set("company_id", `eq.${companyId}`);
+    subUrl.searchParams.set("limit", "1");
+
+    const [companyRes, subRes] = await Promise.all([
+      fetch(companyUrl, { headers, cache: "no-store" }),
+      fetch(subUrl, { headers, cache: "no-store" }),
+    ]);
+
+    const company = companyRes.ok ? (await companyRes.json())[0] : null;
+    const sub = subRes.ok ? (await subRes.json())[0] : null;
+    const exempt = Boolean(company?.billing_exempt);
+    const status = String(sub?.status || "none");
+    return {
+      name: (company?.name as string | null) ?? null,
+      billingActive: exempt || BILLING_ACTIVE_STATUSES.includes(status),
+    };
+  } catch {
+    return { name: null, billingActive: true };
+  }
+}
+
 function getSessionIssuedAt(accessToken?: string | null) {
   if (!accessToken) {
     return null;
@@ -322,12 +364,17 @@ export async function proxy(request: NextRequest) {
           fetchWorkspaceUserSnapshot(user.id),
           fetchWorkspaceAuthControl(user.id),
         ]);
+        const billing = workspaceUser?.company_id
+          ? await fetchCompanyBilling(workspaceUser.company_id)
+          : { name: null, billingActive: true };
         snapshot = {
           uid: user.id,
           companyId: workspaceUser?.company_id ?? null,
           role: workspaceUser?.role ?? null,
           isActive: workspaceUser?.is_active !== false,
           revokedAt: authControl?.sessionRevokedAt ?? null,
+          companyName: billing.name,
+          billingActive: billing.billingActive,
         };
         const token = await signWorkspaceSnapshot(snapshot);
         if (token) {

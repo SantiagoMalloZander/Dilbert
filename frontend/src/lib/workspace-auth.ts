@@ -17,6 +17,11 @@ import {
 } from "@/lib/workspace-impersonation";
 import { canAccessAdmin, canManageUsers } from "@/lib/auth/permissions";
 import { isSuperAdminEmail, type AppRole } from "@/lib/workspace-roles";
+import {
+  WORKSPACE_SNAPSHOT_COOKIE,
+  readWorkspaceSnapshot,
+} from "@/lib/workspace-snapshot-cache";
+import { getBillingState } from "@/modules/billing/queries";
 
 export type WorkspaceSessionUser = {
   id: string;
@@ -26,6 +31,8 @@ export type WorkspaceSessionUser = {
   role: AppRole;
   companyId: string;
   isSuperAdmin: boolean;
+  companyName: string | null;
+  billingActive: boolean;
   impersonation?: ImpersonationPayload;
 };
 
@@ -58,6 +65,8 @@ function buildSessionUser(params: {
   isSuperAdmin: boolean;
   name?: string | null;
   image?: string | null;
+  companyName?: string | null;
+  billingActive?: boolean;
 }) {
   const email = normalizeEmail(params.authUser.email || "");
 
@@ -69,23 +78,52 @@ function buildSessionUser(params: {
     role: params.role,
     companyId: params.companyId,
     isSuperAdmin: params.isSuperAdmin,
+    companyName: params.companyName ?? null,
+    billingActive: params.billingActive ?? true,
   } satisfies WorkspaceSessionUser;
 }
 
 export const getAuthSession = cache(async function getCachedAuthSession() {
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user: authUser },
-    error,
-  } = await supabase.auth.getUser();
 
-  if (error || !authUser?.email) {
+  // getSession() reads the (already middleware-verified) cookie locally — no
+  // network round-trip to Supabase Auth in Oregon, unlike getUser().
+  const {
+    data: { session: authSession },
+  } = await supabase.auth.getSession();
+  const authUser = authSession?.user ?? null;
+
+  if (!authUser?.email) {
     return null;
   }
 
   const email = normalizeEmail(authUser.email);
   const isSuperAdmin = isSuperAdminEmail(email);
 
+  // ── Fast path: reuse the signed workspace snapshot the middleware already
+  // built this request. Zero DB round-trips (company/role/billing all there). ──
+  if (!isSuperAdmin) {
+    const cookieStore = await cookies();
+    const snap = await readWorkspaceSnapshot(
+      cookieStore.get(WORKSPACE_SNAPSHOT_COOKIE)?.value,
+      authUser.id
+    );
+    if (snap) {
+      const hasAccess = Boolean(snap.companyId && snap.role && snap.isActive);
+      return {
+        user: buildSessionUser({
+          authUser,
+          role: (hasAccess ? snap.role : "analyst") as AppRole,
+          companyId: hasAccess ? snap.companyId || "" : "",
+          isSuperAdmin: false,
+          companyName: snap.companyName,
+          billingActive: snap.billingActive,
+        }),
+      } satisfies WorkspaceSession;
+    }
+  }
+
+  // ── Fallback (super-admin, or snapshot cookie missing/expired): query DB. ──
   let appUser = null;
   if (!isSuperAdmin) {
     appUser = await getAppUserById(authUser.id);
@@ -95,6 +133,15 @@ export const getAuthSession = cache(async function getCachedAuthSession() {
   }
 
   const hasAccess = Boolean(appUser?.company_id && appUser?.role && appUser.is_active);
+  let billingActive = true;
+  if (hasAccess && appUser?.company_id) {
+    try {
+      billingActive = (await getBillingState(appUser.company_id)).active;
+    } catch {
+      billingActive = true;
+    }
+  }
+
   const session: WorkspaceSession = {
     user: buildSessionUser({
       authUser,
@@ -103,6 +150,8 @@ export const getAuthSession = cache(async function getCachedAuthSession() {
       isSuperAdmin,
       name: appUser?.name || null,
       image: appUser?.avatar_url || null,
+      companyName: null,
+      billingActive,
     }),
   };
 
@@ -115,6 +164,7 @@ export const getAuthSession = cache(async function getCachedAuthSession() {
     if (impersonation) {
       session.user.companyId = impersonation.companyId;
       session.user.role = "owner";
+      session.user.companyName = impersonation.companyName ?? session.user.companyName;
       session.user.impersonation = impersonation;
     }
   }

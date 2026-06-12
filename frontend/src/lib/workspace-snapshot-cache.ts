@@ -35,6 +35,10 @@ export interface WorkspaceSnapshot {
   isActive: boolean;
   /** session_revoked_at from auth app_metadata, ISO string or null */
   revokedAt: string | null;
+  /** Company display name (so the RSC shell doesn't re-query it). */
+  companyName: string | null;
+  /** Whether billing grants access (exempt or active sub) — for the paywall. */
+  billingActive: boolean;
 }
 
 export async function signWorkspaceSnapshot(snap: WorkspaceSnapshot): Promise<string | null> {
@@ -68,6 +72,8 @@ export async function readWorkspaceSnapshot(
       role: (payload.role as string | null) ?? null,
       isActive: payload.isActive !== false,
       revokedAt: (payload.revokedAt as string | null) ?? null,
+      companyName: (payload.companyName as string | null) ?? null,
+      billingActive: payload.billingActive !== false,
     };
   } catch {
     return null;
