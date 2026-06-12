@@ -106,3 +106,14 @@ export async function createPreapproval(params: {
 export async function getPreapproval(id: string): Promise<MpPreapproval> {
   return mpFetch<MpPreapproval>(`/preapproval/${id}`, { method: "GET" });
 }
+
+/** Most recent AUTHORIZED subscription for a company (by external_reference). */
+export async function findAuthorizedPreapproval(companyId: string): Promise<MpPreapproval | null> {
+  const data = await mpFetch<{ results?: MpPreapproval[] }>(
+    `/preapproval/search?external_reference=${encodeURIComponent(
+      companyId
+    )}&status=authorized&sort=date_created:desc&limit=1`,
+    { method: "GET" }
+  );
+  return data.results?.[0] ?? null;
+}

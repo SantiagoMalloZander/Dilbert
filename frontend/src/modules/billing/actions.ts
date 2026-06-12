@@ -4,7 +4,12 @@ import { requireAuth } from "@/lib/workspace-auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { appUrl, clampSeats, mpPricePerSeatArs, PRICE_PER_SEAT_USD_CENTS } from "@/lib/billing/config";
 import { createSubscriptionCheckout, createBillingPortal } from "@/lib/billing/stripe";
-import { createPreapprovalPlan, getPreapproval } from "@/lib/billing/mercadopago";
+import {
+  createPreapprovalPlan,
+  getPreapproval,
+  findAuthorizedPreapproval,
+  type MpPreapproval,
+} from "@/lib/billing/mercadopago";
 import { getSubscription } from "@/modules/billing/queries";
 
 async function requireBillingOwner() {
@@ -100,37 +105,48 @@ export async function startMercadoPagoCheckout(seatsInput: number): Promise<{ ur
 
 /**
  * Confirms a Mercado Pago subscription when the payer returns to /app/suscripcion.
- * MP appends `preapproval_id` to the back_url; we fetch it, check it's authorized
- * and (matching this company) flip the subscription to active. Idempotent.
+ * Robust to timing: MP can still report "pending" the instant we're redirected,
+ * so we retry a few times AND search the company's authorized subscription by
+ * external_reference (works even if MP doesn't append preapproval_id). The
+ * webhook reconciles it too; this is the fast path. Idempotent.
  */
-export async function confirmMercadoPagoReturn(preapprovalId: string): Promise<boolean> {
+export async function confirmMercadoPagoReturn(preapprovalId?: string): Promise<boolean> {
   const { companyId } = await requireBillingOwner();
-  if (!preapprovalId) return false;
 
-  let pre;
-  try {
-    pre = await getPreapproval(preapprovalId);
-  } catch {
-    return false;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      let authorized: MpPreapproval | null = null;
+
+      if (preapprovalId) {
+        const pre = await getPreapproval(preapprovalId);
+        const sameCompany = !pre.external_reference || pre.external_reference === companyId;
+        if (sameCompany && pre.status === "authorized") authorized = pre;
+      }
+      if (!authorized) {
+        authorized = await findAuthorizedPreapproval(companyId);
+      }
+
+      if (authorized && authorized.status === "authorized") {
+        await upsertSubscription(companyId, {
+          provider: "mercadopago",
+          currency: "ars",
+          mp_preapproval_id: authorized.id,
+          status: "active",
+        });
+        const sub = await getSubscription(companyId);
+        if (sub?.seats && sub.seats > 0) {
+          const supabase = createAdminSupabaseClient();
+          await supabase.from("companies").update({ vendor_limit: sub.seats }).eq("id", companyId);
+        }
+        return true;
+      }
+    } catch {
+      // transient — retry
+    }
+    if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 1500));
   }
 
-  // Guard: if MP carried our company reference, it must match the caller's.
-  if (pre.external_reference && pre.external_reference !== companyId) return false;
-  if (pre.status !== "authorized") return false;
-
-  await upsertSubscription(companyId, {
-    provider: "mercadopago",
-    currency: "ars",
-    mp_preapproval_id: pre.id,
-    status: "active",
-  });
-
-  const sub = await getSubscription(companyId);
-  if (sub?.seats && sub.seats > 0) {
-    const supabase = createAdminSupabaseClient();
-    await supabase.from("companies").update({ vendor_limit: sub.seats }).eq("id", companyId);
-  }
-  return true;
+  return false;
 }
 
 /** Open the Stripe Billing Portal so the owner can update/cancel their plan. */

@@ -14,10 +14,11 @@ export default async function SuscripcionPage({
   const session = await requireSession();
   if (!session.user.companyId) redirect("/app/account");
 
-  // Volviendo de Mercado Pago: MP agrega ?preapproval_id=… → confirmamos el alta.
+  // Volviendo de Mercado Pago (?mp=ok y/o ?preapproval_id=…) → confirmamos el alta.
   const params = (await searchParams) ?? {};
-  const preapprovalId = typeof params.preapproval_id === "string" ? params.preapproval_id : null;
-  if (preapprovalId) {
+  const preapprovalId = typeof params.preapproval_id === "string" ? params.preapproval_id : undefined;
+  const returningFromMp = params.mp === "ok" || Boolean(preapprovalId);
+  if (returningFromMp) {
     try {
       await confirmMercadoPagoReturn(preapprovalId);
     } catch {
