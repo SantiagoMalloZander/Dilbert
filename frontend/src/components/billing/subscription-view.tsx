@@ -114,12 +114,13 @@ export function SubscriptionView({
           </div>
           <h1 className="text-2xl font-semibold">Suscripción activa</h1>
           <p className="text-sm text-muted-foreground">
-            {state.seats} {state.seats === 1 ? "vendedor" : "vendedores"} ·{" "}
             {state.provider === "mercadopago" ? "Mercado Pago" : "Tarjeta"}
           </p>
         </div>
 
-        <div className="mt-6 space-y-2 rounded-xl border border-border bg-background/60 p-4 text-sm">
+        <SeatsUsageBar used={activeVendors} paid={state.seats} />
+
+        <div className="mt-4 space-y-2 rounded-xl border border-border bg-background/60 p-4 text-sm">
           {state.currentPeriodEnd ? (
             <div className="flex justify-between">
               <span className="text-muted-foreground">
@@ -291,6 +292,33 @@ function Shell({ children }: { children: React.ReactNode }) {
       <Card className="bg-card/90">
         <CardContent className="p-6 sm:p-8">{children}</CardContent>
       </Card>
+    </div>
+  );
+}
+
+/** Barrita: vendedores pagados vs. los que se están usando. */
+function SeatsUsageBar({ used, paid }: { used: number; paid: number }) {
+  const over = used > paid;
+  const pct = paid > 0 ? Math.min(100, Math.round((used / paid) * 100)) : used > 0 ? 100 : 0;
+  return (
+    <div className="mt-6 rounded-xl border border-border bg-background/60 p-4">
+      <div className="flex items-center justify-between text-sm">
+        <span className="font-medium text-foreground">Vendedores</span>
+        <span className={over ? "font-semibold text-[#D4420A]" : "text-muted-foreground"}>
+          {used} usados de {paid} pagados
+        </span>
+      </div>
+      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full rounded-full ${over ? "bg-[#D4420A]" : "bg-primary"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {over ? (
+        <p className="mt-2 text-xs text-[#D4420A]">
+          Estás usando más vendedores de los que pagás. Sumá asientos para cubrirlos.
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { getUsersCenterData, type UsersCenterData } from "@/modules/users/querie
 import { getBillingState, getActiveVendorCount, type BillingState } from "@/modules/billing/queries";
 import { PRICE_PER_SEAT_USD_CENTS, clampSeats } from "@/lib/billing/config";
 import { getDolarTarjeta, usdToArs } from "@/lib/billing/fx";
+import { getBotConfig, type BotConfig } from "@/modules/agency/bot/queries";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
 
 export default async function SettingsPage() {
@@ -22,7 +23,7 @@ export default async function SettingsPage() {
   const companyId = session.user.companyId;
   const priceUsd = PRICE_PER_SEAT_USD_CENTS / 100;
 
-  const [zones, properties, usersData, billing, activeVendors, rate] = await Promise.all([
+  const [zones, properties, usersData, billing, activeVendors, rate, botConfig] = await Promise.all([
     listZones(),
     listProperties(),
     // User management lives inside Configuración now. Owner-only; skip for a
@@ -35,6 +36,9 @@ export default async function SettingsPage() {
       : Promise.resolve<BillingState | null>(null),
     companyId ? getActiveVendorCount(companyId).catch(() => 0) : Promise.resolve(0),
     getDolarTarjeta(),
+    companyId
+      ? getBotConfig(companyId).catch(() => ({ configured: false, phoneNumber: null, configuredAt: null }))
+      : Promise.resolve<BotConfig>({ configured: false, phoneNumber: null, configuredAt: null }),
   ]);
 
   const billingData = billing
@@ -73,6 +77,7 @@ export default async function SettingsPage() {
         initialProperties={properties}
         usersData={usersData}
         billingData={billingData}
+        botConfig={botConfig}
       />
     </div>
   );

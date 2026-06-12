@@ -10,6 +10,7 @@ import type { ZoneRecord } from "@/modules/agency/zones/types";
 import type { PropertyRecord } from "@/modules/agency/properties/types";
 import type { UsersCenterData } from "@/modules/users/queries";
 import type { BillingState } from "@/modules/billing/queries";
+import type { BotConfig } from "@/modules/agency/bot/queries";
 
 type BillingData = {
   state: BillingState;
@@ -28,11 +29,13 @@ export function SettingsTabs({
   initialProperties,
   usersData,
   billingData,
+  botConfig,
 }: {
   initialZones: ZoneRecord[];
   initialProperties: PropertyRecord[];
   usersData: UsersCenterData | null;
   billingData: BillingData | null;
+  botConfig: BotConfig;
 }) {
   return (
     <Tabs defaultValue="properties" className="w-full">
@@ -40,8 +43,8 @@ export function SettingsTabs({
         <TabsTrigger value="properties">Productos</TabsTrigger>
         <TabsTrigger value="zones">Zonas</TabsTrigger>
         {usersData ? <TabsTrigger value="users">Usuarios</TabsTrigger> : null}
-        {billingData ? <TabsTrigger value="billing">Suscripción</TabsTrigger> : null}
         <TabsTrigger value="bot">Bot</TabsTrigger>
+        {billingData ? <TabsTrigger value="billing">Suscripción</TabsTrigger> : null}
       </TabsList>
 
       <TabsContent value="properties">
@@ -60,6 +63,9 @@ export function SettingsTabs({
           />
         </TabsContent>
       ) : null}
+      <TabsContent value="bot">
+        <BotPlaceholder config={botConfig} />
+      </TabsContent>
       {billingData ? (
         <TabsContent value="billing">
           <SubscriptionView
@@ -75,9 +81,6 @@ export function SettingsTabs({
           />
         </TabsContent>
       ) : null}
-      <TabsContent value="bot">
-        <BotPlaceholder />
-      </TabsContent>
     </Tabs>
   );
 }
