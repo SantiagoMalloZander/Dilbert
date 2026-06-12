@@ -2,15 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Lock, Mail, ShieldAlert } from "lucide-react";
 import {
-  finalizeRegistrationAction,
+  ArrowRight,
+  Building2,
+  Loader2,
+  Lock,
+  Mail,
+  ShieldAlert,
+  UserPlus,
+} from "lucide-react";
+import {
+  createCompanyAsOwnerAction,
   lookupEmailAction,
   prepareOauthFlowAction,
+  registerEmployeeAction,
   requestRegistrationOtpAction,
   syncExistingUserAccessAction,
 } from "@/modules/auth/actions";
-import type { AuthOtpType, AuthStep } from "@/modules/auth/types";
+import type { AuthIntent, AuthOtpType, AuthStep } from "@/modules/auth/types";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import {
   applySessionPreference,
@@ -50,19 +59,9 @@ function getOAuthErrorMessage(errorCode?: string) {
 }
 
 function getLoginErrorMessage(message?: string) {
-  if (!message) {
-    return "No pude iniciar sesión en este momento.";
-  }
-
+  if (!message) return "No pude iniciar sesión en este momento.";
   const normalized = message.toLowerCase();
-  if (normalized.includes("invalid login credentials")) {
-    return "La contraseña es incorrecta.";
-  }
-
-  if (normalized.includes("email not confirmed")) {
-    return "Primero verificá tu email con el código que te mandamos.";
-  }
-
+  if (normalized.includes("invalid login credentials")) return "La contraseña es incorrecta.";
   return "No pude iniciar sesión en este momento.";
 }
 
@@ -84,27 +83,30 @@ export function AuthFlow({
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [city, setCity] = useState("");
+  const [inviteCode, setInviteCode] = useState(initialJoinToken);
   const [joinToken] = useState(initialJoinToken);
+  const [intent, setIntent] = useState<AuthIntent>("login");
   const [otpType, setOtpType] = useState<AuthOtpType>(initialOtpType);
   const [rememberMe, setRememberMe] = useState(true);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [companyError, setCompanyError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [globalMessage, setGlobalMessage] = useState<string | null>(null);
   const [loadingAction, setLoadingAction] = useState<
-    "email" | "password" | "otp" | "register" | "resend" | "google" | "microsoft" | null
+    "email" | "password" | "otp" | "owner" | "employee" | "resend" | "google" | "microsoft" | null
   >(null);
   const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
     const savedPreference = window.localStorage.getItem(STORAGE_KEY);
-    if (savedPreference !== null) {
-      setRememberMe(savedPreference === "1");
-    }
+    if (savedPreference !== null) setRememberMe(savedPreference === "1");
   }, []);
 
-  // Resend cooldown countdown.
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
@@ -116,28 +118,28 @@ export function AuthFlow({
       setGlobalMessage("Tu sesión anterior se cerró por 30 minutos de inactividad.");
       return;
     }
-
     if (revoked) {
       setGlobalMessage(
         "Tu acceso fue revocado. Si necesitás volver a entrar, pedile a tu empresa que te habilite otra vez."
       );
       return;
     }
-
     const oauthMessage = getOAuthErrorMessage(oauthError);
-    if (oauthMessage) {
-      setGlobalMessage(oauthMessage);
-    }
+    if (oauthMessage) setGlobalMessage(oauthMessage);
   }, [oauthError, revoked, timeout]);
 
   const heading = useMemo(() => {
     switch (step) {
       case "login":
         return { title: "Hola de nuevo", subtitle: "Ingresá tu contraseña para entrar." };
-      case "register":
-        return { title: "Creá tu cuenta", subtitle: "Un paso y entrás. Sin tarjeta para empezar." };
+      case "choose":
+        return { title: "¿Cómo querés entrar?", subtitle: "Elegí una opción para empezar." };
+      case "register-owner":
+        return { title: "Creá tu inmobiliaria", subtitle: "Datos básicos y empezás. Sin tarjeta para probar." };
+      case "register-employee":
+        return { title: "Sumate a tu equipo", subtitle: "Creá tu acceso para entrar al CRM de tu inmobiliaria." };
       case "otp":
-        return { title: "Revisá tu email", subtitle: `Te enviamos un código de 6 dígitos a ${email}.` };
+        return { title: "Revisá tu email", subtitle: `Te enviamos un código a ${email}.` };
       default:
         return { title: "Entrá a Dilbert", subtitle: "Tu CRM inmobiliario con IA. Ingresá tu email para continuar." };
     }
@@ -152,6 +154,7 @@ export function AuthFlow({
   function resetErrors() {
     setEmailError(null);
     setNameError(null);
+    setCompanyError(null);
     setPasswordError(null);
     setOtpError(null);
     setGlobalMessage(null);
@@ -169,7 +172,6 @@ export function AuthFlow({
   async function handleEmailContinue() {
     resetErrors();
     const normalized = email.trim().toLowerCase();
-
     if (!normalized) {
       setEmailError("Ingresá tu email.");
       return;
@@ -179,7 +181,17 @@ export function AuthFlow({
     try {
       const result = await lookupEmailAction({ email: normalized });
       setEmail(result.email);
-      setStep(result.exists ? "login" : "register");
+
+      if (result.verified) {
+        // Fully registered account → password.
+        setStep("login");
+      } else if (result.preAuthorized) {
+        // Owner/admin already assigned them a company → just create their access.
+        setStep("register-employee");
+      } else {
+        // Brand-new (or half-finished) → let them pick owner vs employee.
+        setStep("choose");
+      }
     } catch (error) {
       setEmailError(error instanceof Error ? error.message : "No pude validar tu email.");
     } finally {
@@ -189,7 +201,6 @@ export function AuthFlow({
 
   async function handlePasswordLogin() {
     resetErrors();
-
     if (!password.trim()) {
       setPasswordError("Ingresá tu contraseña.");
       return;
@@ -199,32 +210,27 @@ export function AuthFlow({
     persistRememberPreference();
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
-        // Email not confirmed: auto-send OTP (magic link) and jump to verification.
+        // Unverified email → send the code and jump to verification.
         if (error.message.toLowerCase().includes("email not confirmed")) {
           setLoadingAction("otp");
           try {
-            const { error: otpError } = await supabase.auth.signInWithOtp({
-              email,
-            });
+            const { error: otpError } = await supabase.auth.signInWithOtp({ email });
             if (otpError) throw otpError;
             setOtp("");
             setOtpType("magiclink");
+            setIntent("login");
             setStep("otp");
-            setLoadingAction(null);
-            return;
           } catch (otpErr) {
-            const msg =
-              otpErr instanceof Error ? otpErr.message : "No pude enviar el código de verificación.";
-            setGlobalMessage(msg);
+            setGlobalMessage(
+              otpErr instanceof Error ? otpErr.message : "No pude enviar el código de verificación."
+            );
+          } finally {
             setLoadingAction(null);
-            return;
           }
+          return;
         }
         setPasswordError(getLoginErrorMessage(error.message));
         return;
@@ -234,62 +240,73 @@ export function AuthFlow({
         email,
         joinToken: joinToken || undefined,
       });
-
       router.push(synced.redirectTo);
     } catch {
-      emitGlobalToast({
-        tone: "error",
-        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
-      });
+      emitGlobalToast({ tone: "error", text: "Falló la conexión. Probá de nuevo en unos segundos." });
       setGlobalMessage("No pude iniciar sesión en este momento.");
     } finally {
       setLoadingAction(null);
     }
   }
 
-  async function handleRequestOtp() {
+  /** Shared OTP issuing for both owner and employee registration. */
+  async function sendRegistrationOtp(nextIntent: AuthIntent) {
+    const result = await requestRegistrationOtpAction({
+      email,
+      fullName,
+      password,
+      joinToken: joinToken || undefined,
+    });
+    setOtp("");
+    setOtpType(result.otpType);
+    setIntent(nextIntent);
+    setStep("otp");
+  }
+
+  async function handleOwnerSubmit() {
     resetErrors();
-
-    if (!fullName.trim()) {
-      setNameError("Ingresá tu nombre completo.");
-      return;
-    }
-
+    if (fullName.trim().length < 2) return setNameError("Ingresá tu nombre.");
+    if (companyName.trim().length < 2) return setCompanyError("Ingresá el nombre de tu inmobiliaria.");
     if (!PASSWORD_RULE.test(password)) {
-      setPasswordError(
-        "La contraseña debe tener al menos 8 caracteres, 1 número y 1 carácter especial."
-      );
-      return;
+      return setPasswordError("Mínimo 8 caracteres, con un número y un símbolo.");
     }
 
-    setLoadingAction("register");
+    setLoadingAction("owner");
     try {
-      const result = await requestRegistrationOtpAction({
-        email,
-        fullName,
-        password,
-        joinToken: joinToken || undefined,
-      });
-
-      setOtp("");
-      setOtpType(result.otpType);
-      setStep("otp");
-      router.replace(
-        `/app/?step=otp&email=${encodeURIComponent(email)}&otp_type=${encodeURIComponent(result.otpType)}${
-          joinToken ? `&join=${encodeURIComponent(joinToken)}` : ""
-        }`
-      );
+      await sendRegistrationOtp("owner");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No pude enviar el código.";
-      if (message.toLowerCase().includes("email")) {
-        setEmailError(message);
-      } else if (message.toLowerCase().includes("contraseña")) {
-        setPasswordError(message);
-      } else {
-        setGlobalMessage(message);
-      }
+      handleRegisterError(error);
     } finally {
       setLoadingAction(null);
+    }
+  }
+
+  async function handleEmployeeSubmit() {
+    resetErrors();
+    if (fullName.trim().length < 2) return setNameError("Ingresá tu nombre.");
+    if (!PASSWORD_RULE.test(password)) {
+      return setPasswordError("Mínimo 8 caracteres, con un número y un símbolo.");
+    }
+
+    setLoadingAction("employee");
+    try {
+      await sendRegistrationOtp("employee");
+    } catch (error) {
+      handleRegisterError(error);
+    } finally {
+      setLoadingAction(null);
+    }
+  }
+
+  function handleRegisterError(error: unknown) {
+    const message = error instanceof Error ? error.message : "No pude enviar el código.";
+    if (message.toLowerCase().includes("iniciá sesión")) {
+      setGlobalMessage(message);
+      setStep("login");
+    } else if (message.toLowerCase().includes("email")) {
+      setEmailError(message);
+    } else {
+      setGlobalMessage(message);
     }
   }
 
@@ -297,15 +314,11 @@ export function AuthFlow({
     if (loadingAction !== null || resendCooldown > 0) return;
     resetErrors();
     setLoadingAction("resend");
-
     try {
-      if (otpType === "magiclink") {
-        // Email-verification flow for an existing account: Supabase resends.
+      if (otpType === "magiclink" && intent === "login") {
         const { error } = await supabase.auth.signInWithOtp({ email });
         if (error) throw error;
       } else {
-        // New-registration flow: re-issue our own OTP (name + password are
-        // still in state from the register step).
         await requestRegistrationOtpAction({
           email,
           fullName: fullName.trim() || "Nuevo usuario",
@@ -316,8 +329,10 @@ export function AuthFlow({
       setResendCooldown(30);
       emitGlobalToast({ tone: "success", text: `Te reenviamos un código nuevo a ${email}.` });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No pude reenviar el código.";
-      emitGlobalToast({ tone: "error", text: message });
+      emitGlobalToast({
+        tone: "error",
+        text: error instanceof Error ? error.message : "No pude reenviar el código.",
+      });
     } finally {
       setLoadingAction(null);
     }
@@ -325,7 +340,6 @@ export function AuthFlow({
 
   async function handleVerifyOtp() {
     resetErrors();
-
     if (!/^\d{6,8}$/.test(otp)) {
       setOtpError("Ingresá el código de 6 a 8 dígitos.");
       return;
@@ -335,47 +349,45 @@ export function AuthFlow({
     persistRememberPreference();
 
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: otpType,
-      });
-
+      const { error } = await supabase.auth.verifyOtp({ email, token: otp, type: otpType });
       if (error) {
         setOtpError("El código es incorrecto o venció. Pedí uno nuevo.");
         return;
       }
 
-      // After OTP verification, handle based on flow type.
-      // magiclink = email verification for existing account (login flow)
-      // signup = new registration
-      const result =
-        otpType === "magiclink"
-          ? await syncExistingUserAccessAction({
-              email,
-              joinToken: joinToken || undefined,
-            })
-          : await finalizeRegistrationAction({
-              email,
-              joinToken: joinToken || undefined,
-            });
+      let redirectTo: string;
+      if (intent === "owner") {
+        const res = await createCompanyAsOwnerAction({
+          email,
+          companyName,
+          phone: phone.trim() || undefined,
+          city: city.trim() || undefined,
+        });
+        redirectTo = res.redirectTo;
+      } else if (intent === "employee") {
+        const res = await registerEmployeeAction({
+          email,
+          joinToken: inviteCode.trim() || joinToken || undefined,
+        });
+        redirectTo = res.redirectTo;
+      } else {
+        const res = await syncExistingUserAccessAction({ email, joinToken: joinToken || undefined });
+        redirectTo = res.redirectTo;
+      }
 
-      router.push(result.redirectTo);
-    } catch {
-      emitGlobalToast({
-        tone: "error",
-        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
-      });
-      setGlobalMessage("No pude verificar el código ahora.");
+      router.push(redirectTo);
+    } catch (error) {
+      setGlobalMessage(
+        error instanceof Error ? error.message : "No pude completar tu acceso. Probá de nuevo."
+      );
     } finally {
       setLoadingAction(null);
     }
   }
 
-  async function handleOauth(provider: "google" | "microsoft", mode: "login" | "register") {
+  async function handleOauth(provider: "google" | "microsoft") {
     resetErrors();
     const normalized = email.trim().toLowerCase();
-
     if (!normalized) {
       setEmailError("Ingresá tu email.");
       setStep("email");
@@ -383,7 +395,6 @@ export function AuthFlow({
     }
 
     setLoadingAction(provider);
-
     try {
       window.localStorage.setItem(STORAGE_KEY, rememberMe ? "1" : "0");
       applySessionPreference(rememberMe);
@@ -391,26 +402,18 @@ export function AuthFlow({
 
       await prepareOauthFlowAction({
         email: normalized,
-        mode,
+        mode: step === "login" ? "login" : "register",
         remember: rememberMe,
         joinToken: joinToken || undefined,
       });
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider === "google" ? "google" : "azure",
-        options: {
-          redirectTo: `${window.location.origin}/app/auth/callback`,
-        },
+        options: { redirectTo: `${window.location.origin}/app/auth/callback` },
       });
-
-      if (error) {
-        setGlobalMessage("No pude iniciar el flujo OAuth. Probá de nuevo.");
-      }
+      if (error) setGlobalMessage("No pude iniciar el flujo OAuth. Probá de nuevo.");
     } catch {
-      emitGlobalToast({
-        tone: "error",
-        text: "Falló la conexión de red. Probá de nuevo en unos segundos.",
-      });
+      emitGlobalToast({ tone: "error", text: "Falló la conexión. Probá de nuevo en unos segundos." });
       setGlobalMessage("No pude iniciar el flujo OAuth.");
     } finally {
       setLoadingAction(null);
@@ -430,6 +433,8 @@ export function AuthFlow({
       }
     };
   }
+
+  const showOauth = step === "login" || step === "register-employee";
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-6 py-12 text-foreground">
@@ -456,6 +461,7 @@ export function AuthFlow({
           ) : null}
 
           <div key={step} className="space-y-4 animate-in fade-in slide-in-from-bottom-1 duration-300">
+            {/* Email field / locked email pill */}
             {step === "email" ? (
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-foreground">
@@ -494,140 +500,181 @@ export function AuthFlow({
               </div>
             )}
 
-            {step === "register" ? (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="full-name" className="text-sm font-medium text-foreground">
-                    Nombre completo
-                  </Label>
-                  <Input
-                    id="full-name"
-                    value={fullName}
-                    onChange={(event) => setFullName(event.target.value)}
-                    autoComplete="name"
-                    autoFocus
-                    className={inputClass}
-                    placeholder="Tu nombre"
-                  />
-                  {nameError ? <p className="text-sm text-[#C0392B]">{nameError}</p> : null}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="register-password" className="text-sm font-medium text-foreground">
-                    Contraseña
-                  </Label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
-                    <Input
-                      id="register-password"
-                      type="password"
-                      autoComplete="new-password"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      onKeyDown={onEnter(handleRequestOtp)}
-                      className={`${inputClass} pl-10`}
-                      placeholder="Creá una contraseña segura"
-                    />
+            {/* ── Choose: owner (primary) vs employee (secondary) ── */}
+            {step === "choose" ? (
+              <div className="space-y-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetErrors();
+                    setStep("register-owner");
+                  }}
+                  className="group flex w-full items-center gap-4 rounded-2xl border border-[#D4420A]/25 bg-[#D4420A]/[0.04] p-5 text-left transition-all hover:border-[#D4420A]/50 hover:bg-[#D4420A]/[0.07] active:scale-[0.99]"
+                >
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#D4420A] text-white">
+                    <Building2 className="h-6 w-6" />
                   </div>
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    Mínimo 8 caracteres, con un número y un símbolo.
-                  </p>
-                  {passwordError ? <p className="text-sm text-[#C0392B]">{passwordError}</p> : null}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-semibold">Crear cuenta nueva</p>
+                    <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
+                      Soy dueño de una inmobiliaria y quiero abrir mi espacio.
+                    </p>
+                  </div>
+                  <ArrowRight className="h-5 w-5 shrink-0 text-[#D4420A] transition-transform group-hover:translate-x-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetErrors();
+                    setStep("register-employee");
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Me invitó mi inmobiliaria · entrar como empleado
+                </button>
+              </div>
+            ) : null}
+
+            {/* ── Owner registration ── */}
+            {step === "register-owner" ? (
+              <>
+                <Field label="Tu nombre" error={nameError}>
+                  <Input
+                    autoFocus
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    autoComplete="name"
+                    className={inputClass}
+                    placeholder="Nombre y apellido"
+                  />
+                </Field>
+                <Field label="Nombre de la inmobiliaria" error={companyError}>
+                  <Input
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className={inputClass}
+                    placeholder="Ej: Demarco Inmuebles"
+                  />
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Teléfono" optional>
+                    <Input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      autoComplete="tel"
+                      className={inputClass}
+                      placeholder="+54 9 11…"
+                    />
+                  </Field>
+                  <Field label="Ciudad" optional>
+                    <Input
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className={inputClass}
+                      placeholder="Ciudad / zona"
+                    />
+                  </Field>
                 </div>
+                <Field label="Contraseña" error={passwordError} hint="Mínimo 8 caracteres, con un número y un símbolo.">
+                  <PasswordInput
+                    value={password}
+                    onChange={setPassword}
+                    onEnter={() => handleOwnerSubmit()}
+                    inputClass={inputClass}
+                    placeholder="Creá una contraseña segura"
+                  />
+                </Field>
+                <Button type="button" onClick={handleOwnerSubmit} disabled={loadingAction !== null} className={primaryButtonClass}>
+                  {loadingAction === "owner" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Crear mi inmobiliaria
+                </Button>
               </>
             ) : null}
 
-            {step === "login" ? (
-              <div className="space-y-2">
-                <Label htmlFor="login-password" className="text-sm font-medium text-foreground">
-                  Contraseña
-                </Label>
-                <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+            {/* ── Employee registration ── */}
+            {step === "register-employee" ? (
+              <>
+                <Field label="Tu nombre" error={nameError}>
                   <Input
-                    id="login-password"
-                    type="password"
-                    autoComplete="current-password"
+                    autoFocus
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    autoComplete="name"
+                    className={inputClass}
+                    placeholder="Nombre y apellido"
+                  />
+                </Field>
+                <Field label="Contraseña" error={passwordError} hint="Mínimo 8 caracteres, con un número y un símbolo.">
+                  <PasswordInput
+                    value={password}
+                    onChange={setPassword}
+                    onEnter={() => handleEmployeeSubmit()}
+                    inputClass={inputClass}
+                    placeholder="Creá una contraseña segura"
+                  />
+                </Field>
+                <Field label="Código de invitación" optional hint="Si tu inmobiliaria te pasó un código, pegalo acá.">
+                  <Input
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    className={inputClass}
+                    placeholder="Opcional"
+                  />
+                </Field>
+                <Button type="button" onClick={handleEmployeeSubmit} disabled={loadingAction !== null} className={primaryButtonClass}>
+                  {loadingAction === "employee" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Crear mi acceso
+                </Button>
+              </>
+            ) : null}
+
+            {/* ── Login (password) ── */}
+            {step === "login" ? (
+              <>
+                <Field label="Contraseña" error={passwordError}>
+                  <PasswordInput
                     autoFocus
                     value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    onKeyDown={onEnter(handlePasswordLogin)}
-                    className={`${inputClass} pl-10`}
+                    onChange={setPassword}
+                    onEnter={() => handlePasswordLogin()}
+                    inputClass={inputClass}
                     placeholder="Tu contraseña"
+                    autoComplete="current-password"
                   />
-                </div>
-                {passwordError ? <p className="text-sm text-[#C0392B]">{passwordError}</p> : null}
-              </div>
+                </Field>
+                <Button type="button" onClick={handlePasswordLogin} disabled={loadingAction !== null} className={primaryButtonClass}>
+                  {loadingAction === "password" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Entrar
+                </Button>
+              </>
             ) : null}
 
-            {step === "otp" ? (
-              <div className="space-y-2">
-                <Label htmlFor="otp" className="text-sm font-medium text-foreground">
-                  Código de verificación
-                </Label>
-                <Input
-                  id="otp"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  autoFocus
-                  value={otp}
-                  onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 8))}
-                  onKeyDown={onEnter(handleVerifyOtp)}
-                  className={`${inputClass} h-13 text-center text-2xl font-semibold tracking-[0.4em]`}
-                  placeholder="······"
-                />
-                {otpError ? <p className="text-sm text-[#C0392B]">{otpError}</p> : null}
-              </div>
-            ) : null}
-
-            {step === "email" ? (
-              <Button
-                type="button"
-                onClick={handleEmailContinue}
-                disabled={loadingAction !== null}
-                className={primaryButtonClass}
-              >
-                {loadingAction === "email" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Continuar
-              </Button>
-            ) : null}
-
-            {step === "login" ? (
-              <Button
-                type="button"
-                onClick={handlePasswordLogin}
-                disabled={loadingAction !== null}
-                className={primaryButtonClass}
-              >
-                {loadingAction === "password" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Entrar
-              </Button>
-            ) : null}
-
-            {step === "register" ? (
-              <Button
-                type="button"
-                onClick={handleRequestOtp}
-                disabled={loadingAction !== null}
-                className={primaryButtonClass}
-              >
-                {loadingAction === "register" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Crear cuenta
-              </Button>
-            ) : null}
-
+            {/* ── OTP ── */}
             {step === "otp" ? (
               <>
-                <Button
-                  type="button"
-                  onClick={handleVerifyOtp}
-                  disabled={loadingAction !== null}
-                  className={primaryButtonClass}
-                >
+                <div className="space-y-2">
+                  <Label htmlFor="otp" className="text-sm font-medium text-foreground">
+                    Código de verificación
+                  </Label>
+                  <Input
+                    id="otp"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    value={otp}
+                    onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 8))}
+                    onKeyDown={onEnter(handleVerifyOtp)}
+                    className={`${inputClass} h-13 text-center text-2xl font-semibold tracking-[0.4em]`}
+                    placeholder="······"
+                  />
+                  {otpError ? <p className="text-sm text-[#C0392B]">{otpError}</p> : null}
+                </div>
+                <Button type="button" onClick={handleVerifyOtp} disabled={loadingAction !== null} className={primaryButtonClass}>
                   {loadingAction === "otp" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Verificar y entrar
                 </Button>
-
                 <div className="pt-1 text-center text-sm text-muted-foreground">
                   ¿No te llegó?{" "}
                   <button
@@ -651,7 +698,16 @@ export function AuthFlow({
               </>
             ) : null}
 
-            {step !== "email" ? (
+            {/* Continuar (email step) */}
+            {step === "email" ? (
+              <Button type="button" onClick={handleEmailContinue} disabled={loadingAction !== null} className={primaryButtonClass}>
+                {loadingAction === "email" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Continuar
+              </Button>
+            ) : null}
+
+            {/* Remember me */}
+            {step === "login" || step === "register-owner" || step === "register-employee" ? (
               <label
                 htmlFor="remember-me"
                 className="flex cursor-pointer items-center gap-2.5 pt-1 text-sm text-muted-foreground"
@@ -665,19 +721,19 @@ export function AuthFlow({
               </label>
             ) : null}
 
-            {step === "login" || step === "register" ? (
+            {/* OAuth */}
+            {showOauth ? (
               <>
                 <div className="flex items-center gap-3 pt-1">
                   <div className="h-px flex-1 bg-border" />
                   <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">o</span>
                   <div className="h-px flex-1 bg-border" />
                 </div>
-
                 <div className="space-y-2.5">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => handleOauth("google", step === "login" ? "login" : "register")}
+                    onClick={() => handleOauth("google")}
                     disabled={loadingAction !== null || !googleReady}
                     className="h-11 w-full rounded-xl border-border bg-card text-sm font-medium text-foreground transition-all hover:bg-muted/60 active:scale-[0.985]"
                   >
@@ -691,7 +747,7 @@ export function AuthFlow({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => handleOauth("microsoft", step === "login" ? "login" : "register")}
+                    onClick={() => handleOauth("microsoft")}
                     disabled={loadingAction !== null || !microsoftReady}
                     className="h-11 w-full rounded-xl border-border bg-card text-sm font-medium text-foreground transition-all hover:bg-muted/60 active:scale-[0.985]"
                   >
@@ -716,25 +772,78 @@ export function AuthFlow({
   );
 }
 
+function Field({
+  label,
+  children,
+  error,
+  hint,
+  optional,
+}: {
+  label: string;
+  children: React.ReactNode;
+  error?: string | null;
+  hint?: string;
+  optional?: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label className="flex items-center gap-2 text-sm font-medium text-foreground">
+        {label}
+        {optional ? <span className="text-xs font-normal text-muted-foreground">(opcional)</span> : null}
+      </Label>
+      {children}
+      {hint && !error ? <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p> : null}
+      {error ? <p className="text-sm text-[#C0392B]">{error}</p> : null}
+    </div>
+  );
+}
+
+function PasswordInput({
+  value,
+  onChange,
+  onEnter,
+  inputClass,
+  placeholder,
+  autoFocus,
+  autoComplete = "new-password",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onEnter: () => void;
+  inputClass: string;
+  placeholder: string;
+  autoFocus?: boolean;
+  autoComplete?: string;
+}) {
+  return (
+    <div className="relative">
+      <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+      <Input
+        type="password"
+        autoComplete={autoComplete}
+        autoFocus={autoFocus}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            onEnter();
+          }
+        }}
+        className={`${inputClass} pl-10`}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}
+
 function GoogleLogo({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden>
-      <path
-        fill="#4285F4"
-        d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47a5.53 5.53 0 0 1-2.4 3.63v3h3.86c2.27-2.09 3.56-5.17 3.56-8.87z"
-      />
-      <path
-        fill="#34A853"
-        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09A11.99 11.99 0 0 0 12 24z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M5.27 14.29A7.16 7.16 0 0 1 4.89 12c0-.8.14-1.57.38-2.29V6.62H1.29a11.99 11.99 0 0 0 0 10.76l3.98-3.09z"
-      />
-      <path
-        fill="#EA4335"
-        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z"
-      />
+      <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47a5.53 5.53 0 0 1-2.4 3.63v3h3.86c2.27-2.09 3.56-5.17 3.56-8.87z" />
+      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09A11.99 11.99 0 0 0 12 24z" />
+      <path fill="#FBBC05" d="M5.27 14.29A7.16 7.16 0 0 1 4.89 12c0-.8.14-1.57.38-2.29V6.62H1.29a11.99 11.99 0 0 0 0 10.76l3.98-3.09z" />
+      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z" />
     </svg>
   );
 }

@@ -330,4 +330,34 @@ AVOID:              Purple, blue, gradients, Inter headlines, corporate copy
 
 ---
 
+## 11. IN-APP UI — "CLEAN MODE" (logueado)
+
+> La landing es unhinged. **El producto adentro es Apple.** Dos registros distintos, a propósito: afuera vendemos personalidad, adentro vendemos calma y velocidad.
+
+Una vez que el usuario entra (login, pagos, CRM, configuración), el diseño cambia a **limpio, claro y pulido**. Esta es **la clave del producto**: tiene que sentirse rápido, obvio y sin fricción — como una app de Apple.
+
+### Principios (no negociables)
+- **Limpio sobre decorado.** Fondo `#FBFAF8`, tarjetas blancas `#FFFFFF`, sombras suaves (`shadow-panel`), **nunca** bordes gruesos brutalistas adentro de la app.
+- **Una decisión por pantalla.** Si hay varias acciones, una sola es la primaria (naranja, sólida); el resto es secundario y visualmente más callado.
+- **Jerarquía por tamaño, no por ruido.** La opción principal es grande (tarjeta con ícono); las alternativas van más chicas y abajo (texto/enlace). Ej: en el alta, "Crear cuenta nueva" es una tarjeta grande y "entrar como empleado" es un link discreto debajo.
+- **Feedback siempre.** Todo botón tiene estado de carga (spinner), micro-animación al tocar (`active:scale-[0.985]`) y confirmación (toast). Si algo tarda, se ve. Nunca un botón "muerto".
+- **Movimiento sutil.** Transiciones de entrada cortas (`animate-in fade-in slide-in-from-bottom-1 duration-300`). Nada que rebote o distraiga.
+- **Espacio para respirar.** Padding generoso, radios `rounded-xl`/`rounded-2xl`, inputs altos (`h-11`) cómodos para tocar.
+- **Texto humano y corto.** Mensajes claros en español rioplatense, sin jerga técnica. Los errores dicen qué hacer, no solo qué falló.
+
+### Tokens de la app (clean mode)
+```
+--background:  #FBFAF8     /* off-white cálido, nunca blanco puro */
+--card:        #FFFFFF
+--primary:     #D4420A     /* CTA / acción primaria */
+--border:      rgba(32,26,19,.10)   /* finos y suaves */
+radios:        rounded-xl (botones/inputs) · rounded-2xl (tarjetas/modales)
+sombra:        shadow-panel (difusa, baja)
+```
+
+### Regla mental
+> Si una pantalla te hace dudar dónde tocar, está mal. Limpio = obvio. Si tenés que explicarlo, simplificalo.
+
+---
+
 *DILBERT CRM. NO GRID REQUIRED.*

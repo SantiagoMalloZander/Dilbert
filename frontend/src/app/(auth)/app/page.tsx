@@ -7,7 +7,7 @@ export default async function AuthPage({
 }: {
   searchParams?: Promise<{
     timeout?: string;
-    step?: "email" | "login" | "register" | "otp";
+    step?: string;
     email?: string;
     oauth_error?: string;
     join?: string;
@@ -17,6 +17,12 @@ export default async function AuthPage({
 }) {
   const session = await getAuthSession();
   const resolvedSearchParams = (await searchParams) ?? {};
+
+  // Only a few steps are safe to deep-link into; everything else starts at email.
+  const allowedSteps = new Set(["email", "login", "otp"]);
+  const initialStep = allowedSteps.has(resolvedSearchParams.step || "")
+    ? (resolvedSearchParams.step as "email" | "login" | "otp")
+    : "email";
 
   if (session?.user?.email) {
     if (session.user.isSuperAdmin) {
@@ -45,7 +51,7 @@ export default async function AuthPage({
       )}
       timeout={resolvedSearchParams.timeout === "1"}
       initialEmail={resolvedSearchParams.email || ""}
-      initialStep={resolvedSearchParams.step || "email"}
+      initialStep={initialStep}
       initialJoinToken={resolvedSearchParams.join || ""}
       initialOtpType={resolvedSearchParams.otp_type || "signup"}
       oauthError={resolvedSearchParams.oauth_error}
