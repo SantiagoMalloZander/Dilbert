@@ -203,7 +203,6 @@ export function AuthFlow({
           try {
             const { error: otpError } = await supabase.auth.signInWithOtp({
               email,
-              options: { shouldCreateUser: false },
             });
             if (otpError) throw otpError;
             setOtp("");
