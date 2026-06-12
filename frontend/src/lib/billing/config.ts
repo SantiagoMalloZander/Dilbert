@@ -13,8 +13,11 @@ export function mpPricePerSeatArs(): number {
   return Number.isFinite(v) && v > 0 ? v : 18000;
 }
 
-/** Subscription states that grant access to the app. */
-export const ACTIVE_STATUSES = ["active", "trialing"];
+/** Subscription states that grant access to the app (free tier included). */
+export const ACTIVE_STATUSES = ["active", "trialing", "free"];
+
+/** Free tier limit. */
+export const FREE_LEADS_PER_DAY = 1;
 
 export function appUrl(): string {
   return (process.env.NEXT_PUBLIC_APP_URL || "https://dilvert.netlify.app").replace(/\/$/, "");

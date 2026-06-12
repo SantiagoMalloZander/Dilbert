@@ -29,6 +29,18 @@ async function upsertSubscription(companyId: string, patch: Record<string, unkno
     );
 }
 
+/** Activate the free tier (1 lead/day, no agent, no customization). No payment. */
+export async function activateFreePlan(): Promise<void> {
+  const { companyId } = await requireBillingOwner();
+  await upsertSubscription(companyId, {
+    provider: null,
+    status: "free",
+    seats: 1,
+    unit_amount: 0,
+    currency: null,
+  });
+}
+
 /** Stripe Checkout (USD, per-seat subscription). Returns the hosted-checkout URL. */
 export async function startStripeCheckout(seatsInput: number): Promise<{ url: string }> {
   const { user, companyId } = await requireBillingOwner();

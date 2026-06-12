@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Check, CreditCard, Loader2, Minus, Plus, ShieldCheck } from "lucide-react";
+import { Check, CreditCard, Gift, Loader2, Minus, Plus, ShieldCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { emitGlobalToast } from "@/lib/global-toast";
@@ -10,6 +11,7 @@ import {
   startStripeCheckout,
   startMercadoPagoCheckout,
   openBillingPortal,
+  activateFreePlan,
 } from "@/modules/billing/actions";
 import { MIN_SEATS, MAX_SEATS } from "@/lib/billing/config";
 import type { BillingState } from "@/modules/billing/queries";
@@ -41,6 +43,7 @@ export function SubscriptionView({
   mpEnabled: boolean;
 }) {
   const params = useSearchParams();
+  const router = useRouter();
   const [seats, setSeats] = useState(defaultSeats);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -66,10 +69,24 @@ export function SubscriptionView({
     }
   }
 
+  async function goFree() {
+    setBusy("free");
+    try {
+      await activateFreePlan();
+      emitGlobalToast({ tone: "success", text: "¡Listo! Estás en el plan Gratis." });
+      router.refresh();
+    } catch {
+      emitGlobalToast({ tone: "error", text: "No pude activar el plan gratis. Probá de nuevo." });
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const isPaying = PAYING_STATUSES.includes(state.status);
+  const isFree = state.status === "free";
 
   // ── Exempt (grandfathered / cortesía) ──────────────────────────────────────
-  if (state.exempt && !isPaying) {
+  if (state.exempt && !isPaying && !isFree) {
     return (
       <Shell>
         <div className="flex flex-col items-center gap-3 text-center">
@@ -132,20 +149,46 @@ export function SubscriptionView({
     );
   }
 
-  // ── Not subscribed — the plan ───────────────────────────────────────────────
+  // ── None (elegir plan) o Free (upsell a Pro) ────────────────────────────────
   const totalUsd = seats * priceUsd;
   const totalArs = seats * priceArs;
 
   return (
     <Shell>
       <div className="text-center">
-        <h1 className="text-2xl font-semibold">Activá Dilbert</h1>
+        <h1 className="text-2xl font-semibold">{isFree ? "Pasá a Pro" : "Elegí tu plan"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Pagás solo por los vendedores que usás. Cancelás cuando quieras.
+          {isFree
+            ? "Estás en el plan Gratis (1 lead por día). Pasá a Pro para leads ilimitados y todo a medida."
+            : "Empezá gratis o activá Pro con todo incluido."}
         </p>
       </div>
 
-      <div className="mt-6 text-center">
+      {/* Free option — solo si todavía no está en Free */}
+      {!isFree && isOwner ? (
+        <>
+          <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-background/60 p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-600">
+                <Gift className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold">Gratis</p>
+                <p className="text-xs text-muted-foreground">1 lead por día · para probar</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={goFree} disabled={busy !== null}>
+              {busy === "free" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Empezar gratis
+            </Button>
+          </div>
+          <div className="my-5 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            o pasá a Pro
+          </div>
+        </>
+      ) : null}
+
+      <div className="mt-2 text-center">
         <div className="flex items-end justify-center gap-1">
           <span className="text-5xl font-semibold tracking-tight">${priceUsd}</span>
           <span className="mb-1 text-sm text-muted-foreground">/ vendedor / mes</span>

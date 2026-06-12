@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cómo funciona — Dilbert</title>
+<meta name="description" content="Un agente atiende a cada contacto que llega, capta los datos, filtra lo que no sirve y lo deriva al vendedor indicado. Después carga todo en el CRM y recontacta solo.">
+<link rel="icon" type="image/svg+xml" href="dilbert-crm-logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+  <script>document.documentElement.classList.add('js');</script>
+
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="/"><span class="brand-dot"></span>Dilbert</a>
+      <nav class="nav-links">
+        <a class="muted" href="/comofunciona">Cómo funciona</a>
+        <a class="muted" href="/precio">Precio</a>
+        <div class="nav-cta"><a class="btn btn-primary" href="/app">Entrar</a></div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="page-hero">
+    <div class="wrap">
+      <span class="eyebrow reveal">Cómo funciona</span>
+      <h1 class="reveal">Un agente que atiende,<br>ordena y deriva. Solo.</h1>
+      <p class="lead reveal">
+        Desde que entra un contacto hasta que se cierra la reserva, Dilbert se ocupa de todo
+        el camino. Tu equipo solo atiende a los clientes que valen la pena.
+      </p>
+    </div>
+  </section>
+
+  <!-- FLOW -->
+  <section style="padding-top: 30px;">
+    <div class="wrap">
+      <div class="flow">
+        <div class="flow-step reveal">
+          <div class="n">1</div>
+          <div>
+            <h3>Llega un contacto</h3>
+            <p>Alguien escribe desde tu página web, Instagram, Meta Ads o donde publiques. Entra directo a Dilbert.</p>
+          </div>
+        </div>
+
+        <div class="flow-step reveal">
+          <div class="n">2</div>
+          <div>
+            <h3>El agente lo atiende al instante</h3>
+            <p>Le da la bienvenida, le hace las preguntas y capta los datos: qué busca, en qué zona y con qué presupuesto. Responde solo lo simple —precio de una propiedad, preguntas frecuentes— y <strong>filtra lo que no sirve</strong>, para que tus vendedores no pierdan tiempo en consultas vacías.</p>
+            <span class="tag">Filtra conversaciones basura</span>
+          </div>
+        </div>
+
+        <div class="flow-step reveal">
+          <div class="n">3</div>
+          <div>
+            <h3>Clasifica y lo deriva al vendedor indicado</h3>
+            <p>Con los datos ya tomados, decide quién tiene que atenderlo y se lo pasa a esa persona —con la ficha del cliente ya armada y cargada en el CRM.</p>
+          </div>
+        </div>
+
+        <div class="flow-step reveal">
+          <div class="n">4</div>
+          <div>
+            <h3>Sigue cargando todo lo que pasa</h3>
+            <p>A partir de ahí, cada conversación del vendedor con el cliente —WhatsApp, mail, llamadas— se vuelve ficha sola. El CRM queda siempre al día, sin que nadie cargue nada a mano.</p>
+          </div>
+        </div>
+
+        <div class="flow-step reveal">
+          <div class="n">5</div>
+          <div>
+            <h3>Recontacta solo para revivir clientes</h3>
+            <p>Si un cliente quedó frío, el agente lo vuelve a contactar automáticamente para retomar la charla, revivir la oportunidad y cerrar más reservas.</p>
+            <span class="tag">Más reservas, sin esfuerzo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTEGRACIONES -->
+  <section class="band">
+    <div class="wrap">
+      <div class="callout reveal">
+        <span class="eyebrow">Se conecta con lo que ya usás</span>
+        <h2>Traemos los datos de tus leads.</h2>
+        <p class="lead" style="max-width:560px;margin:14px auto 0;">
+          Nos conectamos a <strong>Wasi</strong> y a tu CRM actual para traer la información de tus leads
+          y propiedades. No tenés que mudarte de sistema ni empezar de cero.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final">
+    <div class="wrap reveal">
+      <h2>Probalo con tu inmobiliaria.</h2>
+      <p class="lead" style="max-width:520px;margin:14px auto 0;">Empezás gratis y ves cómo se ordena todo solo.</p>
+      <a class="btn btn-primary btn-lg" href="/app">Empezar gratis</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap foot">
+      <div class="brand" style="font-size:16px;"><span class="brand-dot"></span>Dilbert</div>
+      <div class="foot-links">
+        <a href="/comofunciona">Cómo funciona</a>
+        <a href="/precio">Precio</a>
+        <a href="/app">Entrar</a>
+      </div>
+      <div>© <span id="y"></span> Dilbert</div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+  </script>
+</body>
+</html>

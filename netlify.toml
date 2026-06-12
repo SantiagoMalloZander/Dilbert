@@ -16,11 +16,21 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Serve the static landing at the root with a clean URL (no /landing.html).
-# CDN-level rewrite (status 200) — evaluated before the Next.js routes.
+# Serve the static marketing pages with clean URLs (no .html).
+# CDN-level rewrites (status 200) — evaluated before the Next.js routes.
 [[redirects]]
   from = "/"
   to = "/landing.html"
+  status = 200
+
+[[redirects]]
+  from = "/comofunciona"
+  to = "/comofunciona.html"
+  status = 200
+
+[[redirects]]
+  from = "/precio"
+  to = "/precio.html"
   status = 200
 
 # Next.js middleware handles routing, no need for Netlify redirects

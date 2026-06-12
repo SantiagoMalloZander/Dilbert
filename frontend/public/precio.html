@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Precio — Dilbert</title>
+<meta name="description" content="Empezá gratis con 1 lead por día. Pasá a Pro para leads ilimitados, el agente que clasifica y recontacta, conexión con Wasi y tu CRM, todo a medida y soporte 24/7.">
+<link rel="icon" type="image/svg+xml" href="dilbert-crm-logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+  <script>document.documentElement.classList.add('js');</script>
+
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="/"><span class="brand-dot"></span>Dilbert</a>
+      <nav class="nav-links">
+        <a class="muted" href="/comofunciona">Cómo funciona</a>
+        <a class="muted" href="/precio">Precio</a>
+        <div class="nav-cta"><a class="btn btn-primary" href="/app">Entrar</a></div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="page-hero">
+    <div class="wrap">
+      <span class="eyebrow reveal">Precio</span>
+      <h1 class="reveal">Simple y claro.</h1>
+      <p class="lead reveal">Empezás gratis. Cuando quieras más, pasás a Pro. Sin permanencia, cancelás cuando quieras.</p>
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section style="padding-top: 34px;">
+    <div class="wrap">
+      <div class="compare reveal">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th class="col">
+                <div class="tier">Gratis</div>
+                <div class="price">$0<small>para siempre</small></div>
+              </th>
+              <th class="col pro pro-col">
+                <div class="tier">Pro</div>
+                <div class="price">US$15<small>/ vendedor / mes</small></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feat">Leads por día</td>
+              <td class="col">1</td>
+              <td class="col pro-col"><strong>Ilimitados</strong></td>
+            </tr>
+            <tr>
+              <td class="feat">Fichas automáticas de clientes</td>
+              <td class="col yes">✓</td>
+              <td class="col pro-col yes">✓</td>
+            </tr>
+            <tr>
+              <td class="feat">Seguimiento (quién espera respuesta + mensaje sugerido)</td>
+              <td class="col no">—</td>
+              <td class="col pro-col yes">✓</td>
+            </tr>
+            <tr>
+              <td class="feat">Agente que clasifica y deriva los leads</td>
+              <td class="col no">—</td>
+              <td class="col pro-col yes">✓</td>
+            </tr>
+            <tr>
+              <td class="feat">Recontacto automático para revivir clientes</td>
+              <td class="col no">—</td>
+              <td class="col pro-col yes">✓</td>
+            </tr>
+            <tr>
+              <td class="feat">Conexión con Wasi y tu CRM actual</td>
+              <td class="col no">—</td>
+              <td class="col pro-col yes">✓</td>
+            </tr>
+            <tr>
+              <td class="feat">Integraciones nuevas a pedido</td>
+              <td class="col no">—</td>
+              <td class="col pro-col yes">✓</td>
+            </tr>
+            <tr>
+              <td class="feat">Personalización a medida</td>
+              <td class="col no">—</td>
+              <td class="col pro-col yes">✓</td>
+            </tr>
+            <tr>
+              <td class="feat">Soporte 24/7, todos los días</td>
+              <td class="col no">—</td>
+              <td class="col pro-col yes">✓</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="cta-row">
+              <td></td>
+              <td class="col"><a class="btn btn-ghost block" href="/app">Empezar gratis</a></td>
+              <td class="col pro-col"><a class="btn btn-primary block" href="/app">Empezar Pro</a></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <p class="center lead" style="font-size:14px;margin-top:22px;">
+        Pagás con tarjeta o Mercado Pago. Sumás o sacás vendedores cuando quieras.
+      </p>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="band final">
+    <div class="wrap reveal">
+      <h2>Empezá hoy, gratis.</h2>
+      <p class="lead" style="max-width:520px;margin:14px auto 0;">Probá Dilbert con tu inmobiliaria y pasá a Pro cuando lo necesites.</p>
+      <a class="btn btn-primary btn-lg" href="/app">Empezar gratis</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap foot">
+      <div class="brand" style="font-size:16px;"><span class="brand-dot"></span>Dilbert</div>
+      <div class="foot-links">
+        <a href="/comofunciona">Cómo funciona</a>
+        <a href="/precio">Precio</a>
+        <a href="/app">Entrar</a>
+      </div>
+      <div>© <span id="y"></span> Dilbert</div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+  </script>
+</body>
+</html>

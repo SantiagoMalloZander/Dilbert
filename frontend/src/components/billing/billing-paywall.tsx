@@ -24,15 +24,15 @@ export function BillingPaywall({ active, isOwner }: { active: boolean; isOwner: 
         <div className="mx-auto mb-4 w-fit rounded-2xl bg-primary/10 p-3 text-primary">
           <Lock className="h-6 w-6" />
         </div>
-        <h2 className="text-xl font-semibold">Activá tu suscripción</h2>
+        <h2 className="text-xl font-semibold">Elegí tu plan</h2>
         <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
           {isOwner
-            ? "Para seguir usando Dilbert, activá tu plan. Pagás solo por los vendedores que usás y cancelás cuando quieras."
-            : "Tu inmobiliaria todavía no activó la suscripción. Avisale al dueño de la cuenta para empezar."}
+            ? "Para empezar a usar Dilbert elegí un plan. Tenés una opción gratis para probar y una Pro con todo incluido."
+            : "Tu inmobiliaria todavía no eligió un plan. Avisale al dueño de la cuenta para empezar."}
         </p>
         {isOwner ? (
           <Button className="mt-6 w-full" onClick={() => router.push("/app/suscripcion")}>
-            Ver planes
+            Elegí tu plan
           </Button>
         ) : null}
       </div>
