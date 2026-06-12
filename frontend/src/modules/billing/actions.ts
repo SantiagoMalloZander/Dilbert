@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/workspace-auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { appUrl, clampSeats, PRICE_PER_SEAT_USD_CENTS } from "@/lib/billing/config";
 import { createSubscriptionCheckout, createBillingPortal } from "@/lib/billing/stripe";
-import { createPreapproval } from "@/lib/billing/mercadopago";
+import { createPreapprovalPlan, getPreapproval } from "@/lib/billing/mercadopago";
 import { getDolarTarjeta, usdToArs } from "@/lib/billing/fx";
 import { getSubscription } from "@/modules/billing/queries";
 
@@ -65,24 +65,27 @@ export async function startStripeCheckout(seatsInput: number): Promise<{ url: st
   return { url: session.url };
 }
 
-/** Mercado Pago subscription (ARS). Returns the init_point to redirect the payer. */
+/**
+ * Mercado Pago subscription (ARS) via a subscription PLAN. We don't bind any
+ * payer_email, so ANY Mercado Pago account can pay (the owner, the accountant,
+ * whoever) by logging into their own MP — no "tu email no coincide". Returns
+ * the init_point to redirect to.
+ */
 export async function startMercadoPagoCheckout(seatsInput: number): Promise<{ url: string }> {
-  const { user, companyId } = await requireBillingOwner();
+  const { companyId } = await requireBillingOwner();
   const seats = clampSeats(seatsInput);
   // El precio está en USD; Mercado Pago cobra en ARS al dólar tarjeta del día.
   const rate = await getDolarTarjeta();
   const amountArs = usdToArs(seats * (PRICE_PER_SEAT_USD_CENTS / 100), rate);
 
-  const preapproval = await createPreapproval({
+  const plan = await createPreapprovalPlan({
     companyId,
-    email: user.email,
     seats,
     amountArs,
     backUrl: `${appUrl()}/app/suscripcion?mp=ok`,
-    notificationUrl: `${appUrl()}/app/api/webhooks/mercadopago`,
   });
 
-  if (!preapproval.init_point) {
+  if (!plan.init_point) {
     throw new Error("MP_NO_INIT_POINT");
   }
 
@@ -91,11 +94,45 @@ export async function startMercadoPagoCheckout(seatsInput: number): Promise<{ ur
     seats,
     unit_amount: Math.round(amountArs / seats),
     currency: "ars",
-    mp_preapproval_id: preapproval.id,
     status: "pending",
   });
 
-  return { url: preapproval.init_point };
+  return { url: plan.init_point };
+}
+
+/**
+ * Confirms a Mercado Pago subscription when the payer returns to /app/suscripcion.
+ * MP appends `preapproval_id` to the back_url; we fetch it, check it's authorized
+ * and (matching this company) flip the subscription to active. Idempotent.
+ */
+export async function confirmMercadoPagoReturn(preapprovalId: string): Promise<boolean> {
+  const { companyId } = await requireBillingOwner();
+  if (!preapprovalId) return false;
+
+  let pre;
+  try {
+    pre = await getPreapproval(preapprovalId);
+  } catch {
+    return false;
+  }
+
+  // Guard: if MP carried our company reference, it must match the caller's.
+  if (pre.external_reference && pre.external_reference !== companyId) return false;
+  if (pre.status !== "authorized") return false;
+
+  await upsertSubscription(companyId, {
+    provider: "mercadopago",
+    currency: "ars",
+    mp_preapproval_id: pre.id,
+    status: "active",
+  });
+
+  const sub = await getSubscription(companyId);
+  if (sub?.seats && sub.seats > 0) {
+    const supabase = createAdminSupabaseClient();
+    await supabase.from("companies").update({ vendor_limit: sub.seats }).eq("id", companyId);
+  }
+  return true;
 }
 
 /** Open the Stripe Billing Portal so the owner can update/cancel their plan. */

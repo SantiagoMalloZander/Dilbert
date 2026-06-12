@@ -36,9 +36,45 @@ export type MpPreapproval = {
   init_point?: string;
   external_reference?: string;
   payer_email?: string;
+  preapproval_plan_id?: string;
   auto_recurring?: { transaction_amount?: number; currency_id?: string };
   next_payment_date?: string;
 };
+
+export type MpPreapprovalPlan = {
+  id: string;
+  init_point?: string;
+  external_reference?: string;
+};
+
+/**
+ * Subscription PLAN ("suscripción con plan"). Unlike a direct preapproval, the
+ * plan's init_point lets ANY Mercado Pago account subscribe with their own
+ * login — we never bind a payer_email. Ideal for companies (the owner, the
+ * accountant, whoever paga). We tie it to the company via external_reference
+ * and confirm on return to /app/suscripcion (and via webhook).
+ */
+export async function createPreapprovalPlan(params: {
+  companyId: string;
+  seats: number;
+  amountArs: number;
+  backUrl: string;
+}): Promise<MpPreapprovalPlan> {
+  return mpFetch<MpPreapprovalPlan>("/preapproval_plan", {
+    method: "POST",
+    json: {
+      reason: `Dilbert — CRM (${params.seats} ${params.seats === 1 ? "vendedor" : "vendedores"})`,
+      external_reference: params.companyId,
+      back_url: params.backUrl,
+      auto_recurring: {
+        frequency: 1,
+        frequency_type: "months",
+        transaction_amount: params.amountArs,
+        currency_id: "ARS",
+      },
+    },
+  });
+}
 
 export async function createPreapproval(params: {
   companyId: string;

@@ -1,13 +1,29 @@
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/workspace-auth";
 import { getBillingState, getActiveVendorCount } from "@/modules/billing/queries";
+import { confirmMercadoPagoReturn } from "@/modules/billing/actions";
 import { PRICE_PER_SEAT_USD_CENTS, clampSeats } from "@/lib/billing/config";
 import { getDolarTarjeta, usdToArs } from "@/lib/billing/fx";
 import { SubscriptionView } from "@/components/billing/subscription-view";
 
-export default async function SuscripcionPage() {
+export default async function SuscripcionPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requireSession();
   if (!session.user.companyId) redirect("/app/account");
+
+  // Volviendo de Mercado Pago: MP agrega ?preapproval_id=… → confirmamos el alta.
+  const params = (await searchParams) ?? {};
+  const preapprovalId = typeof params.preapproval_id === "string" ? params.preapproval_id : null;
+  if (preapprovalId) {
+    try {
+      await confirmMercadoPagoReturn(preapprovalId);
+    } catch {
+      // best-effort; el webhook lo reconcilia igual
+    }
+  }
 
   const isOwner = session.user.role === "owner" || session.user.isSuperAdmin;
   const priceUsd = PRICE_PER_SEAT_USD_CENTS / 100;
