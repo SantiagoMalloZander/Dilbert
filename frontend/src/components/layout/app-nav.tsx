@@ -7,6 +7,7 @@ import {
   Activity,
   Bot,
   Building2,
+  CreditCard,
   Inbox,
   Loader2,
   Settings,
@@ -56,6 +57,12 @@ export function AppNav({
       href: "/app/settings",
       label: "Configuración",
       icon: Settings,
+      visible: hasWorkspaceAccess && (role === "owner" || isSuperAdmin),
+    },
+    {
+      href: "/app/suscripcion",
+      label: "Suscripción",
+      icon: CreditCard,
       visible: hasWorkspaceAccess && (role === "owner" || isSuperAdmin),
     },
     {

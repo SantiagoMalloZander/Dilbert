@@ -623,6 +623,7 @@ export type Database = {
           status: Database["public"]["Enums"]["company_status"]
           updated_at: string
           vendor_limit: number
+          billing_exempt: boolean
         }
         Insert: {
           created_at?: string
@@ -634,6 +635,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["company_status"]
           updated_at?: string
           vendor_limit?: number
+          billing_exempt?: boolean
         }
         Update: {
           created_at?: string
@@ -645,6 +647,58 @@ export type Database = {
           status?: Database["public"]["Enums"]["company_status"]
           updated_at?: string
           vendor_limit?: number
+          billing_exempt?: boolean
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          id: string
+          company_id: string
+          provider: string | null
+          status: string
+          seats: number
+          unit_amount: number | null
+          currency: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          mp_preapproval_id: string | null
+          current_period_end: string | null
+          cancel_at_period_end: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          provider?: string | null
+          status?: string
+          seats?: number
+          unit_amount?: number | null
+          currency?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          mp_preapproval_id?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          provider?: string | null
+          status?: string
+          seats?: number
+          unit_amount?: number | null
+          currency?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          mp_preapproval_id?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
