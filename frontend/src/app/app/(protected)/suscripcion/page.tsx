@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/workspace-auth";
 import { getBillingState, getActiveVendorCount } from "@/modules/billing/queries";
 import { confirmMercadoPagoReturn } from "@/modules/billing/actions";
-import { PRICE_PER_SEAT_USD_CENTS, clampSeats } from "@/lib/billing/config";
-import { getDolarTarjeta, usdToArs } from "@/lib/billing/fx";
+import { PRICE_PER_SEAT_USD_CENTS, clampSeats, mpPricePerSeatArs } from "@/lib/billing/config";
+import { getDolarTarjeta } from "@/lib/billing/fx";
 import { SubscriptionView } from "@/components/billing/subscription-view";
 
 export default async function SuscripcionPage({
@@ -43,7 +43,7 @@ export default async function SuscripcionPage({
       defaultSeats={defaultSeats}
       activeVendors={activeVendors}
       priceUsd={priceUsd}
-      priceArs={usdToArs(priceUsd, rate)}
+      priceArs={mpPricePerSeatArs()}
       dolarTarjeta={rate}
       stripeEnabled={Boolean(process.env.STRIPE_SECRET_KEY)}
       mpEnabled={Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN)}

@@ -7,8 +7,8 @@ import { listZones } from "@/modules/agency/zones/queries";
 import { listProperties } from "@/modules/agency/properties/queries";
 import { getUsersCenterData, type UsersCenterData } from "@/modules/users/queries";
 import { getBillingState, getActiveVendorCount, type BillingState } from "@/modules/billing/queries";
-import { PRICE_PER_SEAT_USD_CENTS, clampSeats } from "@/lib/billing/config";
-import { getDolarTarjeta, usdToArs } from "@/lib/billing/fx";
+import { PRICE_PER_SEAT_USD_CENTS, clampSeats, mpPricePerSeatArs } from "@/lib/billing/config";
+import { getDolarTarjeta } from "@/lib/billing/fx";
 import { getBotConfig, type BotConfig } from "@/modules/agency/bot/queries";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
 
@@ -47,7 +47,7 @@ export default async function SettingsPage() {
         defaultSeats: clampSeats(Math.max(billing.seats || 0, activeVendors, 1)),
         activeVendors,
         priceUsd,
-        priceArs: usdToArs(priceUsd, rate),
+        priceArs: mpPricePerSeatArs(),
         dolarTarjeta: rate,
         isOwner: session.user.role === "owner" || session.user.isSuperAdmin,
         stripeEnabled: Boolean(process.env.STRIPE_SECRET_KEY),

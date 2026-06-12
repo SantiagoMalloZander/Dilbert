@@ -273,7 +273,7 @@ export function SubscriptionView({
 
           {mpEnabled ? (
             <p className="text-center text-[11px] text-muted-foreground">
-              En pesos al dólar tarjeta (${dolarTarjeta.toLocaleString("es-AR")} / USD).
+              ${priceArs.toLocaleString("es-AR")} ARS por vendedor / mes.
             </p>
           ) : null}
 

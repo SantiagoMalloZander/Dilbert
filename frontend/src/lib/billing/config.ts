@@ -10,7 +10,7 @@ export const MAX_SEATS = 50;
 /** ARS price per seat for Mercado Pago (USD can't be charged locally in AR). */
 export function mpPricePerSeatArs(): number {
   const v = Number(process.env.MP_PRICE_PER_SEAT_ARS);
-  return Number.isFinite(v) && v > 0 ? v : 18000;
+  return Number.isFinite(v) && v > 0 ? v : 15;
 }
 
 /** Subscription states that grant access to the app (free tier included). */
