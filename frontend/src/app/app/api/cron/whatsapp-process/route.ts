@@ -76,7 +76,13 @@ async function getTeammatePhones(companyId: string): Promise<string[]> {
 
 function buildTranscript(rows: QueueRow[]): string {
   const lines = rows.map((r) => {
-    const who = r.from_me ? "Vendedor" : r.push_name?.trim() || "Cliente";
+    // Bot (YCloud) lines speak as "Asistente"; vendor lines as "Vendedor".
+    const isBot = r.instance_name.startsWith("ycloud_");
+    const who = r.from_me
+      ? isBot
+        ? "Asistente"
+        : "Vendedor"
+      : r.push_name?.trim() || "Cliente";
     return `${who}: ${r.raw_text}`;
   });
   let transcript = lines.join("\n");

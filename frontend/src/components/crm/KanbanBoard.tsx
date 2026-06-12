@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { Loader2, Filter, Plus, Sparkles, Phone } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -64,6 +64,12 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
   const [audioUploadOpen, setAudioUploadOpen] = useState(false);
 
   const canDrag = data.currentUser.role === "owner" || data.currentUser.role === "vendor";
+
+  // Server refreshes (realtime updates, post-move revalidation) deliver new
+  // stage data; sync the optimistic local copy so the board reflects it.
+  useEffect(() => {
+    setStages(data.stages);
+  }, [data.stages]);
 
   const summary = useMemo(() => {
     const leadCount = stages.reduce((sum, stage) => sum + stage.leadCount, 0);

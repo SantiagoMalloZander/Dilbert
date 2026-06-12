@@ -191,37 +191,43 @@ export function SubscriptionView({
         </>
       ) : null}
 
-      <div className="mt-2 text-center">
-        <div className="flex items-end justify-center gap-1">
-          <span className="text-5xl font-semibold tracking-tight">${priceUsd}</span>
-          <span className="mb-1 text-sm text-muted-foreground">/ vendedor / mes</span>
+      <div className="mt-3 text-center">
+        <div className="flex items-baseline justify-center gap-1.5">
+          <span className="text-[44px] font-semibold leading-none tracking-tight">${priceUsd}</span>
+          <span className="text-sm text-muted-foreground">USD / vendedor / mes</span>
         </div>
       </div>
 
-      {/* Seat stepper */}
-      <div className="mt-6 flex items-center justify-center gap-4">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setSeats((s) => Math.max(MIN_SEATS, s - 1))}
-          disabled={seats <= MIN_SEATS || !isOwner}
-          aria-label="Menos vendedores"
-        >
-          <Minus className="h-4 w-4" />
-        </Button>
-        <div className="min-w-[7rem] text-center">
-          <div className="text-3xl font-semibold">{seats}</div>
-          <div className="text-xs text-muted-foreground">{seats === 1 ? "vendedor" : "vendedores"}</div>
+      {/* Seat stepper — one pill control */}
+      <div className="mt-7 flex items-center justify-center">
+        <div className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 p-1.5 shadow-hard-sm">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-full transition-all hover:bg-muted active:scale-95"
+            onClick={() => setSeats((s) => Math.max(MIN_SEATS, s - 1))}
+            disabled={seats <= MIN_SEATS || !isOwner}
+            aria-label="Menos vendedores"
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+          <div className="min-w-[8.5rem] text-center">
+            <span className="text-lg font-semibold tabular-nums">{seats}</span>
+            <span className="ml-1.5 text-sm text-muted-foreground">
+              {seats === 1 ? "vendedor" : "vendedores"}
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-full transition-all hover:bg-muted active:scale-95"
+            onClick={() => setSeats((s) => Math.min(MAX_SEATS, s + 1))}
+            disabled={seats >= MAX_SEATS || !isOwner}
+            aria-label="Más vendedores"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setSeats((s) => Math.min(MAX_SEATS, s + 1))}
-          disabled={seats >= MAX_SEATS || !isOwner}
-          aria-label="Más vendedores"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
       </div>
 
       {activeVendors > seats ? (
@@ -230,17 +236,21 @@ export function SubscriptionView({
         </p>
       ) : null}
 
-      <div className="mt-6 rounded-xl border border-border bg-background/60 p-4 text-center text-sm">
-        <span className="text-muted-foreground">Total mensual</span>
-        <div className="mt-1 text-xl font-semibold">
+      <div className="mt-7 flex items-center justify-between rounded-xl border border-border bg-background/60 px-5 py-4">
+        <span className="text-sm text-muted-foreground">Total mensual</span>
+        <span className="text-xl font-semibold tabular-nums">
           USD ${totalUsd.toLocaleString("es-AR")}
-        </div>
+        </span>
       </div>
 
       {isOwner ? (
         <div className="mt-6 space-y-3">
           {stripeEnabled ? (
-            <Button className="w-full" onClick={() => go("stripe")} disabled={busy !== null}>
+            <Button
+              className="h-11 w-full rounded-xl text-sm font-semibold shadow-sm transition-all active:scale-[0.985]"
+              onClick={() => go("stripe")}
+              disabled={busy !== null}
+            >
               {busy === "stripe" ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -252,7 +262,7 @@ export function SubscriptionView({
 
           {mpEnabled ? (
             <Button
-              className="w-full bg-[#009ee3] text-white hover:bg-[#008fcc]"
+              className="h-11 w-full rounded-xl bg-[#009ee3] text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#008fcc] active:scale-[0.985]"
               onClick={() => go("mercadopago")}
               disabled={busy !== null}
             >
@@ -289,8 +299,8 @@ export function SubscriptionView({
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto max-w-md py-6">
-      <Card className="bg-card/90">
-        <CardContent className="p-6 sm:p-8">{children}</CardContent>
+      <Card className="rounded-2xl border-border bg-card shadow-panel">
+        <CardContent className="p-7 sm:p-9">{children}</CardContent>
       </Card>
     </div>
   );

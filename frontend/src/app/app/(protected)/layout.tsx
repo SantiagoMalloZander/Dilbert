@@ -1,6 +1,7 @@
 import { InactivityGuard } from "@/components/inactivity-guard";
 import { AppShell } from "@/components/app-shell";
 import { BillingPaywall } from "@/components/billing/billing-paywall";
+import { RealtimeRefresh } from "@/components/crm/RealtimeRefresh";
 import { requireSession } from "@/lib/workspace-auth";
 
 export default async function ProtectedLayout({
@@ -20,7 +21,10 @@ export default async function ProtectedLayout({
         {children}
       </AppShell>
       {session.user.companyId ? (
-        <BillingPaywall active={session.user.billingActive} isOwner={isOwner} />
+        <>
+          <RealtimeRefresh companyId={session.user.companyId} />
+          <BillingPaywall active={session.user.billingActive} isOwner={isOwner} />
+        </>
       ) : null}
     </>
   );

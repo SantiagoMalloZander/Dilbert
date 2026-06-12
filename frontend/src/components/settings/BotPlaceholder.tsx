@@ -56,9 +56,24 @@ export function BotPlaceholder({ config }: { config: BotConfig }) {
     }
     setBusy("save");
     try {
-      await saveBotConfig({ apiKey, phoneNumber: phone });
+      const result = await saveBotConfig({ apiKey, phoneNumber: phone });
+      if (!result.ok) {
+        const messages = {
+          invalid_key: "La API Key no es válida. Copiala de nuevo desde YCloud.",
+          phone_not_found:
+            "Ese número no figura en tu cuenta de YCloud. Revisá que sea el número del canal de WhatsApp.",
+          webhook_failed:
+            "Validé tu cuenta pero no pude activar la recepción de mensajes. Probá de nuevo en unos segundos.",
+          unknown: "No pude conectar con YCloud. Probá de nuevo en unos segundos.",
+        } as const;
+        emitGlobalToast({ tone: "error", text: messages[result.error] });
+        return;
+      }
       setApiKey("");
-      emitGlobalToast({ tone: "success", text: "¡Listo! El bot quedó conectado." });
+      emitGlobalToast({
+        tone: "success",
+        text: "¡Listo! El bot quedó conectado: las conversaciones van a entrar solas al CRM.",
+      });
       router.refresh();
     } catch {
       emitGlobalToast({ tone: "error", text: "No pude guardar los datos. Revisá e intentá de nuevo." });
