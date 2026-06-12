@@ -267,8 +267,8 @@ export function AuthFlow({
   async function handleVerifyOtp() {
     resetErrors();
 
-    if (!/^\d{6}$/.test(otp)) {
-      setOtpError("Ingresá el código de 6 dígitos.");
+    if (!/^\d{6,8}$/.test(otp)) {
+      setOtpError("Ingresá el código de 6 a 8 dígitos.");
       return;
     }
 
@@ -494,16 +494,26 @@ export function AuthFlow({
 
             {step === "otp" ? (
               <div className="space-y-2">
-                <Label htmlFor="otp" className="text-sm font-medium text-foreground">
-                  Código de verificación
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="otp" className="text-sm font-medium text-foreground">
+                    Código de verificación
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={handleRequestOtp}
+                    disabled={loadingAction !== null}
+                    className="text-sm font-medium text-[#D4420A] transition-colors hover:text-[#B93708] disabled:opacity-50"
+                  >
+                    Pedir otro
+                  </button>
+                </div>
                 <Input
                   id="otp"
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   autoFocus
                   value={otp}
-                  onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 8))}
                   onKeyDown={onEnter(handleVerifyOtp)}
                   className={`${inputClass} h-13 text-center text-2xl font-semibold tracking-[0.4em]`}
                   placeholder="······"
