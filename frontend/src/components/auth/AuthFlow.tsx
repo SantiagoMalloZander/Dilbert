@@ -93,8 +93,9 @@ export function AuthFlow({
   const [otpError, setOtpError] = useState<string | null>(null);
   const [globalMessage, setGlobalMessage] = useState<string | null>(null);
   const [loadingAction, setLoadingAction] = useState<
-    "email" | "password" | "otp" | "register" | "google" | "microsoft" | null
+    "email" | "password" | "otp" | "register" | "resend" | "google" | "microsoft" | null
   >(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
     const savedPreference = window.localStorage.getItem(STORAGE_KEY);
@@ -102,6 +103,13 @@ export function AuthFlow({
       setRememberMe(savedPreference === "1");
     }
   }, []);
+
+  // Resend cooldown countdown.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   useEffect(() => {
     if (timeout) {
@@ -280,6 +288,36 @@ export function AuthFlow({
       } else {
         setGlobalMessage(message);
       }
+    } finally {
+      setLoadingAction(null);
+    }
+  }
+
+  async function handleResendOtp() {
+    if (loadingAction !== null || resendCooldown > 0) return;
+    resetErrors();
+    setLoadingAction("resend");
+
+    try {
+      if (otpType === "magiclink") {
+        // Email-verification flow for an existing account: Supabase resends.
+        const { error } = await supabase.auth.signInWithOtp({ email });
+        if (error) throw error;
+      } else {
+        // New-registration flow: re-issue our own OTP (name + password are
+        // still in state from the register step).
+        await requestRegistrationOtpAction({
+          email,
+          fullName: fullName.trim() || "Nuevo usuario",
+          password,
+          joinToken: joinToken || undefined,
+        });
+      }
+      setResendCooldown(30);
+      emitGlobalToast({ tone: "success", text: `Te reenviamos un código nuevo a ${email}.` });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No pude reenviar el código.";
+      emitGlobalToast({ tone: "error", text: message });
     } finally {
       setLoadingAction(null);
     }
@@ -524,19 +562,9 @@ export function AuthFlow({
 
             {step === "otp" ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="otp" className="text-sm font-medium text-foreground">
-                    Código de verificación
-                  </Label>
-                  <button
-                    type="button"
-                    onClick={handleRequestOtp}
-                    disabled={loadingAction !== null}
-                    className="text-sm font-medium text-[#D4420A] transition-colors hover:text-[#B93708] disabled:opacity-50"
-                  >
-                    Pedir otro
-                  </button>
-                </div>
+                <Label htmlFor="otp" className="text-sm font-medium text-foreground">
+                  Código de verificación
+                </Label>
                 <Input
                   id="otp"
                   inputMode="numeric"
@@ -589,15 +617,38 @@ export function AuthFlow({
             ) : null}
 
             {step === "otp" ? (
-              <Button
-                type="button"
-                onClick={handleVerifyOtp}
-                disabled={loadingAction !== null}
-                className={primaryButtonClass}
-              >
-                {loadingAction === "otp" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Verificar y entrar
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  onClick={handleVerifyOtp}
+                  disabled={loadingAction !== null}
+                  className={primaryButtonClass}
+                >
+                  {loadingAction === "otp" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Verificar y entrar
+                </Button>
+
+                <div className="pt-1 text-center text-sm text-muted-foreground">
+                  ¿No te llegó?{" "}
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={loadingAction !== null || resendCooldown > 0}
+                    className="inline-flex items-center gap-1.5 font-medium text-[#D4420A] transition-all hover:text-[#B93708] active:scale-95 disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:text-muted-foreground"
+                  >
+                    {loadingAction === "resend" ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Enviando…
+                      </>
+                    ) : resendCooldown > 0 ? (
+                      `Reenviar en ${resendCooldown}s`
+                    ) : (
+                      "Reenviar código"
+                    )}
+                  </button>
+                </div>
+              </>
             ) : null}
 
             {step !== "email" ? (
