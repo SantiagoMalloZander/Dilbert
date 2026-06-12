@@ -197,25 +197,24 @@ export function AuthFlow({
       });
 
       if (error) {
-        // Email not confirmed: auto-send OTP and jump to verification.
+        // Email not confirmed: auto-send OTP (magic link) and jump to verification.
         if (error.message.toLowerCase().includes("email not confirmed")) {
-          setLoadingAction("register");
+          setLoadingAction("otp");
           try {
-            const result = await requestRegistrationOtpAction({
+            const { error: otpError } = await supabase.auth.signInWithOtp({
               email,
-              fullName: "",
-              password,
-              joinToken: joinToken || undefined,
+              options: { shouldCreateUser: false },
             });
+            if (otpError) throw otpError;
             setOtp("");
-            setOtpType(result.otpType);
+            setOtpType("magiclink");
             setStep("otp");
             setLoadingAction(null);
             return;
           } catch (otpErr) {
-            setGlobalMessage(
-              otpErr instanceof Error ? otpErr.message : "No pude enviar el código de verificación."
-            );
+            const msg =
+              otpErr instanceof Error ? otpErr.message : "No pude enviar el código de verificación.";
+            setGlobalMessage(msg);
             setLoadingAction(null);
             return;
           }
@@ -310,10 +309,19 @@ export function AuthFlow({
         return;
       }
 
-      const result = await finalizeRegistrationAction({
-        email,
-        joinToken: joinToken || undefined,
-      });
+      // After OTP verification, handle based on flow type.
+      // magiclink = email verification for existing account (login flow)
+      // signup = new registration
+      const result =
+        otpType === "magiclink"
+          ? await syncExistingUserAccessAction({
+              email,
+              joinToken: joinToken || undefined,
+            })
+          : await finalizeRegistrationAction({
+              email,
+              joinToken: joinToken || undefined,
+            });
 
       router.push(result.redirectTo);
     } catch {
