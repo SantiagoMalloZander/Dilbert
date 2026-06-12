@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
-import { Loader2, Filter, Plus, Sparkles, Phone } from "lucide-react";
+import { Loader2, Filter, Plus, Phone } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PipelineStage } from "@/components/crm/PipelineStage";
 import { Breadcrumbs } from "@/components/crm/Breadcrumbs";
@@ -115,16 +115,6 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
     updateSearchParam("lead", leadId);
   };
 
-  // Mover por selección (alternativa al drag, más cómoda en celular).
-  const handleMoveLead = async (leadId: string, stageId: string) => {
-    const response = await moveLeadToStage({ leadId, stageId });
-    if (response.error) {
-      emitGlobalToast({ tone: "error", text: response.error });
-      return;
-    }
-    startTransition(() => router.refresh());
-  };
-
   const handleClearFilters = () => {
     startTransition(() => {
       router.replace(pathname, { scroll: false });
@@ -184,168 +174,140 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
   return (
     <>
       <div className="mb-6">
-        <Breadcrumbs items={[{ label: "Seguimiento", href: "/app/crm/leads" }]} />
+        <Breadcrumbs items={[{ label: "Pipeline", href: "/app/crm/leads" }]} />
       </div>
-      <div className="space-y-6">
-        <Card className="bg-card/90">
-          <CardContent className="pt-6">
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-foreground">
-                <Sparkles className="h-3.5 w-3.5" />
-                Seguimiento
-              </div>
+      <div className="space-y-5">
+        <Card className="border-border bg-card shadow-panel">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight">Seguimiento de clientes</h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                  Arrastrá cada cliente a la columna según en qué anda. Tocá una tarjeta para ver el detalle.
+                <h1 className="text-2xl font-semibold tracking-tight">Pipeline</h1>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Arrastrá cada cliente a la columna según cómo viene. Tocá una tarjeta para ver el detalle.
                 </p>
-                {activeStage ? (
-                  <p className="mt-3 text-xs uppercase tracking-[0.18em] text-foreground">
-                    Filtrado por estado: {activeStage.name}
-                  </p>
-                ) : null}
               </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[360px]">
-              <div className="rounded-xl border border-border bg-background/50 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Clientes en pantalla</p>
-                <p className="mt-2 text-2xl font-semibold">{summary.leadCount}</p>
-              </div>
-              <div className="rounded-xl border border-border bg-background/50 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Valor estimado total</p>
-                <p className="mt-2 text-2xl font-semibold">{formatCurrency(summary.totalValue)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-foreground">Filtros</h3>
-                {activeFilterCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                    {activeFilterCount} activo{activeFilterCount !== 1 ? "s" : ""}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setAudioUploadOpen(true)}
-                >
+              <div className="flex shrink-0 items-center gap-2">
+                <Button variant="outline" onClick={() => setAudioUploadOpen(true)} className="rounded-xl">
                   <Phone className="mr-2 h-4 w-4" />
-                  CARGAR LLAMADA
+                  Cargar llamada
                 </Button>
                 {data.leadForm.canCreate && (
                   <Button
-                    size="sm"
                     onClick={() => setCreateLeadOpen(true)}
                     disabled={!data.leadForm.pipelines.length}
+                    className="rounded-xl shadow-sm transition-all active:scale-[0.98]"
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    CREAR LEAD
+                    Nuevo cliente
                   </Button>
                 )}
               </div>
             </div>
-            <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr_auto]">
+
+            {/* Resumen suave */}
+            <div className="mt-5 flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center gap-2 rounded-full bg-muted px-3.5 py-1.5 text-sm">
+                <span className="font-semibold text-foreground">{summary.leadCount}</span>
+                <span className="text-muted-foreground">clientes</span>
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-muted px-3.5 py-1.5 text-sm">
+                <span className="text-muted-foreground">Valor estimado</span>
+                <span className="font-semibold text-foreground">{formatCurrency(summary.totalValue)}</span>
+              </span>
+              {activeStage ? (
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#D4420A]/[0.08] px-3.5 py-1.5 text-sm font-medium text-[#D4420A]">
+                  Etapa: {activeStage.name}
+                </span>
+              ) : null}
+            </div>
+
+            {/* Filtros: una fila limpia */}
+            <div className="mt-5 flex flex-wrap items-end gap-3">
               {data.currentUser.canManageAssigneeFilter ? (
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground">Vendedor</Label>
+                <div className="min-w-[180px] flex-1 space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Vendedor</Label>
+                  <Select
+                    value={data.filters.assignedTo || "all"}
+                    onValueChange={(value) => updateSearchParam("assignedTo", value)}
+                  >
+                    <SelectTrigger className="w-full rounded-xl border-border bg-background">
+                      <span className="flex-1 truncate text-left text-sm">
+                        {data.assignees.find((a) => a.id === data.filters.assignedTo)?.name || "Todos"}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los vendedores</SelectItem>
+                      {data.assignees.map((assignee) => (
+                        <SelectItem key={assignee.id} value={assignee.id}>
+                          {assignee.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+
+              <div className="min-w-[150px] flex-1 space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Tipo de cliente</Label>
                 <Select
-                  value={data.filters.assignedTo || "all"}
-                  onValueChange={(value) => updateSearchParam("assignedTo", value)}
+                  value={data.filters.role || "all"}
+                  onValueChange={(value) => updateSearchParam("role", value)}
                 >
-                  <SelectTrigger className="w-full border-border bg-background/50 text-foreground">
+                  <SelectTrigger className="w-full rounded-xl border-border bg-background">
                     <span className="flex-1 truncate text-left text-sm">
-                      {data.assignees.find((a) => a.id === data.filters.assignedTo)?.name || "Todos los vendedores"}
+                      {data.filters.role === "comprador"
+                        ? "Compradores"
+                        : data.filters.role === "vendedor"
+                          ? "Vendedores"
+                          : "Todos"}
                     </span>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos los vendedores</SelectItem>
-                    {data.assignees.map((assignee) => (
-                      <SelectItem key={assignee.id} value={assignee.id}>
-                        {assignee.name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="comprador">Compradores</SelectItem>
+                    <SelectItem value="vendedor">Vendedores</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            ) : null}
 
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">Tipo de cliente</Label>
-              <Select
-                value={data.filters.role || "all"}
-                onValueChange={(value) => updateSearchParam("role", value)}
-              >
-                <SelectTrigger className="w-full border-border bg-background/50 text-foreground">
-                  <span className="flex-1 truncate text-left text-sm">
-                    {data.filters.role === "comprador"
-                      ? "Compradores"
-                      : data.filters.role === "vendedor"
-                        ? "Vendedores"
-                        : "Todos"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="comprador">Compradores</SelectItem>
-                  <SelectItem value="vendedor">Vendedores</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">Desde</Label>
+              <div className="min-w-[140px] flex-1 space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Desde</Label>
                 <Input
                   type="date"
                   value={data.filters.createdFrom || ""}
                   onChange={(event) => updateSearchParam("createdFrom", event.target.value || null)}
-                  className="border-border bg-background/50 text-foreground"
+                  className="rounded-xl border-border bg-background"
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">Hasta</Label>
+              <div className="min-w-[140px] flex-1 space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Hasta</Label>
                 <Input
                   type="date"
                   value={data.filters.createdTo || ""}
                   onChange={(event) => updateSearchParam("createdTo", event.target.value || null)}
-                  className="border-border bg-background/50 text-foreground"
+                  className="rounded-xl border-border bg-background"
                 />
               </div>
-            </div>
 
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  onClick={handleClearFilters}
-                  className="w-full"
-                >
+              {activeFilterCount > 0 ? (
+                <Button variant="ghost" onClick={handleClearFilters} className="rounded-xl text-muted-foreground">
                   {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Filter className="mr-2 h-4 w-4" />}
                   Limpiar
                 </Button>
-              </div>
-            </div>
+              ) : null}
             </div>
           </CardContent>
         </Card>
 
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className={cn("overflow-x-auto pb-4", isPending && "opacity-80")}>
-            <div className="flex min-w-max gap-4">
+            <div className="flex min-w-max gap-3">
               {stages.map((stage) => (
                 <PipelineStage
                   key={stage.id}
                   stage={stage}
                   canDrag={canDrag}
                   onOpenLead={handleOpenLead}
-                  allStages={stages.map((s) => ({ id: s.id, name: s.name }))}
-                  onMoveLead={handleMoveLead}
                 />
               ))}
             </div>
