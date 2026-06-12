@@ -486,6 +486,62 @@ async function clearAppUserAccess(userId: string) {
   }
 }
 
+function slugifyName(value: string) {
+  return (
+    (value || "inmobiliaria")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "inmobiliaria"
+  );
+}
+
+function deriveCompanyName(email: string) {
+  const domain = (email.split("@")[1] || "").toLowerCase();
+  const freeProviders = [
+    "gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "yahoo.com.ar",
+    "live.com", "live.com.ar", "icloud.com", "proton.me", "protonmail.com", "gmx.com",
+  ];
+  if (domain && !freeProviders.includes(domain)) {
+    const label = domain.split(".")[0];
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+  return "Mi inmobiliaria";
+}
+
+/**
+ * Self-service signup: a brand-new email with no invite becomes the OWNER of a
+ * brand-new company. This is what lets public traffic register and start using
+ * Dilbert on their own (they pick a plan right after). Invited teammates never
+ * hit this path — they already have an authorized_emails record.
+ */
+async function provisionSelfServiceCompany(params: { email: string }) {
+  const supabase = createAdminSupabaseClient();
+  const companyName = deriveCompanyName(params.email);
+  const slug = `${slugifyName(companyName)}-${randomBytes(3).toString("hex")}`;
+
+  const { data: company, error } = await supabase
+    .from("companies")
+    .insert({ name: companyName, slug, vendor_limit: 1, status: "active" })
+    .select("id")
+    .single();
+
+  if (error || !company) {
+    return null;
+  }
+
+  await supabase.from("authorized_emails").insert({
+    company_id: company.id,
+    email: normalizeEmail(params.email),
+    role: "owner",
+    added_by: null,
+  });
+
+  return { company_id: company.id, role: "owner" as const };
+}
+
 export async function syncWorkspaceAccessByEmail(params: {
   email: string;
   authIdentity?: AuthIdentitySnapshot | null;
@@ -512,6 +568,23 @@ export async function syncWorkspaceAccessByEmail(params: {
 
     if (!params.authIdentity) {
       return null;
+    }
+
+    // Self-service signup (no invite, no join token): create their own company
+    // and make them the owner. Failed joins (joinToken present) stay company-less.
+    if (!params.joinToken) {
+      const provisioned = await provisionSelfServiceCompany({ email: normalizedEmail });
+      if (provisioned) {
+        await upsertAppUser({
+          id: params.authIdentity.id,
+          email: normalizedEmail,
+          name: params.authIdentity.name,
+          avatarUrl: params.authIdentity.avatarUrl,
+          companyId: provisioned.company_id,
+          role: provisioned.role,
+        });
+        return getAppUserByEmail(normalizedEmail);
+      }
     }
 
     await upsertAppUser({

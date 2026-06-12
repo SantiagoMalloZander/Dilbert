@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AuthFlow } from "@/components/auth/AuthFlow";
 import { getAuthSession } from "@/lib/workspace-auth";
+import { getBillingState } from "@/modules/billing/queries";
 
 export default async function AuthPage({
   searchParams,
@@ -25,6 +26,14 @@ export default async function AuthPage({
 
     if (!session.user.companyId) {
       redirect("/app/pending-access");
+    }
+
+    // Owner sin plan activo → directo a elegir plan y pagar (onboarding).
+    if (session.user.role === "owner") {
+      const billing = await getBillingState(session.user.companyId);
+      if (!billing.active) {
+        redirect("/app/suscripcion");
+      }
     }
 
     redirect("/app/crm");

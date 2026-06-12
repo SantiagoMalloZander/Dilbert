@@ -30,6 +30,7 @@ export function SubscriptionView({
   activeVendors,
   priceUsd,
   priceArs,
+  dolarTarjeta,
   stripeEnabled,
   mpEnabled,
 }: {
@@ -39,6 +40,7 @@ export function SubscriptionView({
   activeVendors: number;
   priceUsd: number;
   priceArs: number;
+  dolarTarjeta: number;
   stripeEnabled: boolean;
   mpEnabled: boolean;
 }) {
@@ -256,6 +258,12 @@ export function SubscriptionView({
               {busy === "mercadopago" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Pagar con Mercado Pago · ${totalArs.toLocaleString("es-AR")} ARS
             </Button>
+          ) : null}
+
+          {mpEnabled ? (
+            <p className="text-center text-[11px] text-muted-foreground">
+              En pesos al dólar tarjeta (${dolarTarjeta.toLocaleString("es-AR")} / USD).
+            </p>
           ) : null}
 
           {!stripeEnabled && !mpEnabled ? (
