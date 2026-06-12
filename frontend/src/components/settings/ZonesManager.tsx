@@ -118,11 +118,11 @@ export function ZonesManager({ initialZones }: { initialZones: ZoneRecord[] }) {
             Resumen de cobertura
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            <div className="rounded-2xl border border-[#2A1A0A]/10 bg-[#F5F0E8] p-4 text-center">
+            <div className="rounded-2xl border border-border bg-muted p-4 text-center">
               <p className="text-2xl font-semibold">{list.length}</p>
               <p className="mt-1 text-xs font-medium text-muted-foreground">Zonas</p>
             </div>
-            <div className="rounded-2xl border border-[#2A1A0A]/10 bg-[#F5F0E8] p-4 text-center">
+            <div className="rounded-2xl border border-border bg-muted p-4 text-center">
               <p className="text-2xl font-semibold">{Object.keys(groupedByCity).filter((k) => k !== "Sin ciudad").length}</p>
               <p className="mt-1 text-xs font-medium text-muted-foreground">Ciudades</p>
             </div>
@@ -138,7 +138,7 @@ export function ZonesManager({ initialZones }: { initialZones: ZoneRecord[] }) {
             <p className="text-sm text-muted-foreground">
               Todavía no cargaste zonas. Agregá la primera para empezar.
             </p>
-            <Button onClick={openCreate} variant="outline" className="border-[#2A1A0A]/15 bg-[#F5F0E8]">
+            <Button onClick={openCreate} variant="outline" className="border-border bg-muted">
               <Plus className="mr-2 h-4 w-4" />
               Agregar zona
             </Button>
@@ -158,7 +158,7 @@ export function ZonesManager({ initialZones }: { initialZones: ZoneRecord[] }) {
                   {zones.map((zone) => (
                     <div
                       key={zone.id}
-                      className="group flex items-start justify-between gap-2 rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4"
+                      className="group flex items-start justify-between gap-2 rounded-2xl border border-border bg-muted p-4"
                     >
                       <div className="min-w-0">
                         <p className="truncate font-medium">{zone.name}</p>
@@ -236,7 +236,7 @@ export function ZonesManager({ initialZones }: { initialZones: ZoneRecord[] }) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} className="border-[#2A1A0A]/15 bg-[#F5F0E8]">
+            <Button variant="outline" onClick={() => setOpen(false)} className="border-border bg-muted">
               Cancelar
             </Button>
             <Button onClick={save} disabled={isPending}>

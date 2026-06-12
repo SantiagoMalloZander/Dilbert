@@ -89,14 +89,14 @@ function getDueState(value: string | null) {
   if (diffInDays < 0) {
     return {
       label: "Vencida",
-      className: "border-red-400/40 bg-red-500/10 text-red-200",
+      className: "border-red-400/40 bg-red-500/10 text-red-700",
     };
   }
 
   if (diffInDays <= 7) {
     return {
       label: `${diffInDays === 0 ? "Hoy" : `${diffInDays}d`}`,
-      className: "border-amber-300/40 bg-amber-300/10 text-amber-100",
+      className: "border-amber-300/40 bg-amber-300/10 text-amber-700",
     };
   }
 
@@ -123,8 +123,8 @@ export function LeadCard({
       type="button"
       onClick={() => onOpen(lead.id)}
       className={cn(
-        "group w-full rounded-[22px] border border-[#2A1A0A]/15 bg-card p-4 text-left shadow-hard transition duration-200",
-        "hover:border-[#D4420A]/40 hover:bg-[#122033]",
+        "group w-full rounded-[22px] border border-border bg-card p-4 text-left shadow-hard transition duration-200",
+        "hover:border-[#D4420A]/40 hover:bg-muted",
         disabled && "cursor-default",
         isDragging && "rotate-[1deg] border-[#D4420A]/50 shadow-hard"
       )}
@@ -134,9 +134,9 @@ export function LeadCard({
           <p className="line-clamp-2 text-sm font-semibold text-foreground">{lead.title}</p>
           <p className="mt-1 text-xs text-muted-foreground">{lead.contact.name}</p>
         </div>
-        <Avatar className="h-9 w-9 border border-[#2A1A0A]/15 bg-[#111b2a]">
+        <Avatar className="h-9 w-9 border border-border bg-muted">
           <AvatarImage src={lead.assignedUser?.avatarUrl} alt={lead.assignedUser?.name || "Vendedor"} />
-          <AvatarFallback className="bg-[#16304a] text-[10px] text-foreground">
+          <AvatarFallback className="bg-muted text-[10px] text-foreground">
             {getInitials(lead.assignedUser?.name)}
           </AvatarFallback>
         </Avatar>
@@ -156,7 +156,7 @@ export function LeadCard({
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-2">
-        <Badge className="border border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground">
+        <Badge className="border border-border bg-muted text-foreground">
           <SourceIcon className="h-3 w-3" />
           {sourceMeta.label}
         </Badge>

@@ -193,11 +193,11 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[360px]">
-              <div className="rounded-2xl border border-white/10 bg-background/50 px-4 py-3">
+              <div className="rounded-2xl border border-border bg-background/50 px-4 py-3">
                 <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Clientes en pantalla</p>
                 <p className="mt-2 text-2xl font-semibold">{summary.leadCount}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-background/50 px-4 py-3">
+              <div className="rounded-2xl border border-border bg-background/50 px-4 py-3">
                 <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Valor estimado total</p>
                 <p className="mt-2 text-2xl font-semibold">{formatCurrency(summary.totalValue)}</p>
               </div>
@@ -243,7 +243,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
                   value={data.filters.assignedTo || "all"}
                   onValueChange={(value) => updateSearchParam("assignedTo", value)}
                 >
-                  <SelectTrigger className="w-full border-white/10 bg-background/50 text-foreground">
+                  <SelectTrigger className="w-full border-border bg-background/50 text-foreground">
                     <span className="flex-1 truncate text-left text-sm">
                       {data.assignees.find((a) => a.id === data.filters.assignedTo)?.name || "Todos los vendedores"}
                     </span>
@@ -267,7 +267,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
                   type="date"
                   value={data.filters.createdFrom || ""}
                   onChange={(event) => updateSearchParam("createdFrom", event.target.value || null)}
-                  className="border-white/10 bg-background/50 text-foreground"
+                  className="border-border bg-background/50 text-foreground"
                 />
               </div>
               <div className="space-y-2">
@@ -276,7 +276,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
                   type="date"
                   value={data.filters.createdTo || ""}
                   onChange={(event) => updateSearchParam("createdTo", event.target.value || null)}
-                  className="border-white/10 bg-background/50 text-foreground"
+                  className="border-border bg-background/50 text-foreground"
                 />
               </div>
             </div>
@@ -336,7 +336,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
 export function KanbanBoardSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="rounded-[30px] border border-white/10 bg-card/90 p-6">
+      <div className="rounded-[30px] border border-border bg-card/90 p-6">
         <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
           <div className="space-y-3">
             <div className="h-6 w-28 animate-pulse rounded-full bg-card/10" />
@@ -360,7 +360,7 @@ export function KanbanBoardSkeleton() {
           {Array.from({ length: 4 }).map((_, stageIndex) => (
             <div
               key={stageIndex}
-              className="flex min-h-[70vh] w-[320px] shrink-0 flex-col rounded-[28px] border border-white/10 bg-card/90 p-4"
+              className="flex min-h-[70vh] w-[320px] shrink-0 flex-col rounded-[28px] border border-border bg-card/90 p-4"
             >
               <div className="h-6 w-32 animate-pulse rounded-full bg-card/10" />
               <div className="mt-2 h-4 w-20 animate-pulse rounded-full bg-card/10" />

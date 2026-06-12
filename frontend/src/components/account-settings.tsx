@@ -336,7 +336,7 @@ export function AccountSettings({
         <div
           className={`fixed right-4 top-4 z-50 flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm shadow-panel ${
             toast.tone === "success"
-              ? "border-emerald-500/30 bg-emerald-500/12 text-emerald-100"
+              ? "border-emerald-500/30 bg-emerald-500/12 text-emerald-700"
               : "border-destructive/30 bg-destructive/12 text-destructive"
           }`}
         >
@@ -356,8 +356,8 @@ export function AccountSettings({
             </CardHeader>
             <CardContent>
               <form className="space-y-6" onSubmit={handleProfileSave}>
-                <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-background/50 p-4 sm:flex-row sm:items-center">
-                  <Avatar className="h-20 w-20 border border-white/10 bg-primary/10 text-lg text-primary">
+                <div className="flex flex-col gap-4 rounded-3xl border border-border bg-background/50 p-4 sm:flex-row sm:items-center">
+                  <Avatar className="h-20 w-20 border border-border bg-primary/10 text-lg text-primary">
                     {profile.avatarUrl ? (
                       <AvatarImage src={profile.avatarUrl} alt={profile.name || initialData.email} />
                     ) : null}
@@ -372,7 +372,7 @@ export function AccountSettings({
                     </div>
                     <Label
                       htmlFor="avatar-upload"
-                      className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/8"
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2 text-sm hover:bg-muted"
                     >
                       {actionKey === "avatar" ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -506,10 +506,10 @@ export function AccountSettings({
                     <p className="text-xs text-destructive">{fieldErrors.newPassword}</p>
                   ) : null}
                   <div className="space-y-1 text-xs text-muted-foreground">
-                    <p className={passwordChecks.hasNumber ? "text-emerald-300" : undefined}>
+                    <p className={passwordChecks.hasNumber ? "text-emerald-700" : undefined}>
                       Debe incluir al menos 1 número
                     </p>
-                    <p className={passwordChecks.hasSpecial ? "text-emerald-300" : undefined}>
+                    <p className={passwordChecks.hasSpecial ? "text-emerald-700" : undefined}>
                       Debe incluir al menos 1 carácter especial
                     </p>
                   </div>
@@ -552,7 +552,7 @@ export function AccountSettings({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="rounded-2xl border border-white/10 bg-background/50 p-4 text-sm text-muted-foreground">
+              <div className="rounded-2xl border border-border bg-background/50 p-4 text-sm text-muted-foreground">
                 Si cerrás sesión en todos los dispositivos, las sesiones activas del workspace se
                 invalidan y cada equipo va a tener que volver a autenticarse.
               </div>

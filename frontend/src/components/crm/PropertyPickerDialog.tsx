@@ -132,7 +132,7 @@ export function PropertyPickerDialog({
                   type="button"
                   disabled={disabled}
                   onClick={() => onPick(p)}
-                  className="flex w-full items-start gap-3 rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-3 text-left transition-all hover:border-[#D4420A]/30 disabled:opacity-50"
+                  className="flex w-full items-start gap-3 rounded-2xl border border-border bg-muted p-3 text-left transition-all hover:border-[#D4420A]/30 disabled:opacity-50"
                 >
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-xs font-semibold text-primary">
                     {p.title.slice(0, 2).toUpperCase()}
@@ -151,10 +151,10 @@ export function PropertyPickerDialog({
                       <Badge className={STATUS_TONE[p.status] ?? STATUS_TONE.pausada}>
                         {STATUS_LABELS[p.status] ?? p.status}
                       </Badge>
-                      <Badge className="border-[#2A1A0A]/15 bg-card text-foreground">
+                      <Badge className="border-border bg-card text-foreground">
                         {PROPERTY_TYPE_LABELS[p.propertyType] ?? p.propertyType}
                       </Badge>
-                      <Badge className="border-[#2A1A0A]/15 bg-card text-foreground">
+                      <Badge className="border-border bg-card text-foreground">
                         {OPERATION_LABELS[p.operationType] ?? p.operationType}
                       </Badge>
                     </div>
@@ -174,7 +174,7 @@ export function PropertyPickerDialog({
         </div>
 
         <div className="flex justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-[#2A1A0A]/15 bg-[#F5F0E8]">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-border bg-muted">
             Cancelar
           </Button>
         </div>

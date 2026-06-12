@@ -14,7 +14,7 @@ const ITEMS = [
 export function CrmSubNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex flex-wrap items-center gap-1 rounded-xl border border-[#2A1A0A]/10 bg-[#F5F0E8] p-1">
+    <nav className="flex flex-wrap items-center gap-1 rounded-xl border border-border bg-muted p-1">
       {ITEMS.map((item) => {
         const isActive = item.exact
           ? pathname === item.href

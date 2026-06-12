@@ -102,8 +102,8 @@ export function AppNav({
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                 active
-                  ? "bg-[#D4420A] text-[#F5F0E8]"
-                  : "text-[#F5F0E8]/55 hover:bg-white/8 hover:text-[#F5F0E8]",
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 isPending && !active && "opacity-50 pointer-events-none"
               )}
             >

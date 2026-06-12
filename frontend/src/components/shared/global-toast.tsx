@@ -34,11 +34,11 @@ export function GlobalToast() {
       toastOptions={{
         classNames: {
           toast:
-            "border-2 border-[#2A1A0A]/20 shadow-[4px_4px_0px_rgba(42,26,10,0.15)] rounded-xl",
+            "border-2 border-border shadow-[4px_4px_0px_rgba(42,26,10,0.15)] rounded-xl",
           title: "font-semibold",
-          description: "text-[#2A1A0A]/80",
+          description: "text-foreground",
           actionButton: "bg-[#D4420A] text-white",
-          cancelButton: "bg-[#F5F0E8] text-[#1A1A1A]",
+          cancelButton: "bg-muted text-foreground",
           success: "!bg-emerald-50 !text-emerald-900 !border-emerald-300",
           error: "!bg-red-50 !text-red-900 !border-red-300",
         },

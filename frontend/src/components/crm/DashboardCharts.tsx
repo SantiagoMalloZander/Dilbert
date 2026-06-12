@@ -87,16 +87,16 @@ export function LeadsBySourceChart({ data }: { data: LeadsBySourceMetric[] }) {
         {safeData.map((item, index) => (
           <div
             key={item.source}
-            className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/5 px-4 py-3"
+            className="flex items-center justify-between rounded-2xl border border-border bg-muted px-4 py-3"
           >
             <div className="flex items-center gap-3">
               <span
                 className="h-3 w-3 rounded-full"
                 style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
               />
-              <span className="text-sm text-[#d8e4f2]">{item.label}</span>
+              <span className="text-sm text-muted-foreground">{item.label}</span>
             </div>
-            <span className="text-sm font-semibold text-white">{item.count}</span>
+            <span className="text-sm font-semibold text-foreground">{item.count}</span>
           </div>
         ))}
       </div>

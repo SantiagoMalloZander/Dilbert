@@ -442,9 +442,9 @@ export function AdminPanel({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto rounded-[22px] border border-white/10">
+          <div className="overflow-x-auto rounded-[22px] border border-border">
             <table className="min-w-full text-left text-sm">
-              <thead className="bg-white/5 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              <thead className="bg-muted text-xs uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 font-medium">Empresa</th>
                   <th className="px-4 py-3 font-medium">Vendedores</th>
@@ -456,7 +456,7 @@ export function AdminPanel({
               </thead>
               <tbody>
                 {companies.map((company) => (
-                  <tr key={company.id} className="border-t border-white/10">
+                  <tr key={company.id} className="border-t border-border">
                     <td className="px-4 py-4">
                       <div className="space-y-1">
                         <p className="font-medium text-foreground">{company.name}</p>
@@ -533,7 +533,7 @@ export function AdminPanel({
                       Owner: {company.owner?.name || "Sin owner"} · {company.owner?.email || "sin email"}
                     </CardDescription>
                     {company.owner?.state === "pending" ? (
-                      <p className="text-xs text-amber-300">
+                      <p className="text-xs text-amber-700">
                         El owner todavía no terminó su registro.
                       </p>
                     ) : null}
@@ -544,7 +544,7 @@ export function AdminPanel({
                 </Badge>
               </div>
 
-              <div className="rounded-[22px] border border-white/10 bg-background/60 p-4">
+              <div className="rounded-[22px] border border-border bg-background/60 p-4">
                 <div className="mb-3 flex items-center gap-2 text-sm font-medium">
                   <Users className="h-4 w-4 text-primary" />
                   Límite de vendedores
@@ -560,7 +560,7 @@ export function AdminPanel({
                         [company.id]: event.target.value,
                       }))
                     }
-                    className="border-white/10 bg-background"
+                    className="border-border bg-background"
                   />
                   <Button
                     variant="secondary"
@@ -580,8 +580,8 @@ export function AdminPanel({
             </CardHeader>
 
             <CardContent className="space-y-3">
-              <div className="rounded-[22px] border border-white/10">
-                <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div className="rounded-[22px] border border-border">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
                   <p className="text-sm font-medium">Vendedores de la empresa</p>
                   <Badge variant="secondary">{company.vendors.length}</Badge>
                 </div>
@@ -627,8 +627,8 @@ export function AdminPanel({
                 )}
               </div>
 
-              <div className="rounded-[22px] border border-white/10">
-                <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div className="rounded-[22px] border border-border">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
                   <div className="flex items-center gap-2">
                     <KeyRound className="h-4 w-4 text-primary" />
                     <p className="text-sm font-medium">Usuarios y contraseñas</p>
@@ -681,7 +681,7 @@ export function AdminPanel({
                                   [user.id]: event.target.value,
                                 }))
                               }
-                              className="border-white/10 bg-background"
+                              className="border-border bg-background"
                             />
                             <Button
                               onClick={() => handleSetPassword(user)}
@@ -705,10 +705,10 @@ export function AdminPanel({
       </div>
 
       {isCreateOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04070d]/80 px-4 py-10 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-[30px] border border-white/10 bg-[#0b1220] shadow-panel">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-10 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-[30px] border border-border bg-card shadow-panel">
             <form onSubmit={handleCreateCompany}>
-              <div className="border-b border-white/10 px-6 py-5">
+              <div className="border-b border-border px-6 py-5">
                 <p className="text-xs uppercase tracking-[0.2em] text-primary">Nueva empresa</p>
                 <h3 className="mt-2 text-2xl font-semibold">Crear empresa y owner</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -723,7 +723,7 @@ export function AdminPanel({
                     id="company-name"
                     value={createForm.companyName}
                     onChange={(event) => setFormValue("companyName", event.target.value)}
-                    className="border-white/10 bg-background"
+                    className="border-border bg-background"
                     placeholder="Acme CRM"
                   />
                 </div>
@@ -735,7 +735,7 @@ export function AdminPanel({
                       id="owner-name"
                       value={createForm.ownerName}
                       onChange={(event) => setFormValue("ownerName", event.target.value)}
-                      className="border-white/10 bg-background"
+                      className="border-border bg-background"
                       placeholder="María Pérez"
                     />
                   </div>
@@ -746,7 +746,7 @@ export function AdminPanel({
                       type="email"
                       value={createForm.ownerEmail}
                       onChange={(event) => setFormValue("ownerEmail", event.target.value)}
-                      className="border-white/10 bg-background"
+                      className="border-border bg-background"
                       placeholder="owner@empresa.com"
                     />
                   </div>
@@ -760,12 +760,12 @@ export function AdminPanel({
                     min={1}
                     value={createForm.vendorLimit}
                     onChange={(event) => setFormValue("vendorLimit", event.target.value)}
-                    className="border-white/10 bg-background"
+                    className="border-border bg-background"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 border-t border-white/10 px-6 py-5 sm:flex-row sm:justify-end">
+              <div className="flex flex-col gap-3 border-t border-border px-6 py-5 sm:flex-row sm:justify-end">
                 <Button
                   type="button"
                   variant="ghost"

@@ -20,7 +20,7 @@ export function BillingPaywall({ active, isOwner }: { active: boolean; isOwner: 
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/85 p-6 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-card p-8 text-center shadow-panel">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-panel">
         <div className="mx-auto mb-4 w-fit rounded-2xl bg-primary/10 p-3 text-primary">
           <Lock className="h-6 w-6" />
         </div>

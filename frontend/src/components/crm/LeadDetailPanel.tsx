@@ -180,18 +180,18 @@ function realEstateFields(re: RealEstateView): Array<{ label: string; value: str
 
 function getStageTone(stage: LeadStageOption | null) {
   if (!stage) {
-    return "border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground";
+    return "border-border bg-muted text-foreground";
   }
 
   if (stage.isWonStage) {
-    return "border-emerald-400/30 bg-emerald-500/10 text-emerald-100";
+    return "border-emerald-400/30 bg-emerald-500/10 text-emerald-700";
   }
 
   if (stage.isLostStage) {
-    return "border-red-400/30 bg-red-500/10 text-red-100";
+    return "border-red-400/30 bg-red-500/10 text-red-700";
   }
 
-  return "border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground";
+  return "border-border bg-muted text-foreground";
 }
 
 export function LeadDetailPanel({
@@ -422,9 +422,9 @@ export function LeadDetailPanel({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-[#030712]/45 backdrop-blur-[2px]" onClick={closePanel} />
-      <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[560px] flex-col border-l border-[#2A1A0A]/15 bg-background text-foreground shadow-hard">
-        <div className="border-b border-[#2A1A0A]/10 px-6 py-5">
+      <div className="fixed inset-0 z-40 bg-card/45 backdrop-blur-[2px]" onClick={closePanel} />
+      <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[560px] flex-col border-l border-border bg-background text-foreground shadow-hard">
+        <div className="border-b border-border px-6 py-5">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-3">
               <Badge className={getStageTone(lead.stage)}>{lead.stage?.name || "Sin estado"}</Badge>
@@ -445,7 +445,7 @@ export function LeadDetailPanel({
           </div>
 
           <div className="mt-5 text-sm">
-            <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-3">
+            <div className="rounded-2xl border border-border bg-muted p-3">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Valor estimado</p>
               <p className="mt-2 text-lg font-semibold">{formatCurrency(lead.value, lead.currency)}</p>
               {usdEquivalent(lead.value, lead.currency, blueRate) ? (
@@ -464,7 +464,7 @@ export function LeadDetailPanel({
             <div className="grid gap-3 sm:grid-cols-2">
               <button
                 onClick={() => router.push(`/app/crm/contacts?contact=${lead.contact.id}`)}
-                className="group rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
+                className="group rounded-2xl border border-border bg-muted p-4 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
               >
                 <p className="text-xs text-muted-foreground">Contacto</p>
                 <p className="mt-2 font-medium flex items-center gap-1.5 text-foreground group-hover:text-[#D4420A]">
@@ -473,17 +473,17 @@ export function LeadDetailPanel({
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">{lead.contact.companyName || "Sin empresa"}</p>
               </button>
-              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
+              <div className="rounded-2xl border border-border bg-muted p-4">
                 <p className="text-xs text-muted-foreground">Cierre estimado</p>
                 <p className="mt-2 font-medium">
                   {lead.expectedCloseDate ? formatDate(lead.expectedCloseDate) : "Sin fecha"}
                 </p>
               </div>
-              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
+              <div className="rounded-2xl border border-border bg-muted p-4">
                 <p className="text-xs text-muted-foreground">Vendedor asignado</p>
                 <p className="mt-2 font-medium">{lead.assignedUser?.name || "Sin asignar"}</p>
               </div>
-              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
+              <div className="rounded-2xl border border-border bg-muted p-4">
                 <p className="text-xs text-muted-foreground">Estado</p>
                 <p className="mt-2 font-medium capitalize">{lead.status}</p>
                 {lead.lostReason ? (
@@ -503,7 +503,7 @@ export function LeadDetailPanel({
                 {realEstateFields(realEstate).map((field) => (
                   <div
                     key={field.label}
-                    className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4"
+                    className="rounded-2xl border border-border bg-muted p-4"
                   >
                     <p className="text-xs text-muted-foreground">{field.label}</p>
                     <p className="mt-2 font-medium">{field.value}</p>
@@ -597,7 +597,7 @@ export function LeadDetailPanel({
             </div>
 
             {lead.linkedProperty ? (
-              <div className="rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
+              <div className="rounded-2xl border border-border bg-muted p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{lead.linkedProperty.title}</p>
@@ -642,7 +642,7 @@ export function LeadDetailPanel({
                 type="button"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsPropertyPickerOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#2A1A0A]/15 bg-[#F5F0E8]/50 p-4 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A] disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/50 p-4 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A] disabled:opacity-50"
               >
                 <Building2 className="h-4 w-4" />
                 Asignar el inmueble que consultó
@@ -660,7 +660,7 @@ export function LeadDetailPanel({
                 variant="outline"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsNoteOpen(true)}
-                className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground"
+                className="border-border bg-muted text-foreground"
               >
                 <NotebookPen className="mr-2 h-4 w-4" />
                 Añadir nota
@@ -669,7 +669,7 @@ export function LeadDetailPanel({
                 variant="outline"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsActivityOpen(true)}
-                className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground"
+                className="border-border bg-muted text-foreground"
               >
                 <MessageSquarePlus className="mr-2 h-4 w-4" />
                 Añadir actividad
@@ -678,7 +678,7 @@ export function LeadDetailPanel({
                 variant="outline"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsStageOpen(true)}
-                className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground"
+                className="border-border bg-muted text-foreground"
               >
                 <Milestone className="mr-2 h-4 w-4" />
                 Cambiar estado
@@ -689,7 +689,7 @@ export function LeadDetailPanel({
               <Button
                 disabled={!lead.permissions.canMarkOutcome || isPending}
                 onClick={handleMarkWon}
-                className="bg-emerald-500 text-[#06131f] hover:bg-emerald-400"
+                className="bg-emerald-500 text-foreground hover:bg-emerald-400"
               >
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
                 Marcar como Ganado
@@ -698,7 +698,7 @@ export function LeadDetailPanel({
                 variant="outline"
                 disabled={!lead.permissions.canMarkOutcome || isPending}
                 onClick={() => setIsLostOpen(true)}
-                className="border-red-400/30 bg-red-500/10 text-red-100 hover:bg-red-500/15"
+                className="border-red-400/30 bg-red-500/10 text-red-700 hover:bg-red-500/15"
               >
                 <CircleOff className="mr-2 h-4 w-4" />
                 Marcar como Perdido
@@ -707,7 +707,7 @@ export function LeadDetailPanel({
                 variant="outline"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsDeleteLeadOpen(true)}
-                className="border-red-400/30 bg-red-500/10 text-red-400 hover:bg-red-500/15 hover:text-red-300"
+                className="border-red-400/30 bg-red-500/10 text-red-400 hover:bg-red-500/15 hover:text-red-700"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Eliminar lead
@@ -722,12 +722,12 @@ export function LeadDetailPanel({
             </div>
             <div className="space-y-3">
               {lead.timeline.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-[#2A1A0A]/15 px-4 py-5 text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
                   Todavía no hay actividades registradas.
                 </div>
               ) : (
                 lead.timeline.map((item) => (
-                  <div key={item.id} className="group rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
+                  <div key={item.id} className="group rounded-2xl border border-border bg-muted p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <p className="font-medium">{item.title}</p>
@@ -736,13 +736,13 @@ export function LeadDetailPanel({
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className="border border-[#2A1A0A]/15 bg-transparent text-foreground">
+                        <Badge className="border border-border bg-transparent text-foreground">
                           {item.source}
                         </Badge>
                         {lead.permissions.canEdit ? (
                           <button
                             onClick={() => handleDeleteActivity(item.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-700"
                             title="Eliminar actividad"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -771,24 +771,24 @@ export function LeadDetailPanel({
             </div>
             <div className="space-y-3">
               {lead.notes.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-[#2A1A0A]/15 px-4 py-5 text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
                   Todavía no hay notas asociadas.
                 </div>
               ) : (
                 lead.notes.map((note) => (
-                  <div key={note.id} className="group rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-4">
+                  <div key={note.id} className="group rounded-2xl border border-border bg-muted p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                         {note.user?.name || "Usuario"} · {formatDate(note.createdAt)}
                       </p>
                       <div className="flex items-center gap-2">
-                        <Badge className="border border-[#2A1A0A]/15 bg-transparent text-foreground">
+                        <Badge className="border border-border bg-transparent text-foreground">
                           {note.source}
                         </Badge>
                         {lead.permissions.canEdit ? (
                           <button
                             onClick={() => handleDeleteNote(note.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-700"
                             title="Eliminar nota"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -806,7 +806,7 @@ export function LeadDetailPanel({
       </aside>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto border-[3px] border-[#2A1A0A] bg-[#F5F0E8] text-[#1A1A1A] sm:max-w-2xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto border-[3px] border-border bg-muted text-foreground sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Editar lead</DialogTitle>
             <DialogDescription>Actualizá la información principal de la oportunidad.</DialogDescription>
@@ -869,7 +869,7 @@ export function LeadDetailPanel({
       </Dialog>
 
       <Dialog open={isNoteOpen} onOpenChange={setIsNoteOpen}>
-        <DialogContent className="border-[3px] border-[#2A1A0A] bg-[#F5F0E8] text-[#1A1A1A] sm:max-w-lg">
+        <DialogContent className="border-[3px] border-border bg-muted text-foreground sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Añadir nota</DialogTitle>
             <DialogDescription>Guardá contexto útil para el resto del equipo.</DialogDescription>
@@ -880,7 +880,7 @@ export function LeadDetailPanel({
               id="lead-note"
               value={noteContent}
               onChange={(event) => setNoteContent(event.target.value)}
-              className="min-h-36 w-full rounded-lg border border-input bg-[#F5F0E8] px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+              className="min-h-36 w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
             />
           </div>
           <DialogFooter>
@@ -896,7 +896,7 @@ export function LeadDetailPanel({
       </Dialog>
 
       <Dialog open={isActivityOpen} onOpenChange={setIsActivityOpen}>
-        <DialogContent className="border-[3px] border-[#2A1A0A] bg-[#F5F0E8] text-[#1A1A1A] sm:max-w-lg">
+        <DialogContent className="border-[3px] border-border bg-muted text-foreground sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Añadir actividad</DialogTitle>
             <DialogDescription>Agendá o registrá una interacción del lead.</DialogDescription>
@@ -910,7 +910,7 @@ export function LeadDetailPanel({
                   setActivityForm((current) => ({ ...current, type: value as ActivityType }))
                 }
               >
-                <SelectTrigger className="w-full bg-[#F5F0E8]">
+                <SelectTrigger className="w-full bg-muted">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -943,7 +943,7 @@ export function LeadDetailPanel({
                     description: event.target.value,
                   }))
                 }
-                className="min-h-28 w-full rounded-lg border border-input bg-[#F5F0E8] px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+                className="min-h-28 w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
               />
             </div>
             <div className="space-y-2">
@@ -974,7 +974,7 @@ export function LeadDetailPanel({
       </Dialog>
 
       <Dialog open={isStageOpen} onOpenChange={setIsStageOpen}>
-        <DialogContent className="border-[3px] border-[#2A1A0A] bg-[#F5F0E8] text-[#1A1A1A] sm:max-w-md">
+        <DialogContent className="border-[3px] border-border bg-muted text-foreground sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Cambiar estado</DialogTitle>
             <DialogDescription>Mové esta oportunidad a otra etapa del pipeline.</DialogDescription>
@@ -982,7 +982,7 @@ export function LeadDetailPanel({
           <div className="space-y-2">
             <Label>Etapa</Label>
             <Select value={stageId} onValueChange={(value) => setStageId(value || stageId)}>
-              <SelectTrigger className="w-full bg-[#F5F0E8]">
+              <SelectTrigger className="w-full bg-muted">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1007,7 +1007,7 @@ export function LeadDetailPanel({
       </Dialog>
 
       <Dialog open={isLostOpen} onOpenChange={setIsLostOpen}>
-        <DialogContent className="border-[3px] border-[#2A1A0A] bg-[#F5F0E8] text-[#1A1A1A] sm:max-w-lg">
+        <DialogContent className="border-[3px] border-border bg-muted text-foreground sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Marcar como perdido</DialogTitle>
             <DialogDescription>Indicá por qué se cayó la oportunidad.</DialogDescription>
@@ -1018,7 +1018,7 @@ export function LeadDetailPanel({
               id="lost-reason"
               value={lostReason}
               onChange={(event) => setLostReason(event.target.value)}
-              className="min-h-28 w-full rounded-lg border border-input bg-[#F5F0E8] px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+              className="min-h-28 w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
             />
           </div>
           <DialogFooter>
@@ -1038,7 +1038,7 @@ export function LeadDetailPanel({
       </Dialog>
 
       <Dialog open={isDeleteLeadOpen} onOpenChange={setIsDeleteLeadOpen}>
-        <DialogContent className="border-[3px] border-[#2A1A0A] bg-[#F5F0E8] text-[#1A1A1A] sm:max-w-md">
+        <DialogContent className="border-[3px] border-border bg-muted text-foreground sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Eliminar lead</DialogTitle>
             <DialogDescription>

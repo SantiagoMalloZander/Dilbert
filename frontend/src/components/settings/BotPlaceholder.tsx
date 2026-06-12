@@ -41,19 +41,19 @@ export function BotPlaceholder() {
           </p>
 
           {/* Placeholder diagram */}
-          <div className="mt-5 rounded-2xl border-2 border-dashed border-[#2A1A0A]/15 bg-[#F5F0E8]/50 p-6">
+          <div className="mt-5 rounded-2xl border-2 border-dashed border-border bg-muted/50 p-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:items-center">
-              <div className="rounded-xl border border-[#2A1A0A]/15 bg-card p-3 text-center">
+              <div className="rounded-xl border border-border bg-card p-3 text-center">
                 <MessageSquareText className="mx-auto h-5 w-5 text-primary" />
                 <p className="mt-2 text-xs font-semibold">Lead entra</p>
                 <p className="text-[11px] text-muted-foreground">de Meta Ads → WhatsApp</p>
               </div>
-              <div className="rounded-xl border border-[#2A1A0A]/15 bg-card p-3 text-center">
+              <div className="rounded-xl border border-border bg-card p-3 text-center">
                 <Bot className="mx-auto h-5 w-5 text-primary" />
                 <p className="mt-2 text-xs font-semibold">Bot triagea</p>
                 <p className="text-[11px] text-muted-foreground">qué busca, zona, presupuesto</p>
               </div>
-              <div className="rounded-xl border border-[#2A1A0A]/15 bg-card p-3 text-center">
+              <div className="rounded-xl border border-border bg-card p-3 text-center">
                 <GitBranch className="mx-auto h-5 w-5 text-primary" />
                 <p className="mt-2 text-xs font-semibold">Routea</p>
                 <p className="text-[11px] text-muted-foreground">según reglas de la agencia</p>
@@ -67,7 +67,7 @@ export function BotPlaceholder() {
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-[#2A1A0A]/10 bg-[#F5F0E8] p-3 text-xs text-muted-foreground">
+            <div className="rounded-xl border border-border bg-muted p-3 text-xs text-muted-foreground">
               <p className="font-semibold text-foreground">Lo que vas a poder hacer</p>
               <ul className="mt-2 space-y-1 list-disc pl-4">
                 <li>Definir preguntas y respuestas posibles del bot</li>
@@ -76,7 +76,7 @@ export function BotPlaceholder() {
                 <li>SLA: si nadie contesta en X min, re-asignar</li>
               </ul>
             </div>
-            <div className="rounded-xl border border-[#2A1A0A]/10 bg-[#F5F0E8] p-3 text-xs text-muted-foreground">
+            <div className="rounded-xl border border-border bg-muted p-3 text-xs text-muted-foreground">
               <p className="font-semibold text-foreground">Mientras tanto</p>
               <p className="mt-2">
                 El agente ya captura las conversaciones reales del vendedor (WhatsApp, Gmail, audios)

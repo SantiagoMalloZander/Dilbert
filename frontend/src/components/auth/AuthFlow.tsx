@@ -350,17 +350,17 @@ export function AuthFlow({
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] px-6 py-10 text-[#F4F4F5]">
+    <div className="min-h-screen bg-background px-6 py-10 text-foreground">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl items-center justify-center">
         <div className="w-full max-w-[420px]">
           <div className="mb-10 text-center">
-            <div className="font-heading text-4xl tracking-wide text-[#F97316]">DILBERT.</div>
-            <p className="mt-4 text-sm text-white/60">{subtitle}</p>
+            <div className="font-heading text-4xl tracking-wide text-[#D4420A]">DILBERT.</div>
+            <p className="mt-4 text-sm text-muted-foreground">{subtitle}</p>
           </div>
 
-          <div className="rounded-[28px] border border-white/10 bg-[#111111] p-7 shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+          <div className="rounded-[28px] border border-border bg-card p-7 shadow-panel">
             {globalMessage ? (
-              <div className="mb-5 flex items-start gap-3 rounded-2xl border border-[#F97316]/25 bg-[#F97316]/10 p-4 text-sm text-[#FED7AA]">
+              <div className="mb-5 flex items-start gap-3 rounded-2xl border border-[#D4420A]/25 bg-[#D4420A]/10 p-4 text-sm text-[#8a2c06]">
                 <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>{globalMessage}</p>
               </div>
@@ -370,7 +370,7 @@ export function AuthFlow({
               <button
                 type="button"
                 onClick={goBackToEmail}
-                className="mb-5 inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
+                className="mb-5 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Volver
@@ -379,11 +379,11 @@ export function AuthFlow({
 
             <div className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-white/80">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
                   Ingresá tu email
                 </Label>
                 <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
@@ -391,7 +391,7 @@ export function AuthFlow({
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     disabled={step !== "email" || loadingAction !== null}
-                    className="h-12 rounded-2xl border-white/10 bg-[#171717] pl-10 text-white placeholder:text-white/30"
+                    className="h-12 rounded-2xl border-border bg-card pl-10 text-foreground placeholder:text-muted-foreground"
                     placeholder="tu@empresa.com"
                   />
                 </div>
@@ -401,7 +401,7 @@ export function AuthFlow({
               {step === "register" ? (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="full-name" className="text-sm font-medium text-white/80">
+                    <Label htmlFor="full-name" className="text-sm font-medium text-foreground">
                       Nombre completo
                     </Label>
                     <Input
@@ -409,29 +409,29 @@ export function AuthFlow({
                       value={fullName}
                       onChange={(event) => setFullName(event.target.value)}
                       autoComplete="name"
-                      className="h-12 rounded-2xl border-white/10 bg-[#171717] text-white placeholder:text-white/30"
+                      className="h-12 rounded-2xl border-border bg-card text-foreground placeholder:text-muted-foreground"
                       placeholder="Tu nombre"
                     />
                     {nameError ? <p className="text-sm text-[#FB923C]">{nameError}</p> : null}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="register-password" className="text-sm font-medium text-white/80">
+                    <Label htmlFor="register-password" className="text-sm font-medium text-foreground">
                       Contraseña
                     </Label>
                     <div className="relative">
-                      <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                      <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="register-password"
                         type="password"
                         autoComplete="new-password"
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
-                        className="h-12 rounded-2xl border-white/10 bg-[#171717] pl-10 text-white placeholder:text-white/30"
+                        className="h-12 rounded-2xl border-border bg-card pl-10 text-foreground placeholder:text-muted-foreground"
                         placeholder="Creá una contraseña segura"
                       />
                     </div>
-                    <p className="text-xs text-white/40">
+                    <p className="text-xs text-muted-foreground">
                       Mínimo 8 caracteres, 1 número y 1 carácter especial.
                     </p>
                     {passwordError ? <p className="text-sm text-[#FB923C]">{passwordError}</p> : null}
@@ -441,18 +441,18 @@ export function AuthFlow({
 
               {step === "login" ? (
                 <div className="space-y-2">
-                  <Label htmlFor="login-password" className="text-sm font-medium text-white/80">
+                  <Label htmlFor="login-password" className="text-sm font-medium text-foreground">
                     Contraseña
                   </Label>
                   <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="login-password"
                       type="password"
                       autoComplete="current-password"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
-                      className="h-12 rounded-2xl border-white/10 bg-[#171717] pl-10 text-white placeholder:text-white/30"
+                      className="h-12 rounded-2xl border-border bg-card pl-10 text-foreground placeholder:text-muted-foreground"
                       placeholder="Ingresá tu contraseña"
                     />
                   </div>
@@ -462,7 +462,7 @@ export function AuthFlow({
 
               {step === "otp" ? (
                 <div className="space-y-2">
-                  <Label htmlFor="otp" className="text-sm font-medium text-white/80">
+                  <Label htmlFor="otp" className="text-sm font-medium text-foreground">
                     Código de verificación
                   </Label>
                   <Input
@@ -471,7 +471,7 @@ export function AuthFlow({
                     autoComplete="one-time-code"
                     value={otp}
                     onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                    className="h-12 rounded-2xl border-white/10 bg-[#171717] text-center text-lg tracking-[0.35em] text-white"
+                    className="h-12 rounded-2xl border-border bg-card text-center text-lg tracking-[0.35em] text-foreground"
                     placeholder="000000"
                   />
                   {otpError ? <p className="text-sm text-[#FB923C]">{otpError}</p> : null}
@@ -479,13 +479,13 @@ export function AuthFlow({
               ) : null}
 
               {step !== "email" ? (
-                <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#171717] px-4 py-3">
+                <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3">
                   <Checkbox
                     id="remember-me"
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
                   />
-                  <Label htmlFor="remember-me" className="cursor-pointer text-sm text-white/75">
+                  <Label htmlFor="remember-me" className="cursor-pointer text-sm text-muted-foreground">
                     Recordarme
                   </Label>
                 </div>
@@ -496,7 +496,7 @@ export function AuthFlow({
                   type="button"
                   onClick={handleEmailContinue}
                   disabled={loadingAction !== null}
-                  className="h-12 w-full rounded-2xl bg-[#F97316] text-sm font-semibold text-black hover:bg-[#FB923C]"
+                  className="h-12 w-full rounded-2xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
                 >
                   {loadingAction === "email" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Continuar
@@ -508,7 +508,7 @@ export function AuthFlow({
                   type="button"
                   onClick={handlePasswordLogin}
                   disabled={loadingAction !== null}
-                  className="h-12 w-full rounded-2xl bg-[#F97316] text-sm font-semibold text-black hover:bg-[#FB923C]"
+                  className="h-12 w-full rounded-2xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
                 >
                   {loadingAction === "password" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Continuar
@@ -520,7 +520,7 @@ export function AuthFlow({
                   type="button"
                   onClick={handleRequestOtp}
                   disabled={loadingAction !== null}
-                  className="h-12 w-full rounded-2xl bg-[#F97316] text-sm font-semibold text-black hover:bg-[#FB923C]"
+                  className="h-12 w-full rounded-2xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
                 >
                   {loadingAction === "register" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Continuar
@@ -532,7 +532,7 @@ export function AuthFlow({
                   type="button"
                   onClick={handleVerifyOtp}
                   disabled={loadingAction !== null}
-                  className="h-12 w-full rounded-2xl bg-[#F97316] text-sm font-semibold text-black hover:bg-[#FB923C]"
+                  className="h-12 w-full rounded-2xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
                 >
                   {loadingAction === "otp" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Verificar código
@@ -540,13 +540,13 @@ export function AuthFlow({
               ) : null}
 
               {step === "login" || step === "register" ? (
-                <div className="space-y-3 border-t border-white/10 pt-4">
+                <div className="space-y-3 border-t border-border pt-4">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => handleOauth("google", step === "login" ? "login" : "register")}
                     disabled={loadingAction !== null || !googleReady}
-                    className="h-12 w-full rounded-2xl border-white/10 bg-transparent text-white hover:bg-white/5"
+                    className="h-12 w-full rounded-2xl border-border bg-transparent text-foreground hover:bg-muted"
                   >
                     {loadingAction === "google" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Continuar con Google
@@ -558,7 +558,7 @@ export function AuthFlow({
                       handleOauth("microsoft", step === "login" ? "login" : "register")
                     }
                     disabled={loadingAction !== null || !microsoftReady}
-                    className="h-12 w-full rounded-2xl border-white/10 bg-transparent text-white hover:bg-white/5"
+                    className="h-12 w-full rounded-2xl border-border bg-transparent text-foreground hover:bg-muted"
                   >
                     {loadingAction === "microsoft" ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

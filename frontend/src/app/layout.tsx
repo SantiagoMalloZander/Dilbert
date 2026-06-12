@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
-import { Anton, DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Anton, DM_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { GlobalToast } from "@/components/global-toast";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -34,7 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${dmSans.variable} ${anton.variable} ${jetbrainsMono.variable} h-full`}
+      className={`${inter.variable} ${dmSans.variable} ${anton.variable} ${jetbrainsMono.variable} h-full`}
     >
       <body className="min-h-screen bg-background text-foreground">
         <GlobalToast />

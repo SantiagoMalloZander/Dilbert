@@ -298,8 +298,8 @@ export function UsersCenter({
         <div
           className={
             flashMessage.tone === "success"
-              ? "rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100"
-              : "rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-100"
+              ? "rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-700"
+              : "rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-700"
           }
         >
           {flashMessage.text}
@@ -323,7 +323,7 @@ export function UsersCenter({
             </div>
 
             {summary.vendorLimitReached ? (
-              <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+              <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-700">
                 Límite de vendedores alcanzado. Contactá a Dilbert si necesitás ampliarlo.
               </div>
             ) : null}
@@ -346,7 +346,7 @@ export function UsersCenter({
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10 border border-white/10">
+                          <Avatar className="h-10 w-10 border border-border">
                             <AvatarFallback>{getInitials(user.name, user.email)}</AvatarFallback>
                           </Avatar>
                           <div className="space-y-1">
@@ -364,7 +364,7 @@ export function UsersCenter({
                             }
                             disabled={isBusy}
                           >
-                            <SelectTrigger className="min-w-32 border-white/10 bg-background/60 text-foreground">
+                            <SelectTrigger className="min-w-32 border-border bg-background/60 text-foreground">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -386,7 +386,7 @@ export function UsersCenter({
                         {user.canManage ? (
                           <Button
                             variant="ghost"
-                            className="text-red-200 hover:text-red-100"
+                            className="text-red-700 hover:text-red-700"
                             onClick={() => handleRevokeAccess(user)}
                             disabled={isBusy}
                           >
@@ -429,7 +429,7 @@ export function UsersCenter({
                     onChange={(event) =>
                       setAddForm((current) => ({ ...current, email: event.target.value }))
                     }
-                    className="border-white/10 bg-background/60"
+                    className="border-border bg-background/60"
                   />
                 </div>
 
@@ -446,7 +446,7 @@ export function UsersCenter({
                   >
                     <SelectTrigger
                       id="user-role"
-                      className="w-full border-white/10 bg-background/60 text-foreground"
+                      className="w-full border-border bg-background/60 text-foreground"
                     >
                       <SelectValue />
                     </SelectTrigger>
@@ -477,7 +477,7 @@ export function UsersCenter({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-2xl border border-white/10 bg-background/60 p-4">
+              <div className="rounded-2xl border border-border bg-background/60 p-4">
                 <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
                   <Link2 className="h-3.5 w-3.5" />
                   Link actual

@@ -92,7 +92,7 @@ export default async function AgentePage() {
       <WhatsAppConnect initial={whatsappConnection} />
 
       {/* Voice recording */}
-      <div className="rounded-2xl border border-white/10 bg-card/90 p-6">
+      <div className="rounded-2xl border border-border bg-card/90 p-6">
         <p className="text-sm font-medium text-foreground mb-1">Cargar llamada o reunión presencial</p>
         <p className="text-xs text-muted-foreground mb-4">Grabá lo que hablaste y el agente crea el contacto y el lead automáticamente.</p>
         <AgentVoiceButton />

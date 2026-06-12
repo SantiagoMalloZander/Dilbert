@@ -141,7 +141,7 @@ function ChipSelect<T extends string>({
               "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
               value === opt
                 ? "border-primary/40 bg-primary/15 text-foreground"
-                : "border-[#2A1A0A]/15 bg-[#F5F0E8] text-muted-foreground hover:border-[#D4420A]/30"
+                : "border-border bg-muted text-muted-foreground hover:border-[#D4420A]/30"
             )}
           >
             {getLabel(opt)}
@@ -269,7 +269,7 @@ export function PropertiesManager({ initialProperties }: { initialProperties: Pr
                   onClick={() => setFilterStatus(s)}
                   className={cn(
                     "rounded-2xl border p-4 text-center transition-all",
-                    active ? "border-primary/40 bg-primary/10" : "border-[#2A1A0A]/10 bg-[#F5F0E8] hover:border-[#D4420A]/30",
+                    active ? "border-primary/40 bg-primary/10" : "border-border bg-muted hover:border-[#D4420A]/30",
                     s !== "all" && !active ? STATUS_TONE[s as string] : ""
                   )}
                 >
@@ -293,7 +293,7 @@ export function PropertiesManager({ initialProperties }: { initialProperties: Pr
                 : "No hay propiedades en este filtro."}
             </p>
             {list.length === 0 ? (
-              <Button onClick={openCreate} variant="outline" className="border-[#2A1A0A]/15 bg-[#F5F0E8]">
+              <Button onClick={openCreate} variant="outline" className="border-border bg-muted">
                 <Plus className="mr-2 h-4 w-4" />
                 Agregar propiedad
               </Button>
@@ -321,10 +321,10 @@ export function PropertiesManager({ initialProperties }: { initialProperties: Pr
                 {/* title + classification */}
                 <p className="line-clamp-2 font-semibold">{p.title}</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  <Badge className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground">
+                  <Badge className="border-border bg-muted text-foreground">
                     {PROPERTY_TYPE_LABELS[p.propertyType] ?? p.propertyType}
                   </Badge>
-                  <Badge className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground">
+                  <Badge className="border-border bg-muted text-foreground">
                     {OPERATION_LABELS[p.operationType] ?? p.operationType}
                   </Badge>
                   {p.mortgageEligible ? (
@@ -356,7 +356,7 @@ export function PropertiesManager({ initialProperties }: { initialProperties: Pr
                 {p.amenities.length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-1">
                     {p.amenities.slice(0, 4).map((a) => (
-                      <span key={a} className="rounded-full bg-[#F5F0E8] px-2 py-0.5 text-[10px] text-muted-foreground">
+                      <span key={a} className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
                         {AMENITY_LABELS[a] ?? a}
                       </span>
                     ))}
@@ -367,7 +367,7 @@ export function PropertiesManager({ initialProperties }: { initialProperties: Pr
                 ) : null}
 
                 {/* actions */}
-                <div className="mt-4 flex items-center justify-between border-t border-[#2A1A0A]/10 pt-3">
+                <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
                   <span className="text-[11px] text-muted-foreground">
                     {p.internalCode ? <><Tag className="mr-1 inline h-3 w-3" />{p.internalCode}</> : ""}
                   </span>
@@ -578,7 +578,7 @@ export function PropertiesManager({ initialProperties }: { initialProperties: Pr
                           "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
                           active
                             ? "border-primary/40 bg-primary/15 text-foreground"
-                            : "border-[#2A1A0A]/15 bg-[#F5F0E8] text-muted-foreground hover:border-[#D4420A]/30"
+                            : "border-border bg-muted text-muted-foreground hover:border-[#D4420A]/30"
                         )}
                       >
                         {AMENITY_LABELS[a] ?? a}
@@ -603,7 +603,7 @@ export function PropertiesManager({ initialProperties }: { initialProperties: Pr
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} className="border-[#2A1A0A]/15 bg-[#F5F0E8]">
+            <Button variant="outline" onClick={() => setOpen(false)} className="border-border bg-muted">
               Cancelar
             </Button>
             <Button onClick={save} disabled={isPending}>

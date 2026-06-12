@@ -99,7 +99,7 @@ export function LeadsByStageSection({ data }: { data: LeadsByStageMetric[] }) {
         </div>
         <Button
           variant="outline"
-          className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground hover:bg-[#F5F0E8] hover:text-foreground"
+          className="border-border bg-muted text-foreground hover:bg-muted hover:text-foreground"
           render={<Link href="/app/crm/leads" />}
         >
           Ver pipeline
@@ -142,7 +142,7 @@ export function RecentActivitySection({ data, isVendor }: { data: RecentActivity
       <CardContent className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="border-b border-white/10 text-left text-muted-foreground">
+            <tr className="border-b border-border text-left text-muted-foreground">
               <th className="py-2 font-medium">Tipo</th>
               <th className="py-2 font-medium">Descripción</th>
               <th className="py-2 font-medium">Lead/Contacto</th>
@@ -159,9 +159,9 @@ export function RecentActivitySection({ data, isVendor }: { data: RecentActivity
               </tr>
             ) : (
               data.map((activity) => (
-                <tr key={activity.id} className="border-b border-white/10">
+                <tr key={activity.id} className="border-b border-border">
                   <td className="py-3">
-                    <Badge className="border border-white/10 bg-background/50 text-foreground">
+                    <Badge className="border border-border bg-background/50 text-foreground">
                       {activity.type}
                     </Badge>
                   </td>
@@ -193,7 +193,7 @@ export function UpcomingLeadsSection({ data }: { data: UpcomingLeadRecord[] }) {
         </div>
         <Button
           variant="outline"
-          className="border-[#2A1A0A]/15 bg-[#F5F0E8] text-foreground hover:bg-[#F5F0E8] hover:text-foreground"
+          className="border-border bg-muted text-foreground hover:bg-muted hover:text-foreground"
           render={<Link href="/app/crm/leads" />}
         >
           Abrir kanban
@@ -201,14 +201,14 @@ export function UpcomingLeadsSection({ data }: { data: UpcomingLeadRecord[] }) {
       </CardHeader>
       <CardContent className="space-y-3">
         {data.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[#2A1A0A]/15 px-4 py-8 text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
             No hay leads próximos a vencer.
           </div>
         ) : (
           data.map((lead) => (
             <div
               key={lead.id}
-              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-background/50 px-4 py-4 md:flex-row md:items-center md:justify-between"
+              className="flex flex-col gap-3 rounded-2xl border border-border bg-background/50 px-4 py-4 md:flex-row md:items-center md:justify-between"
             >
               <div>
                 <p className="font-medium text-foreground">{lead.title}</p>
@@ -222,8 +222,8 @@ export function UpcomingLeadsSection({ data }: { data: UpcomingLeadRecord[] }) {
                   className={cn(
                     "border",
                     lead.daysUntilClose < 0
-                      ? "border-red-400/30 bg-red-500/10 text-red-100"
-                      : "border-amber-300/30 bg-amber-400/10 text-amber-100"
+                      ? "border-red-400/30 bg-red-500/10 text-red-700"
+                      : "border-amber-300/30 bg-amber-400/10 text-amber-700"
                   )}
                 >
                   {lead.daysUntilClose < 0
@@ -254,7 +254,7 @@ export function SellerPerformanceSection({ data }: { data: SellerPerformanceReco
       <CardContent className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-sm">
           <thead>
-            <tr className="border-b border-white/10 text-left text-muted-foreground">
+            <tr className="border-b border-border text-left text-muted-foreground">
               <th className="py-2 font-medium">Vendedor</th>
               <th className="py-2 font-medium">Leads activos</th>
               <th className="py-2 font-medium">Ganados (mes)</th>
@@ -270,7 +270,7 @@ export function SellerPerformanceSection({ data }: { data: SellerPerformanceReco
               </tr>
             ) : (
               data.map((seller) => (
-                <tr key={seller.userId} className="border-b border-white/10">
+                <tr key={seller.userId} className="border-b border-border">
                   <td className="py-3 font-medium text-foreground">{seller.name}</td>
                   <td className="py-3 text-foreground">{seller.activeLeads}</td>
                   <td className="py-3 text-foreground">{seller.wonThisMonth}</td>
@@ -295,7 +295,7 @@ export function DashboardSectionSkeleton({
   rows?: number;
 }) {
   return (
-    <div className={cn("rounded-[28px] border border-white/10 bg-card/90 p-6", className)}>
+    <div className={cn("rounded-[28px] border border-border bg-card/90 p-6", className)}>
       <div className="h-7 w-44 animate-pulse rounded-full bg-card/10" />
       <div className="mt-3 h-4 w-72 animate-pulse rounded-full bg-card/10" />
       <div className="mt-6 space-y-3">

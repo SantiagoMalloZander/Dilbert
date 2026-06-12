@@ -82,7 +82,7 @@ function ChipGroup<T extends string>({
               "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
               active
                 ? "border-primary/40 bg-primary/15 text-foreground"
-                : "border-[#2A1A0A]/15 bg-[#F5F0E8] text-muted-foreground hover:border-[#D4420A]/30"
+                : "border-border bg-muted text-muted-foreground hover:border-[#D4420A]/30"
             )}
           >
             {opt.label}
@@ -131,7 +131,7 @@ export function LeadRealEstateFormSection({
   const id = (key: string) => `${idPrefix}-${key}`;
 
   return (
-    <div className="space-y-5 rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8]/40 p-4">
+    <div className="space-y-5 rounded-2xl border border-border bg-muted/40 p-4">
       <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
         <Home className="h-3.5 w-3.5" />
         Detalles de la búsqueda

@@ -96,7 +96,7 @@ export function FollowUpInbox({ initial }: { initial: FollowUpData }) {
           ) : (
             <div className="overflow-x-auto rounded-[22px]">
               <table className="min-w-full text-left text-sm">
-                <thead className="bg-white/5 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                <thead className="bg-muted text-xs uppercase tracking-[0.14em] text-muted-foreground">
                   <tr>
                     <th className="px-4 py-3 font-medium">Cliente</th>
                     <th className="px-4 py-3 font-medium">Estado</th>
@@ -109,7 +109,7 @@ export function FollowUpInbox({ initial }: { initial: FollowUpData }) {
                   {items.map((item) => {
                     const desatendido = item.status === "desatendido";
                     return (
-                      <tr key={item.leadId} className="border-t border-white/10 align-top">
+                      <tr key={item.leadId} className="border-t border-border align-top">
                         <td className="px-4 py-4">
                           <p className="font-medium text-foreground">{item.contactName}</p>
                           <p className="text-xs text-muted-foreground">

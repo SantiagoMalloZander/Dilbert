@@ -169,7 +169,7 @@ function ContactFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-[3px] border-[#2A1A0A] bg-card text-foreground sm:max-w-lg">
+      <DialogContent className="border-[3px] border-border bg-card text-foreground sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{initialContact ? "Editar contacto" : "Nuevo contacto"}</DialogTitle>
           <DialogDescription>
@@ -375,7 +375,7 @@ function LeadFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto border-[3px] border-[#2A1A0A] bg-card text-foreground sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto border-[3px] border-border bg-card text-foreground sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Nuevo lead</DialogTitle>
           <DialogDescription>
@@ -419,7 +419,7 @@ function LeadFormDialog({
               </div>
 
               {createInlineContact ? (
-                <div className="grid gap-3 rounded-2xl border border-white/10 bg-background/50 p-4 sm:grid-cols-2">
+                <div className="grid gap-3 rounded-2xl border border-border bg-background/50 p-4 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Input
                       placeholder="Nombre"
@@ -483,7 +483,7 @@ function LeadFormDialog({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3 rounded-2xl border border-white/10 bg-background/50 p-4">
+                <div className="space-y-3 rounded-2xl border border-border bg-background/50 p-4">
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -513,7 +513,7 @@ function LeadFormDialog({
                           "w-full rounded-xl border px-3 py-2 text-left transition-colors",
                           selectedContact?.id === contact.id
                             ? "border-primary bg-primary/10"
-                            : "border-white/10 bg-background/50 hover:bg-background/70"
+                            : "border-border bg-background/50 hover:bg-background/70"
                         )}
                       >
                         <p className="font-medium">{contact.fullName}</p>
@@ -608,7 +608,7 @@ function LeadFormDialog({
           <div className="space-y-2">
             <Label>Inmueble que consultó (opcional)</Label>
             {baseProperty ? (
-              <div className="flex items-center justify-between gap-2 rounded-2xl border border-[#2A1A0A]/15 bg-[#F5F0E8] p-3">
+              <div className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-muted p-3">
                 <span className="flex items-center gap-2 truncate text-sm font-medium">
                   <Building2 className="h-4 w-4 shrink-0 text-primary" />
                   <span className="truncate">{baseProperty.title}</span>
@@ -625,7 +625,7 @@ function LeadFormDialog({
               <button
                 type="button"
                 onClick={() => setPickerOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#2A1A0A]/15 bg-[#F5F0E8]/50 p-3 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A]"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/50 p-3 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A]"
               >
                 <Building2 className="h-4 w-4" />
                 Elegir del catálogo
@@ -750,7 +750,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                   value={queryValue}
                   onChange={(event) => setQueryValue(event.target.value)}
                   placeholder="Nombre, email o empresa"
-                  className="border-white/10 bg-background/50 pl-9 text-foreground"
+                  className="border-border bg-background/50 pl-9 text-foreground"
                 />
               </div>
             </div>
@@ -760,7 +760,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 value={data.filters.source || "all"}
                 onValueChange={(value) => updateParam("source", value)}
               >
-                <SelectTrigger className="w-full border-white/10 bg-background/50 text-foreground">
+                <SelectTrigger className="w-full border-border bg-background/50 text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -774,7 +774,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
               </Select>
             </div>
             <div className="flex items-end">
-              <div className="rounded-2xl border border-white/10 bg-background/50 px-4 py-3 text-right">
+              <div className="rounded-2xl border border-border bg-background/50 px-4 py-3 text-right">
                 <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Contactos</p>
                 <p className="mt-1 text-2xl font-semibold">{data.total}</p>
               </div>
@@ -787,7 +787,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
           <CardContent className="p-4">
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10 hover:bg-transparent">
+              <TableRow className="border-border hover:bg-transparent">
                 <TableHead className="text-muted-foreground">Nombre</TableHead>
                 <TableHead className="text-muted-foreground">Empresa</TableHead>
                 <TableHead className="text-muted-foreground">Email</TableHead>
@@ -799,7 +799,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
             </TableHeader>
             <TableBody>
               {data.contacts.length === 0 ? (
-                <TableRow className="border-[#2A1A0A]/10">
+                <TableRow className="border-border">
                   <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
                     No encontramos contactos con esos filtros.
                   </TableCell>
@@ -808,7 +808,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 data.contacts.map((contact) => (
                   <TableRow
                     key={contact.id}
-                    className="cursor-pointer border-white/10 text-foreground hover:bg-background/50"
+                    className="cursor-pointer border-border text-foreground hover:bg-background/50"
                     onClick={() => openContact(contact.id)}
                   >
                     <TableCell className="font-medium">{contact.fullName}</TableCell>
@@ -817,7 +817,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                     <TableCell>{contact.phone || "Sin teléfono"}</TableCell>
                     <TableCell>{contact.activeLeadCount}</TableCell>
                     <TableCell>
-                      <Badge className="border border-white/10 bg-background/50 text-foreground">
+                      <Badge className="border border-border bg-background/50 text-foreground">
                         {getSourceLabel(contact.source)}
                       </Badge>
                     </TableCell>
@@ -837,7 +837,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 variant="outline"
                 size="sm"
                 disabled={isPending || data.pagination.page <= 1}
-                className="border-white/10 bg-background/50 text-foreground"
+                className="border-border bg-background/50 text-foreground"
                 onClick={() => updateParam("page", String(data.pagination.page - 1))}
               >
                 <ChevronLeft className="mr-2 h-4 w-4" />
@@ -847,7 +847,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 variant="outline"
                 size="sm"
                 disabled={isPending || data.pagination.page >= totalPages}
-                className="border-white/10 bg-background/50 text-foreground"
+                className="border-border bg-background/50 text-foreground"
                 onClick={() => updateParam("page", String(data.pagination.page + 1))}
               >
                 Siguiente
@@ -896,7 +896,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
 export function ContactTableSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="rounded-[30px] border border-white/10 bg-card/90 p-6">
+      <div className="rounded-[30px] border border-border bg-card/90 p-6">
         <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
           <div className="space-y-3">
             <div className="h-6 w-32 animate-pulse rounded-full bg-card/10" />
@@ -913,7 +913,7 @@ export function ContactTableSkeleton() {
           <div className="h-12 animate-pulse rounded-2xl bg-card/10" />
         </div>
       </div>
-      <div className="rounded-[28px] border border-white/10 bg-card/90 p-4">
+      <div className="rounded-[28px] border border-border bg-card/90 p-4">
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <div key={index} className="h-14 animate-pulse rounded-2xl bg-card/10" />
