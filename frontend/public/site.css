@@ -175,9 +175,11 @@ h3 { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
 .marquee { position: relative; overflow: hidden; padding: 6px 0;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); }
-.marquee-track { display: flex; gap: 16px; width: max-content; animation: marquee 28s linear infinite; }
+/* gap va como margin en cada chip (incluido el último) para que el loop a -50%
+   caiga exacto sobre la segunda copia y gire infinito sin saltos. */
+.marquee-track { display: flex; width: max-content; animation: marquee 32s linear infinite; }
 .marquee:hover .marquee-track { animation-play-state: paused; }
-.chip { display: inline-flex; align-items: center; gap: 11px; white-space: nowrap;
+.chip { display: inline-flex; align-items: center; gap: 11px; white-space: nowrap; margin-right: 16px;
   background: var(--card); border: 1px solid var(--line); border-radius: 999px;
   padding: 12px 22px; box-shadow: var(--shadow); }
 .chip img { height: 26px; width: 26px; object-fit: contain; display: block; }
@@ -188,6 +190,35 @@ h3 { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
 @media (prefers-reduced-motion: reduce) {
   .marquee-track { animation: none; flex-wrap: wrap; justify-content: center; width: auto; }
 }
+
+/* Agendar llamada (modal) */
+.call-overlay { position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center;
+  padding: 22px; background: rgba(32,26,19,.45); backdrop-filter: blur(6px); }
+.call-overlay.open { display: flex; animation: callFade .2s ease; }
+@keyframes callFade { from { opacity: 0; } to { opacity: 1; } }
+.call-card { width: 100%; max-width: 420px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 24px; box-shadow: 0 20px 60px rgba(32,26,19,.18); padding: 30px;
+  animation: callPop .25s cubic-bezier(.16,1,.3,1); }
+@keyframes callPop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+.call-card h3 { font-size: 22px; letter-spacing: -.02em; }
+.call-card .sub { color: var(--muted); font-size: 14.5px; margin-top: 6px; }
+.call-field { margin-top: 16px; }
+.call-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.call-field input { width: 100%; height: 46px; border: 1px solid var(--input); border-radius: 12px;
+  padding: 0 14px; font-size: 15px; color: var(--ink); background: #fff; outline: none; transition: border-color .15s, box-shadow .15s; }
+.call-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212,66,10,.12); }
+.call-card .btn { width: 100%; margin-top: 20px; }
+.call-error { color: #b8380a; font-size: 13px; margin-top: 12px; min-height: 0; }
+.call-close { position: absolute; }
+.call-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.call-x { border: 0; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; padding: 2px 6px; border-radius: 8px; }
+.call-x:hover { background: rgba(32,26,19,.05); color: var(--ink); }
+.call-note { display: flex; align-items: center; gap: 7px; justify-content: center; margin-top: 14px; font-size: 12.5px; color: var(--muted); }
+.call-success { text-align: center; padding: 8px 0; }
+.call-success .ok { width: 54px; height: 54px; border-radius: 50%; background: rgba(26,138,79,.12); color: #1a8a4f;
+  display: flex; align-items: center; justify-content: center; margin: 4px auto 16px; }
+.call-success h3 { font-size: 20px; }
+.call-success p { color: var(--muted); font-size: 14.5px; margin-top: 8px; }
 
 /* Final CTA */
 .final { text-align: center; }

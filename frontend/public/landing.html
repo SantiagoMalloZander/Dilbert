@@ -37,7 +37,7 @@
       </p>
       <div class="hero-cta reveal">
         <a class="btn btn-primary btn-lg" href="/app">Empezar gratis</a>
-        <a class="btn btn-ghost btn-lg" href="/comofunciona">Ver cómo funciona</a>
+        <button type="button" class="btn btn-ghost btn-lg" data-call-open>Agendar una llamada</button>
       </div>
       <div class="hero-note reveal">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="#1a8a4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -197,9 +197,47 @@
     <div class="wrap reveal">
       <h2>Probá Dilbert en tu inmobiliaria.</h2>
       <p class="lead" style="max-width:520px;margin:14px auto 0;">Conectá tu WhatsApp y mirá cómo se llena el CRM solo.</p>
-      <a class="btn btn-primary btn-lg" href="/app">Empezar gratis</a>
+      <div class="hero-cta" style="justify-content:center;margin-top:26px;">
+        <a class="btn btn-primary btn-lg" href="/app">Empezar gratis</a>
+        <button type="button" class="btn btn-ghost btn-lg" data-call-open>Agendar una llamada</button>
+      </div>
     </div>
   </section>
+
+  <!-- MODAL: Agendar llamada -->
+  <div class="call-overlay" id="callOverlay" role="dialog" aria-modal="true" aria-labelledby="callTitle">
+    <div class="call-card">
+      <div id="callForm">
+        <div class="call-head">
+          <div>
+            <h3 id="callTitle">Agendá una llamada</h3>
+            <p class="sub">Te llamamos en el horario que te quede cómodo y te mostramos Dilbert con tus propios chats.</p>
+          </div>
+          <button type="button" class="call-x" data-call-close aria-label="Cerrar">×</button>
+        </div>
+        <div class="call-field">
+          <label for="callInmo">Nombre de tu inmobiliaria</label>
+          <input id="callInmo" type="text" autocomplete="organization" placeholder="Ej: Demarco Inmuebles" />
+        </div>
+        <div class="call-field">
+          <label for="callTel">Teléfono</label>
+          <input id="callTel" type="tel" autocomplete="tel" placeholder="+54 9 11 2345 6789" />
+        </div>
+        <div class="call-error" id="callError"></div>
+        <button type="button" class="btn btn-primary" id="callSubmit">Agendar llamada</button>
+        <div class="call-note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="#1a8a4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Sin compromiso. Te contactamos nosotros.
+        </div>
+      </div>
+      <div class="call-success" id="callSuccess" style="display:none;">
+        <div class="ok"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>¡Listo! Te llamamos pronto.</h3>
+        <p>Anotamos tu inmobiliaria. Te contactamos al teléfono que dejaste.</p>
+        <button type="button" class="btn btn-ghost" data-call-close style="margin-top:20px;">Cerrar</button>
+      </div>
+    </div>
+  </div>
 
   <footer>
     <div class="wrap foot">
@@ -219,6 +257,67 @@
       entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
     }, { threshold: 0.12 });
     document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+
+    // Agendar llamada — modal + envío
+    (function () {
+      var overlay = document.getElementById('callOverlay');
+      var formEl = document.getElementById('callForm');
+      var successEl = document.getElementById('callSuccess');
+      var inmo = document.getElementById('callInmo');
+      var tel = document.getElementById('callTel');
+      var err = document.getElementById('callError');
+      var submit = document.getElementById('callSubmit');
+
+      function open() {
+        formEl.style.display = '';
+        successEl.style.display = 'none';
+        err.textContent = '';
+        overlay.classList.add('open');
+        setTimeout(function () { inmo.focus(); }, 60);
+      }
+      function close() { overlay.classList.remove('open'); }
+
+      document.querySelectorAll('[data-call-open]').forEach(function (b) { b.addEventListener('click', open); });
+      document.querySelectorAll('[data-call-close]').forEach(function (b) { b.addEventListener('click', close); });
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+
+      async function send() {
+        err.textContent = '';
+        var inmobiliaria = (inmo.value || '').trim();
+        var telefono = (tel.value || '').trim();
+        if (inmobiliaria.length < 2) { err.textContent = 'Ingresá el nombre de tu inmobiliaria.'; inmo.focus(); return; }
+        if (telefono.replace(/\D/g, '').length < 6) { err.textContent = 'Ingresá un teléfono válido.'; tel.focus(); return; }
+
+        submit.disabled = true;
+        var original = submit.textContent;
+        submit.textContent = 'Agendando…';
+        try {
+          var res = await fetch('/api/agendar-call', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inmobiliaria: inmobiliaria, telefono: telefono })
+          });
+          if (!res.ok) {
+            var data = await res.json().catch(function () { return {}; });
+            throw new Error(data.error || 'No pude agendar ahora. Probá de nuevo.');
+          }
+          inmo.value = ''; tel.value = '';
+          formEl.style.display = 'none';
+          successEl.style.display = '';
+        } catch (e2) {
+          err.textContent = e2.message || 'No pude agendar ahora. Probá de nuevo.';
+        } finally {
+          submit.disabled = false;
+          submit.textContent = original;
+        }
+      }
+
+      submit.addEventListener('click', send);
+      [inmo, tel].forEach(function (el) {
+        el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } });
+      });
+    })();
   </script>
 </body>
 </html>
