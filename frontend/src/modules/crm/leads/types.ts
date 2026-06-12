@@ -11,6 +11,8 @@ export type LeadStatus = Database["public"]["Enums"]["lead_status"];
 export type ActivityType = Database["public"]["Enums"]["activity_type"];
 export type UserRole = Database["public"]["Enums"]["user_role"];
 
+export type LeadRoleFilter = "comprador" | "vendedor";
+
 export type LeadBoardFilters = {
   assignedTo: string | null;
   source: CrmSource | null;
@@ -18,6 +20,7 @@ export type LeadBoardFilters = {
   createdTo: string | null;
   stageId: string | null;
   leadId: string | null;
+  role: LeadRoleFilter | null;
 };
 
 export type LeadAssigneeOption = {

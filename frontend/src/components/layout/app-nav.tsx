@@ -7,8 +7,6 @@ import {
   Activity,
   Bot,
   Building2,
-  CreditCard,
-  Inbox,
   Loader2,
   Settings,
   Shield,
@@ -42,12 +40,6 @@ export function AppNav({
   const items: NavItem[] = [
     { href: "/app/crm", label: "CRM", icon: Activity, visible: hasWorkspaceAccess },
     {
-      href: "/app/seguimiento",
-      label: "Seguimiento",
-      icon: Inbox,
-      visible: hasWorkspaceAccess,
-    },
-    {
       href: "/app/agente",
       label: "Agente IA",
       icon: Bot,
@@ -57,12 +49,6 @@ export function AppNav({
       href: "/app/settings",
       label: "Configuración",
       icon: Settings,
-      visible: hasWorkspaceAccess && (role === "owner" || isSuperAdmin),
-    },
-    {
-      href: "/app/suscripcion",
-      label: "Suscripción",
-      icon: CreditCard,
       visible: hasWorkspaceAccess && (role === "owner" || isSuperAdmin),
     },
     {

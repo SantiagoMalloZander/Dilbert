@@ -397,7 +397,7 @@ export function AdminPanel({
 
       {flashMessage ? (
         <div
-          className={`rounded-[24px] border px-4 py-3 text-sm ${
+          className={`rounded-xl border px-4 py-3 text-sm ${
             flashMessage.tone === "success"
               ? "border-primary/25 bg-primary/10 text-primary"
               : "border-destructive/30 bg-destructive/10 text-destructive-foreground"
@@ -442,7 +442,7 @@ export function AdminPanel({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto rounded-[22px] border border-border">
+          <div className="overflow-x-auto rounded-xl border border-border">
             <table className="min-w-full text-left text-sm">
               <thead className="bg-muted text-xs uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
@@ -544,7 +544,7 @@ export function AdminPanel({
                 </Badge>
               </div>
 
-              <div className="rounded-[22px] border border-border bg-background/60 p-4">
+              <div className="rounded-xl border border-border bg-background/60 p-4">
                 <div className="mb-3 flex items-center gap-2 text-sm font-medium">
                   <Users className="h-4 w-4 text-primary" />
                   Límite de vendedores
@@ -580,7 +580,7 @@ export function AdminPanel({
             </CardHeader>
 
             <CardContent className="space-y-3">
-              <div className="rounded-[22px] border border-border">
+              <div className="rounded-xl border border-border">
                 <div className="flex items-center justify-between border-b border-border px-4 py-3">
                   <p className="text-sm font-medium">Vendedores de la empresa</p>
                   <Badge variant="secondary">{company.vendors.length}</Badge>
@@ -627,7 +627,7 @@ export function AdminPanel({
                 )}
               </div>
 
-              <div className="rounded-[22px] border border-border">
+              <div className="rounded-xl border border-border">
                 <div className="flex items-center justify-between border-b border-border px-4 py-3">
                   <div className="flex items-center gap-2">
                     <KeyRound className="h-4 w-4 text-primary" />
@@ -706,7 +706,7 @@ export function AdminPanel({
 
       {isCreateOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-10 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-[30px] border border-border bg-card shadow-panel">
+          <div className="w-full max-w-xl rounded-xl border border-border bg-card shadow-panel">
             <form onSubmit={handleCreateCompany}>
               <div className="border-b border-border px-6 py-5">
                 <p className="text-xs uppercase tracking-[0.2em] text-primary">Nueva empresa</p>

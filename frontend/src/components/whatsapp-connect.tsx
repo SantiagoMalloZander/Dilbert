@@ -97,7 +97,7 @@ export function WhatsAppConnect({ initial }: { initial: WhatsAppConnection | nul
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-[#25D366]/10 p-3 text-[#1faa52]">
+            <div className="rounded-xl bg-[#25D366]/10 p-3 text-[#1faa52]">
               <Smartphone className="h-5 w-5" />
             </div>
             <div>
@@ -119,7 +119,7 @@ export function WhatsAppConnect({ initial }: { initial: WhatsAppConnection | nul
         </div>
 
         {view === "connected" && (
-          <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-border bg-background/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-5 flex flex-col gap-3 rounded-xl border border-border bg-background/60 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm">
               <p className="font-medium text-foreground">
                 Línea conectada {phone ? formatPhone(phone) : ""}
@@ -136,7 +136,7 @@ export function WhatsAppConnect({ initial }: { initial: WhatsAppConnection | nul
         )}
 
         {view === "qr" && (
-          <div className="mt-5 flex flex-col items-center gap-4 rounded-2xl border border-border bg-background/60 p-5">
+          <div className="mt-5 flex flex-col items-center gap-4 rounded-xl border border-border bg-background/60 p-5">
             {qr ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={qr} alt="Código QR de WhatsApp" className="h-56 w-56 rounded-xl bg-white p-2" />

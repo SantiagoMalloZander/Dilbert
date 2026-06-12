@@ -114,7 +114,7 @@ export function PropertyPickerDialog({
               Cargando catálogo…
             </div>
           ) : error ? (
-            <div className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-700">
+            <div className="rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-700">
               {error}
             </div>
           ) : filtered.length === 0 ? (
@@ -132,7 +132,7 @@ export function PropertyPickerDialog({
                   type="button"
                   disabled={disabled}
                   onClick={() => onPick(p)}
-                  className="flex w-full items-start gap-3 rounded-2xl border border-border bg-muted p-3 text-left transition-all hover:border-[#D4420A]/30 disabled:opacity-50"
+                  className="flex w-full items-start gap-3 rounded-xl border border-border bg-muted p-3 text-left transition-all hover:border-[#D4420A]/30 disabled:opacity-50"
                 >
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-xs font-semibold text-primary">
                     {p.title.slice(0, 2).toUpperCase()}

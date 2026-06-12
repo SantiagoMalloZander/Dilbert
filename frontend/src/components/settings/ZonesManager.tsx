@@ -93,7 +93,7 @@ export function ZonesManager({ initialZones }: { initialZones: ZoneRecord[] }) {
       <Card className="bg-card/90">
         <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+            <div className="rounded-xl bg-primary/10 p-3 text-primary">
               <Map className="h-5 w-5" />
             </div>
             <div>
@@ -118,11 +118,11 @@ export function ZonesManager({ initialZones }: { initialZones: ZoneRecord[] }) {
             Resumen de cobertura
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            <div className="rounded-2xl border border-border bg-muted p-4 text-center">
+            <div className="rounded-xl border border-border bg-muted p-4 text-center">
               <p className="text-2xl font-semibold">{list.length}</p>
               <p className="mt-1 text-xs font-medium text-muted-foreground">Zonas</p>
             </div>
-            <div className="rounded-2xl border border-border bg-muted p-4 text-center">
+            <div className="rounded-xl border border-border bg-muted p-4 text-center">
               <p className="text-2xl font-semibold">{Object.keys(groupedByCity).filter((k) => k !== "Sin ciudad").length}</p>
               <p className="mt-1 text-xs font-medium text-muted-foreground">Ciudades</p>
             </div>
@@ -158,7 +158,7 @@ export function ZonesManager({ initialZones }: { initialZones: ZoneRecord[] }) {
                   {zones.map((zone) => (
                     <div
                       key={zone.id}
-                      className="group flex items-start justify-between gap-2 rounded-2xl border border-border bg-muted p-4"
+                      className="group flex items-start justify-between gap-2 rounded-xl border border-border bg-muted p-4"
                     >
                       <div className="min-w-0">
                         <p className="truncate font-medium">{zone.name}</p>

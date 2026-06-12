@@ -6,6 +6,9 @@ import { requireSession } from "@/lib/workspace-auth";
 import { listZones } from "@/modules/agency/zones/queries";
 import { listProperties } from "@/modules/agency/properties/queries";
 import { getUsersCenterData, type UsersCenterData } from "@/modules/users/queries";
+import { getBillingState, getActiveVendorCount, type BillingState } from "@/modules/billing/queries";
+import { PRICE_PER_SEAT_USD_CENTS, clampSeats } from "@/lib/billing/config";
+import { getDolarTarjeta, usdToArs } from "@/lib/billing/fx";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
 
 export default async function SettingsPage() {
@@ -16,15 +19,37 @@ export default async function SettingsPage() {
     redirect("/app/crm");
   }
 
-  const [zones, properties, usersData] = await Promise.all([
+  const companyId = session.user.companyId;
+  const priceUsd = PRICE_PER_SEAT_USD_CENTS / 100;
+
+  const [zones, properties, usersData, billing, activeVendors, rate] = await Promise.all([
     listZones(),
     listProperties(),
     // User management lives inside Configuración now. Owner-only; skip for a
     // super-admin browsing without a company.
-    session.user.companyId
-      ? getUsersCenterData(session.user.companyId).catch(() => null)
+    companyId
+      ? getUsersCenterData(companyId).catch(() => null)
       : Promise.resolve<UsersCenterData | null>(null),
+    companyId
+      ? getBillingState(companyId).catch(() => null)
+      : Promise.resolve<BillingState | null>(null),
+    companyId ? getActiveVendorCount(companyId).catch(() => 0) : Promise.resolve(0),
+    getDolarTarjeta(),
   ]);
+
+  const billingData = billing
+    ? {
+        state: billing,
+        defaultSeats: clampSeats(Math.max(billing.seats || 0, activeVendors, 1)),
+        activeVendors,
+        priceUsd,
+        priceArs: usdToArs(priceUsd, rate),
+        dolarTarjeta: rate,
+        isOwner: session.user.role === "owner" || session.user.isSuperAdmin,
+        stripeEnabled: Boolean(process.env.STRIPE_SECRET_KEY),
+        mpEnabled: Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN),
+      }
+    : null;
 
   return (
     <div className="space-y-6">
@@ -43,7 +68,12 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      <SettingsTabs initialZones={zones} initialProperties={properties} usersData={usersData} />
+      <SettingsTabs
+        initialZones={zones}
+        initialProperties={properties}
+        usersData={usersData}
+        billingData={billingData}
+      />
     </div>
   );
 }

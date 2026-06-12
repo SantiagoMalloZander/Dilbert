@@ -67,7 +67,7 @@ export function KpiCardsSection({ data }: { data: DashboardKpiData }) {
           >
             <CardHeader>
               <div className="mb-4 flex items-start justify-between gap-4">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <Icon className="h-5 w-5" />
                 </div>
                 <span className="text-3xl font-semibold tracking-tight">{metric.formattedValue}</span>
@@ -133,49 +133,69 @@ export function RecentActivitySection({ data, isVendor }: { data: RecentActivity
     <Card className="bg-card/90">
       <CardHeader>
         <CardTitle className="text-foreground">
-          {isVendor ? "Tu actividad reciente" : "Actividad reciente"}
+          {isVendor ? "Tu actividad" : "Actividad reciente"}
         </CardTitle>
-        <CardDescription className="text-muted-foreground">
-          Últimos 10 eventos {isVendor ? "propios" : "de la empresa"}.
+      </CardHeader>
+      <CardContent>
+        {data.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            Todavía no hay actividad.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {data.slice(0, 8).map((activity) => (
+              <li key={activity.id} className="flex items-center gap-3 py-2.5">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                  {activity.relatedLabel || activity.description}
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {formatRelativeTime(activity.createdAt)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function WonLostMiniChart({ data }: { data: { label: string; won: number; lost: number }[] }) {
+  const max = Math.max(1, ...data.map((m) => Math.max(m.won, m.lost)));
+  return (
+    <Card className="bg-card/90">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base text-foreground">Ganados vs perdidos</CardTitle>
+        <CardDescription className="text-muted-foreground flex items-center gap-3 text-xs">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" /> Ganados
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-[#D4420A]" /> Perdidos
+          </span>
         </CardDescription>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <table className="w-full min-w-[640px] text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-muted-foreground">
-              <th className="py-2 font-medium">Tipo</th>
-              <th className="py-2 font-medium">Descripción</th>
-              <th className="py-2 font-medium">Lead/Contacto</th>
-              <th className="py-2 font-medium">Usuario</th>
-              <th className="py-2 font-medium text-right">Hace cuánto</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-muted-foreground">
-                  Todavía no hay actividad registrada.
-                </td>
-              </tr>
-            ) : (
-              data.map((activity) => (
-                <tr key={activity.id} className="border-b border-border">
-                  <td className="py-3">
-                    <Badge className="border border-border bg-background/50 text-foreground">
-                      {activity.type}
-                    </Badge>
-                  </td>
-                  <td className="py-3 text-foreground">{activity.description}</td>
-                  <td className="py-3 text-muted-foreground">{activity.relatedLabel}</td>
-                  <td className="py-3 text-muted-foreground">{activity.userName}</td>
-                  <td className="py-3 text-right text-muted-foreground">
-                    {formatRelativeTime(activity.createdAt)}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <CardContent>
+        <div className="flex items-end justify-between gap-2" style={{ height: 110 }}>
+          {data.map((m, i) => (
+            <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
+              <div className="flex h-[88px] w-full items-end justify-center gap-1">
+                <div
+                  className="w-1/2 max-w-[14px] rounded-t bg-emerald-500"
+                  style={{ height: `${(m.won / max) * 100}%` }}
+                  title={`${m.won} ganados`}
+                />
+                <div
+                  className="w-1/2 max-w-[14px] rounded-t bg-[#D4420A]"
+                  style={{ height: `${(m.lost / max) * 100}%` }}
+                  title={`${m.lost} perdidos`}
+                />
+              </div>
+              <span className="text-[11px] capitalize text-muted-foreground">{m.label}</span>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
@@ -201,14 +221,14 @@ export function UpcomingLeadsSection({ data }: { data: UpcomingLeadRecord[] }) {
       </CardHeader>
       <CardContent className="space-y-3">
         {data.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
+          <div className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
             No hay leads próximos a vencer.
           </div>
         ) : (
           data.map((lead) => (
             <div
               key={lead.id}
-              className="flex flex-col gap-3 rounded-2xl border border-border bg-background/50 px-4 py-4 md:flex-row md:items-center md:justify-between"
+              className="flex flex-col gap-3 rounded-xl border border-border bg-background/50 px-4 py-4 md:flex-row md:items-center md:justify-between"
             >
               <div>
                 <p className="font-medium text-foreground">{lead.title}</p>
@@ -295,12 +315,12 @@ export function DashboardSectionSkeleton({
   rows?: number;
 }) {
   return (
-    <div className={cn("rounded-[28px] border border-border bg-card/90 p-6", className)}>
+    <div className={cn("rounded-xl border border-border bg-card/90 p-6", className)}>
       <div className="h-7 w-44 animate-pulse rounded-full bg-card/10" />
       <div className="mt-3 h-4 w-72 animate-pulse rounded-full bg-card/10" />
       <div className="mt-6 space-y-3">
         {Array.from({ length: rows }).map((_, index) => (
-          <div key={index} className="h-16 animate-pulse rounded-2xl bg-card/10" />
+          <div key={index} className="h-16 animate-pulse rounded-xl bg-card/10" />
         ))}
       </div>
     </div>

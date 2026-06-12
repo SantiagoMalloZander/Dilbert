@@ -60,14 +60,14 @@ export default function PendingAccessPage() {
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <div className="rounded-3xl border border-border bg-background/60 p-5">
+          <div className="rounded-xl border border-border bg-background/60 p-5">
             <p className="text-sm font-medium text-foreground">Qué tenés que hacer ahora</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Compartile este email a tu empresa y pediles que te agreguen desde el panel de Dilbert.
             </p>
           </div>
 
-          <div className="rounded-3xl border border-border bg-background/60 p-5">
+          <div className="rounded-xl border border-border bg-background/60 p-5">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Mail className="h-4 w-4" />
               Email para compartir
@@ -82,7 +82,7 @@ export default function PendingAccessPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-3xl border border-dashed border-border bg-muted p-5">
+        <div className="mt-8 rounded-xl border border-dashed border-border bg-muted p-5">
           <p className="text-sm leading-6 text-muted-foreground">
             Esta página verifica automáticamente cada 6 segundos. Cuando te habiliten, te vamos a
             llevar al CRM sin que tengas que hacer nada.

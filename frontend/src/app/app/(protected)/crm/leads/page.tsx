@@ -18,6 +18,7 @@ async function LeadsBoardContent({ searchParams }: { searchParams?: SearchParams
         data.filters.createdFrom || "",
         data.filters.createdTo || "",
         data.filters.stageId || "",
+        data.filters.role || "",
         data.selectedLead?.id || "",
         data.selectedLead?.updatedAt || "",
       ].join(":")}

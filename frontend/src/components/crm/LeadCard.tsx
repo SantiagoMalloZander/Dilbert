@@ -123,7 +123,7 @@ export function LeadCard({
       type="button"
       onClick={() => onOpen(lead.id)}
       className={cn(
-        "group w-full rounded-[22px] border border-border bg-card p-4 text-left shadow-hard transition duration-200",
+        "group w-full rounded-xl border border-border bg-card p-4 text-left shadow-hard transition duration-200",
         "hover:border-[#D4420A]/40 hover:bg-muted",
         disabled && "cursor-default",
         isDragging && "rotate-[1deg] border-[#D4420A]/50 shadow-hard"

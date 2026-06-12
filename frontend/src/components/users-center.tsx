@@ -298,8 +298,8 @@ export function UsersCenter({
         <div
           className={
             flashMessage.tone === "success"
-              ? "rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-700"
-              : "rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-700"
+              ? "rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-700"
+              : "rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-700"
           }
         >
           {flashMessage.text}
@@ -323,7 +323,7 @@ export function UsersCenter({
             </div>
 
             {summary.vendorLimitReached ? (
-              <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-700">
+              <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-700">
                 Límite de vendedores alcanzado. Contactá a Dilbert si necesitás ampliarlo.
               </div>
             ) : null}
@@ -477,7 +477,7 @@ export function UsersCenter({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-2xl border border-border bg-background/60 p-4">
+              <div className="rounded-xl border border-border bg-background/60 p-4">
                 <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
                   <Link2 className="h-3.5 w-3.5" />
                   Link actual

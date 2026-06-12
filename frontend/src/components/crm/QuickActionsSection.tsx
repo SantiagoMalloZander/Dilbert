@@ -23,7 +23,7 @@ function QuickActionCard({
     <button
       onClick={onClick}
       disabled={isLoading}
-      className="group relative overflow-hidden rounded-[24px] border border-border bg-gradient-to-br from-white/5 to-white/[0.02] p-5 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
+      className="group relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-white/5 to-white/[0.02] p-5 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
     >
       <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 translate-y-[-8px] rounded-full bg-[#D4420A] opacity-0 blur-3xl transition-all group-hover:opacity-5" />
       <div className="relative z-10 flex items-start gap-3">

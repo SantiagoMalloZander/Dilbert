@@ -237,7 +237,7 @@ export function PropertiesManager({ initialProperties }: { initialProperties: Pr
       <Card className="bg-card/90">
         <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+            <div className="rounded-xl bg-primary/10 p-3 text-primary">
               <Building2 className="h-5 w-5" />
             </div>
             <div>
@@ -268,7 +268,7 @@ export function PropertiesManager({ initialProperties }: { initialProperties: Pr
                   type="button"
                   onClick={() => setFilterStatus(s)}
                   className={cn(
-                    "rounded-2xl border p-4 text-center transition-all",
+                    "rounded-xl border p-4 text-center transition-all",
                     active ? "border-primary/40 bg-primary/10" : "border-border bg-muted hover:border-[#D4420A]/30",
                     s !== "all" && !active ? STATUS_TONE[s as string] : ""
                   )}

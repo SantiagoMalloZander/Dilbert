@@ -92,7 +92,7 @@ export function SubscriptionView({
     return (
       <Shell>
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-600">
+          <div className="rounded-xl bg-emerald-500/10 p-3 text-emerald-600">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-semibold">Tu cuenta está activa</h1>
@@ -109,7 +109,7 @@ export function SubscriptionView({
     return (
       <Shell>
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-600">
+          <div className="rounded-xl bg-emerald-500/10 p-3 text-emerald-600">
             <Check className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-semibold">Suscripción activa</h1>
@@ -119,7 +119,7 @@ export function SubscriptionView({
           </p>
         </div>
 
-        <div className="mt-6 space-y-2 rounded-2xl border border-border bg-background/60 p-4 text-sm">
+        <div className="mt-6 space-y-2 rounded-xl border border-border bg-background/60 p-4 text-sm">
           {state.currentPeriodEnd ? (
             <div className="flex justify-between">
               <span className="text-muted-foreground">
@@ -169,7 +169,7 @@ export function SubscriptionView({
       {/* Free option — solo si todavía no está en Free */}
       {!isFree && isOwner ? (
         <>
-          <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-border bg-background/60 p-4">
+          <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-border bg-background/60 p-4">
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-600">
                 <Gift className="h-5 w-5" />
@@ -229,7 +229,7 @@ export function SubscriptionView({
         </p>
       ) : null}
 
-      <div className="mt-6 rounded-2xl border border-border bg-background/60 p-4 text-center text-sm">
+      <div className="mt-6 rounded-xl border border-border bg-background/60 p-4 text-center text-sm">
         <span className="text-muted-foreground">Total mensual</span>
         <div className="mt-1 text-xl font-semibold">
           USD ${totalUsd.toLocaleString("es-AR")}

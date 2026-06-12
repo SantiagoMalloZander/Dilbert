@@ -445,7 +445,7 @@ export function LeadDetailPanel({
           </div>
 
           <div className="mt-5 text-sm">
-            <div className="rounded-2xl border border-border bg-muted p-3">
+            <div className="rounded-xl border border-border bg-muted p-3">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Valor estimado</p>
               <p className="mt-2 text-lg font-semibold">{formatCurrency(lead.value, lead.currency)}</p>
               {usdEquivalent(lead.value, lead.currency, blueRate) ? (
@@ -464,7 +464,7 @@ export function LeadDetailPanel({
             <div className="grid gap-3 sm:grid-cols-2">
               <button
                 onClick={() => router.push(`/app/crm/contacts?contact=${lead.contact.id}`)}
-                className="group rounded-2xl border border-border bg-muted p-4 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
+                className="group rounded-xl border border-border bg-muted p-4 text-left transition-all hover:border-[#D4420A]/30 hover:bg-[#D4420A]/5"
               >
                 <p className="text-xs text-muted-foreground">Contacto</p>
                 <p className="mt-2 font-medium flex items-center gap-1.5 text-foreground group-hover:text-[#D4420A]">
@@ -473,17 +473,17 @@ export function LeadDetailPanel({
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">{lead.contact.companyName || "Sin empresa"}</p>
               </button>
-              <div className="rounded-2xl border border-border bg-muted p-4">
+              <div className="rounded-xl border border-border bg-muted p-4">
                 <p className="text-xs text-muted-foreground">Cierre estimado</p>
                 <p className="mt-2 font-medium">
                   {lead.expectedCloseDate ? formatDate(lead.expectedCloseDate) : "Sin fecha"}
                 </p>
               </div>
-              <div className="rounded-2xl border border-border bg-muted p-4">
+              <div className="rounded-xl border border-border bg-muted p-4">
                 <p className="text-xs text-muted-foreground">Vendedor asignado</p>
                 <p className="mt-2 font-medium">{lead.assignedUser?.name || "Sin asignar"}</p>
               </div>
-              <div className="rounded-2xl border border-border bg-muted p-4">
+              <div className="rounded-xl border border-border bg-muted p-4">
                 <p className="text-xs text-muted-foreground">Estado</p>
                 <p className="mt-2 font-medium capitalize">{lead.status}</p>
                 {lead.lostReason ? (
@@ -503,7 +503,7 @@ export function LeadDetailPanel({
                 {realEstateFields(realEstate).map((field) => (
                   <div
                     key={field.label}
-                    className="rounded-2xl border border-border bg-muted p-4"
+                    className="rounded-xl border border-border bg-muted p-4"
                   >
                     <p className="text-xs text-muted-foreground">{field.label}</p>
                     <p className="mt-2 font-medium">{field.value}</p>
@@ -523,7 +523,7 @@ export function LeadDetailPanel({
                 {lead.suggestedProperties.map((s) => (
                   <div
                     key={s.id}
-                    className="rounded-2xl border border-primary/30 bg-primary/5 p-4"
+                    className="rounded-xl border border-primary/30 bg-primary/5 p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
@@ -597,7 +597,7 @@ export function LeadDetailPanel({
             </div>
 
             {lead.linkedProperty ? (
-              <div className="rounded-2xl border border-border bg-muted p-4">
+              <div className="rounded-xl border border-border bg-muted p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{lead.linkedProperty.title}</p>
@@ -642,7 +642,7 @@ export function LeadDetailPanel({
                 type="button"
                 disabled={!lead.permissions.canEdit || isPending}
                 onClick={() => setIsPropertyPickerOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/50 p-4 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A] disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/50 p-4 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A] disabled:opacity-50"
               >
                 <Building2 className="h-4 w-4" />
                 Asignar el inmueble que consultó
@@ -722,12 +722,12 @@ export function LeadDetailPanel({
             </div>
             <div className="space-y-3">
               {lead.timeline.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
                   Todavía no hay actividades registradas.
                 </div>
               ) : (
                 lead.timeline.map((item) => (
-                  <div key={item.id} className="group rounded-2xl border border-border bg-muted p-4">
+                  <div key={item.id} className="group rounded-xl border border-border bg-muted p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <p className="font-medium">{item.title}</p>
@@ -771,12 +771,12 @@ export function LeadDetailPanel({
             </div>
             <div className="space-y-3">
               {lead.notes.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
                   Todavía no hay notas asociadas.
                 </div>
               ) : (
                 lead.notes.map((note) => (
-                  <div key={note.id} className="group rounded-2xl border border-border bg-muted p-4">
+                  <div key={note.id} className="group rounded-xl border border-border bg-muted p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                         {note.user?.name || "Usuario"} · {formatDate(note.createdAt)}

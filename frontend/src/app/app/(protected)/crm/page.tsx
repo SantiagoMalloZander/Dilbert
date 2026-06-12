@@ -5,13 +5,13 @@ import {
   DashboardSectionSkeleton,
   KpiCardsSection,
   RecentActivitySection,
-  UpcomingLeadsSection,
+  WonLostMiniChart,
 } from "@/components/crm/DashboardSections";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireSession } from "@/lib/workspace-auth";
 import { getRecentActivities } from "@/modules/crm/activities/queries";
-import { getDashboardKpis, getUpcomingClosingLeads } from "@/modules/crm/leads/queries";
+import { getDashboardKpis, getWonLostByMonth } from "@/modules/crm/leads/queries";
 
 async function KpiSection({ promise }: { promise: ReturnType<typeof getDashboardKpis> }) {
   return <KpiCardsSection data={await promise} />;
@@ -27,12 +27,8 @@ async function RecentActivityBlock({
   return <RecentActivitySection data={await promise} isVendor={isVendor} />;
 }
 
-async function UpcomingLeadsBlock({
-  promise,
-}: {
-  promise: ReturnType<typeof getUpcomingClosingLeads>;
-}) {
-  return <UpcomingLeadsSection data={await promise} />;
+async function WonLostBlock({ promise }: { promise: ReturnType<typeof getWonLostByMonth> }) {
+  return <WonLostMiniChart data={await promise} />;
 }
 
 export default async function CrmPage() {
@@ -41,7 +37,7 @@ export default async function CrmPage() {
 
   const kpiPromise = getDashboardKpis();
   const recentActivitiesPromise = getRecentActivities();
-  const upcomingLeadsPromise = getUpcomingClosingLeads();
+  const wonLostPromise = getWonLostByMonth();
 
   return (
     <div className="space-y-6">
@@ -65,7 +61,7 @@ export default async function CrmPage() {
               </Button>
               <Button render={<Link href="/app/crm/leads" />}>
                 <ListChecks className="mr-2 h-4 w-4" />
-                Seguimiento
+                Pipeline
               </Button>
             </div>
           </div>
@@ -76,11 +72,11 @@ export default async function CrmPage() {
         <KpiSection promise={kpiPromise} />
       </Suspense>
 
-      <Suspense fallback={<DashboardSectionSkeleton rows={4} />}>
-        <UpcomingLeadsBlock promise={upcomingLeadsPromise} />
+      <Suspense fallback={<DashboardSectionSkeleton rows={2} />}>
+        <WonLostBlock promise={wonLostPromise} />
       </Suspense>
 
-      <Suspense fallback={<DashboardSectionSkeleton rows={5} />}>
+      <Suspense fallback={<DashboardSectionSkeleton rows={4} />}>
         <RecentActivityBlock
           promise={recentActivitiesPromise}
           isVendor={session.user.role === "vendor"}

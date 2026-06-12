@@ -334,7 +334,7 @@ export function AccountSettings({
     <>
       {toast ? (
         <div
-          className={`fixed right-4 top-4 z-50 flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm shadow-panel ${
+          className={`fixed right-4 top-4 z-50 flex items-center gap-3 rounded-xl border px-4 py-3 text-sm shadow-panel ${
             toast.tone === "success"
               ? "border-emerald-500/30 bg-emerald-500/12 text-emerald-700"
               : "border-destructive/30 bg-destructive/12 text-destructive"
@@ -356,7 +356,7 @@ export function AccountSettings({
             </CardHeader>
             <CardContent>
               <form className="space-y-6" onSubmit={handleProfileSave}>
-                <div className="flex flex-col gap-4 rounded-3xl border border-border bg-background/50 p-4 sm:flex-row sm:items-center">
+                <div className="flex flex-col gap-4 rounded-xl border border-border bg-background/50 p-4 sm:flex-row sm:items-center">
                   <Avatar className="h-20 w-20 border border-border bg-primary/10 text-lg text-primary">
                     {profile.avatarUrl ? (
                       <AvatarImage src={profile.avatarUrl} alt={profile.name || initialData.email} />
@@ -483,7 +483,7 @@ export function AccountSettings({
                     ) : null}
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">
+                  <div className="rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">
                     No necesitás contraseña actual porque tu cuenta hoy depende de OAuth.
                   </div>
                 )}
@@ -552,7 +552,7 @@ export function AccountSettings({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="rounded-2xl border border-border bg-background/50 p-4 text-sm text-muted-foreground">
+              <div className="rounded-xl border border-border bg-background/50 p-4 text-sm text-muted-foreground">
                 Si cerrás sesión en todos los dispositivos, las sesiones activas del workspace se
                 invalidan y cada equipo va a tener que volver a autenticarse.
               </div>

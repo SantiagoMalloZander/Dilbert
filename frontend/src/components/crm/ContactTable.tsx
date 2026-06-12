@@ -419,7 +419,7 @@ function LeadFormDialog({
               </div>
 
               {createInlineContact ? (
-                <div className="grid gap-3 rounded-2xl border border-border bg-background/50 p-4 sm:grid-cols-2">
+                <div className="grid gap-3 rounded-xl border border-border bg-background/50 p-4 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Input
                       placeholder="Nombre"
@@ -483,7 +483,7 @@ function LeadFormDialog({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3 rounded-2xl border border-border bg-background/50 p-4">
+                <div className="space-y-3 rounded-xl border border-border bg-background/50 p-4">
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -608,7 +608,7 @@ function LeadFormDialog({
           <div className="space-y-2">
             <Label>Inmueble que consultó (opcional)</Label>
             {baseProperty ? (
-              <div className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-muted p-3">
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-muted p-3">
                 <span className="flex items-center gap-2 truncate text-sm font-medium">
                   <Building2 className="h-4 w-4 shrink-0 text-primary" />
                   <span className="truncate">{baseProperty.title}</span>
@@ -625,7 +625,7 @@ function LeadFormDialog({
               <button
                 type="button"
                 onClick={() => setPickerOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/50 p-3 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A]"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/50 p-3 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A]"
               >
                 <Building2 className="h-4 w-4" />
                 Elegir del catálogo
@@ -773,8 +773,30 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Tipo de cliente</Label>
+              <Select
+                value={data.filters.role || "all"}
+                onValueChange={(value) => updateParam("role", value)}
+              >
+                <SelectTrigger className="w-full border-border bg-background/50 text-foreground">
+                  <span className="flex-1 truncate text-left text-sm">
+                    {data.filters.role === "comprador"
+                      ? "Compradores"
+                      : data.filters.role === "vendedor"
+                        ? "Vendedores"
+                        : "Todos"}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="comprador">Compradores</SelectItem>
+                  <SelectItem value="vendedor">Vendedores</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-end">
-              <div className="rounded-2xl border border-border bg-background/50 px-4 py-3 text-right">
+              <div className="rounded-xl border border-border bg-background/50 px-4 py-3 text-right">
                 <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Contactos</p>
                 <p className="mt-1 text-2xl font-semibold">{data.total}</p>
               </div>
@@ -896,11 +918,11 @@ export function ContactTable({ data }: { data: ContactPageData }) {
 export function ContactTableSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="rounded-[30px] border border-border bg-card/90 p-6">
+      <div className="rounded-xl border border-border bg-card/90 p-6">
         <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
           <div className="space-y-3">
             <div className="h-6 w-32 animate-pulse rounded-full bg-card/10" />
-            <div className="h-10 w-72 animate-pulse rounded-2xl bg-card/10" />
+            <div className="h-10 w-72 animate-pulse rounded-xl bg-card/10" />
             <div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-card/10" />
           </div>
           <div className="flex items-end justify-end">
@@ -908,15 +930,15 @@ export function ContactTableSkeleton() {
           </div>
         </div>
         <div className="mt-6 grid gap-4 lg:grid-cols-[1.5fr_0.8fr_auto]">
-          <div className="h-12 animate-pulse rounded-2xl bg-card/10" />
-          <div className="h-12 animate-pulse rounded-2xl bg-card/10" />
-          <div className="h-12 animate-pulse rounded-2xl bg-card/10" />
+          <div className="h-12 animate-pulse rounded-xl bg-card/10" />
+          <div className="h-12 animate-pulse rounded-xl bg-card/10" />
+          <div className="h-12 animate-pulse rounded-xl bg-card/10" />
         </div>
       </div>
-      <div className="rounded-[28px] border border-border bg-card/90 p-4">
+      <div className="rounded-xl border border-border bg-card/90 p-4">
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="h-14 animate-pulse rounded-2xl bg-card/10" />
+            <div key={index} className="h-14 animate-pulse rounded-xl bg-card/10" />
           ))}
         </div>
       </div>

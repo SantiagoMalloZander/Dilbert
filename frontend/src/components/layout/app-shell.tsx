@@ -41,7 +41,7 @@ export function AppShell({
 
         {/* ── Sidebar ────────────────────────────────────────── */}
         <aside className="w-full lg:w-64 shrink-0">
-          <div className="sticky top-5 flex flex-col rounded-2xl border border-border bg-card shadow-panel p-5 gap-6">
+          <div className="sticky top-5 flex flex-col rounded-xl border border-border bg-card shadow-panel p-5 gap-6">
 
             {/* Brand */}
             <div>

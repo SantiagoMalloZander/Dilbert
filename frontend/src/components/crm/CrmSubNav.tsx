@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ListChecks, Users } from "lucide-react";
+import { Home, Inbox, KanbanSquare, Building2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
   { href: "/app/crm", label: "Inicio", icon: Home, exact: true },
-  { href: "/app/crm/leads", label: "Seguimiento", icon: ListChecks },
+  { href: "/app/crm/leads", label: "Pipeline", icon: KanbanSquare },
+  { href: "/app/crm/seguimiento", label: "Seguimiento", icon: Inbox },
   { href: "/app/crm/contacts", label: "Clientes", icon: Users },
+  { href: "/app/crm/propiedades", label: "Propiedades", icon: Building2 },
 ];
 
 export function CrmSubNav() {

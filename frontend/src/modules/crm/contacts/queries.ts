@@ -37,13 +37,32 @@ export function parseContactsFilters(
   };
 
   const pageValue = Number(read("page") || "1");
+  const role = read("role");
 
   return {
     query: normalizeSearch(read("q")),
     source: (read("source") || null) as ContactFilters["source"],
     contactId: read("contact"),
+    role: role === "comprador" || role === "vendedor" ? role : null,
     page: Number.isFinite(pageValue) && pageValue > 0 ? pageValue : 1,
   };
+}
+
+// Operaciones que definen si el contacto es comprador (busca) o vendedor (ofrece).
+const BUYER_OPERATIONS = ["compra", "alquiler", "alquiler_temporario"];
+const SELLER_OPERATIONS = ["venta", "tasacion"];
+
+async function getContactIdsByRole(
+  companyId: string,
+  role: "comprador" | "vendedor"
+): Promise<string[]> {
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase
+    .from("leads")
+    .select("contact_id")
+    .eq("company_id", companyId)
+    .in("operation_type", role === "comprador" ? BUYER_OPERATIONS : SELLER_OPERATIONS);
+  return [...new Set((data ?? []).map((l) => l.contact_id).filter(Boolean))] as string[];
 }
 
 async function getAssignees(companyId: string) {
@@ -124,6 +143,13 @@ export async function getContacts(
     query = query.or(
       `first_name.ilike.%${escaped}%,last_name.ilike.%${escaped}%,email.ilike.%${escaped}%,company_name.ilike.%${escaped}%`
     );
+  }
+
+  // Comprador / vendedor: por las operaciones de sus leads.
+  if (filters.role) {
+    const roleContactIds = await getContactIdsByRole(companyId, filters.role);
+    // sin coincidencias → forzamos vacío con un id imposible
+    query = query.in("id", roleContactIds.length ? roleContactIds : ["00000000-0000-0000-0000-000000000000"]);
   }
 
   // Vendors only see contacts they are assigned to OR contacts that have a lead

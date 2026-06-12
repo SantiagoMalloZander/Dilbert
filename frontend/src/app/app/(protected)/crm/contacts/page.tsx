@@ -12,7 +12,7 @@ async function ContactsPageContent({ searchParams }: { searchParams?: SearchPara
     page,
   });
 
-  return <ContactTable key={`${page}-${filters.query || ""}-${filters.source || ""}-${filters.contactId || ""}`} data={data} />;
+  return <ContactTable key={`${page}-${filters.query || ""}-${filters.source || ""}-${filters.role || ""}-${filters.contactId || ""}`} data={data} />;
 }
 
 export default function CrmContactsPage({

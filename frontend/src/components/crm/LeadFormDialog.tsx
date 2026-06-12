@@ -224,7 +224,7 @@ export function LeadFormDialog({
               </div>
 
               {createInlineContact ? (
-                <div className="grid gap-3 rounded-2xl border border-border bg-background/50 p-4 sm:grid-cols-2">
+                <div className="grid gap-3 rounded-xl border border-border bg-background/50 p-4 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Input
                       placeholder="Nombre"
@@ -288,7 +288,7 @@ export function LeadFormDialog({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3 rounded-2xl border border-border bg-card p-4">
+                <div className="space-y-3 rounded-xl border border-border bg-card p-4">
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -414,7 +414,7 @@ export function LeadFormDialog({
         <div className="space-y-2">
           <Label>Inmueble que consultó (opcional)</Label>
           {baseProperty ? (
-            <div className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-muted p-3">
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-muted p-3">
               <span className="flex items-center gap-2 truncate text-sm font-medium">
                 <Building2 className="h-4 w-4 shrink-0 text-primary" />
                 <span className="truncate">{baseProperty.title}</span>
@@ -431,7 +431,7 @@ export function LeadFormDialog({
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/50 p-3 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/50 p-3 text-sm font-medium text-muted-foreground transition-all hover:border-[#D4420A]/30 hover:text-[#D4420A]"
             >
               <Building2 className="h-4 w-4" />
               Elegir del catálogo

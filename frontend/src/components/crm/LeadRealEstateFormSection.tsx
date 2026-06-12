@@ -131,7 +131,7 @@ export function LeadRealEstateFormSection({
   const id = (key: string) => `${idPrefix}-${key}`;
 
   return (
-    <div className="space-y-5 rounded-2xl border border-border bg-muted/40 p-4">
+    <div className="space-y-5 rounded-xl border border-border bg-muted/40 p-4">
       <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
         <Home className="h-3.5 w-3.5" />
         Detalles de la búsqueda

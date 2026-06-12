@@ -10,7 +10,7 @@ export function BotPlaceholder() {
       <Card className="bg-card/90">
         <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+            <div className="rounded-xl bg-primary/10 p-3 text-primary">
               <Bot className="h-5 w-5" />
             </div>
             <div>
@@ -41,7 +41,7 @@ export function BotPlaceholder() {
           </p>
 
           {/* Placeholder diagram */}
-          <div className="mt-5 rounded-2xl border-2 border-dashed border-border bg-muted/50 p-6">
+          <div className="mt-5 rounded-xl border-2 border-dashed border-border bg-muted/50 p-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:items-center">
               <div className="rounded-xl border border-border bg-card p-3 text-center">
                 <MessageSquareText className="mx-auto h-5 w-5 text-primary" />

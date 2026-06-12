@@ -258,6 +258,12 @@ async function getLeadsForBoard(params: {
     query = query.eq("stage_id", params.filters.stageId);
   }
 
+  if (params.filters.role === "comprador") {
+    query = query.in("operation_type", BUYER_OPERATIONS);
+  } else if (params.filters.role === "vendedor") {
+    query = query.in("operation_type", SELLER_OPERATIONS);
+  }
+
   const { data, error } = await query;
   if (error) {
     throw error;
@@ -596,6 +602,7 @@ export function parseLeadBoardFilters(
   };
 
   const source = read("source");
+  const role = read("role");
 
   return {
     assignedTo: read("assignedTo"),
@@ -604,8 +611,13 @@ export function parseLeadBoardFilters(
     createdTo: read("createdTo"),
     stageId: read("stage"),
     leadId: read("lead"),
+    role: role === "comprador" || role === "vendedor" ? role : null,
   };
 }
+
+// Operaciones que cuentan como "comprador" (busca) vs "vendedor" (ofrece propiedad).
+const BUYER_OPERATIONS = ["compra", "alquiler", "alquiler_temporario"];
+const SELLER_OPERATIONS = ["venta", "tasacion"];
 
 export async function getLeadBoardData(filters: LeadBoardFilters): Promise<LeadBoardData> {
   const { user, company_id } = await requireAuth();
@@ -703,27 +715,33 @@ export async function getDashboardKpis(): Promise<DashboardKpiData> {
   const month = getCurrentMonthRange();
   const isVendor = user.role === "vendor";
 
-  const scopedBase = () => {
-    const q = supabase.from("leads").select("*").eq("company_id", company_id);
+  // count-only queries (head:true) — eficiente, no traen filas.
+  const scopedCount = () => {
+    const q = supabase
+      .from("leads")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", company_id);
     return isVendor ? q.eq("assigned_to", user.id) : q;
   };
 
-  // Simple, jargon-free counts a non-technical broker understands at a glance.
-  const [openResult, visitsResult, wonMonthResult] = await Promise.all([
-    scopedBase().eq("status", "open"),
-    scopedBase().eq("status", "open").eq("visit_status", "agendada"),
-    scopedBase().eq("status", "won").gte("updated_at", month.start).lte("updated_at", month.end),
+  const [openResult, totalResult, wonTotalResult, wonMonthResult] = await Promise.all([
+    scopedCount().eq("status", "open"),
+    scopedCount(),
+    scopedCount().eq("status", "won"),
+    scopedCount().eq("status", "won").gte("updated_at", month.start).lte("updated_at", month.end),
   ]);
 
-  [openResult, visitsResult, wonMonthResult].forEach((result) => {
+  [openResult, totalResult, wonTotalResult, wonMonthResult].forEach((result) => {
     if (result.error) {
       throw result.error;
     }
   });
 
-  const openCount = openResult.data?.length || 0;
-  const visitsCount = visitsResult.data?.length || 0;
-  const wonMonthCount = wonMonthResult.data?.length || 0;
+  const openCount = openResult.count || 0;
+  const totalCount = totalResult.count || 0;
+  const wonTotalCount = wonTotalResult.count || 0;
+  const wonMonthCount = wonMonthResult.count || 0;
+  const reservaronPct = totalCount > 0 ? Math.round((wonTotalCount / totalCount) * 100) : 0;
 
   const metrics: DashboardKpiMetric[] = [
     {
@@ -734,10 +752,17 @@ export async function getDashboardKpis(): Promise<DashboardKpiData> {
       benchmark: null,
     },
     {
-      label: "Visitas agendadas",
-      value: visitsCount,
-      formattedValue: formatNumber(visitsCount),
-      description: "Clientes con una visita coordinada.",
+      label: "Leads cargados",
+      value: totalCount,
+      formattedValue: formatNumber(totalCount),
+      description: "Total de clientes que entraron.",
+      benchmark: null,
+    },
+    {
+      label: "Reservaron",
+      value: reservaronPct,
+      formattedValue: `${reservaronPct}%`,
+      description: "De los que escribieron, cuántos reservaron.",
       benchmark: null,
     },
     {
@@ -753,6 +778,49 @@ export async function getDashboardKpis(): Promise<DashboardKpiData> {
     role: user.role,
     metrics,
   };
+}
+
+export type WonLostMonth = { label: string; won: number; lost: number };
+
+/** Ganados vs perdidos en los últimos 6 meses (para el mini-gráfico del inicio). */
+export async function getWonLostByMonth(): Promise<WonLostMonth[]> {
+  const { user, company_id } = await requireAuth();
+  const supabase = await createServerSupabaseClient();
+  const isVendor = user.role === "vendor";
+
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+  let q = supabase
+    .from("leads")
+    .select("status, updated_at")
+    .eq("company_id", company_id)
+    .in("status", ["won", "lost"])
+    .gte("updated_at", start.toISOString());
+  if (isVendor) q = q.eq("assigned_to", user.id);
+
+  const { data } = await q;
+
+  const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const buckets: WonLostMonth[] = [];
+  const indexByKey = new Map<string, number>();
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    indexByKey.set(key, buckets.length);
+    buckets.push({ label: MONTHS[d.getMonth()], won: 0, lost: 0 });
+  }
+
+  for (const row of data ?? []) {
+    const d = new Date(row.updated_at as string);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    const idx = indexByKey.get(key);
+    if (idx == null) continue;
+    if (row.status === "won") buckets[idx].won += 1;
+    else if (row.status === "lost") buckets[idx].lost += 1;
+  }
+
+  return buckets;
 }
 
 export async function getLeadsByStageMetrics(): Promise<LeadsByStageMetric[]> {

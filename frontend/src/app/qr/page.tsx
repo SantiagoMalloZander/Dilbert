@@ -29,7 +29,7 @@ function QRCard({
   }
 
   return (
-    <div className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-card p-6 w-full max-w-xs">
+    <div className="flex flex-col items-center gap-5 rounded-xl border border-border bg-card p-6 w-full max-w-xs">
       <div className="text-center">
         <p className="text-[9px] font-mono uppercase tracking-[0.22em] text-muted-foreground mb-1">
           Telegram

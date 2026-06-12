@@ -358,9 +358,9 @@ export function AuthFlow({
             <p className="mt-4 text-sm text-muted-foreground">{subtitle}</p>
           </div>
 
-          <div className="rounded-[28px] border border-border bg-card p-7 shadow-panel">
+          <div className="rounded-xl border border-border bg-card p-7 shadow-panel">
             {globalMessage ? (
-              <div className="mb-5 flex items-start gap-3 rounded-2xl border border-[#D4420A]/25 bg-[#D4420A]/10 p-4 text-sm text-[#8a2c06]">
+              <div className="mb-5 flex items-start gap-3 rounded-xl border border-[#D4420A]/25 bg-[#D4420A]/10 p-4 text-sm text-[#8a2c06]">
                 <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>{globalMessage}</p>
               </div>
@@ -391,7 +391,7 @@ export function AuthFlow({
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     disabled={step !== "email" || loadingAction !== null}
-                    className="h-12 rounded-2xl border-border bg-card pl-10 text-foreground placeholder:text-muted-foreground"
+                    className="h-12 rounded-xl border-border bg-card pl-10 text-foreground placeholder:text-muted-foreground"
                     placeholder="tu@empresa.com"
                   />
                 </div>
@@ -409,7 +409,7 @@ export function AuthFlow({
                       value={fullName}
                       onChange={(event) => setFullName(event.target.value)}
                       autoComplete="name"
-                      className="h-12 rounded-2xl border-border bg-card text-foreground placeholder:text-muted-foreground"
+                      className="h-12 rounded-xl border-border bg-card text-foreground placeholder:text-muted-foreground"
                       placeholder="Tu nombre"
                     />
                     {nameError ? <p className="text-sm text-[#FB923C]">{nameError}</p> : null}
@@ -427,7 +427,7 @@ export function AuthFlow({
                         autoComplete="new-password"
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
-                        className="h-12 rounded-2xl border-border bg-card pl-10 text-foreground placeholder:text-muted-foreground"
+                        className="h-12 rounded-xl border-border bg-card pl-10 text-foreground placeholder:text-muted-foreground"
                         placeholder="Creá una contraseña segura"
                       />
                     </div>
@@ -452,7 +452,7 @@ export function AuthFlow({
                       autoComplete="current-password"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
-                      className="h-12 rounded-2xl border-border bg-card pl-10 text-foreground placeholder:text-muted-foreground"
+                      className="h-12 rounded-xl border-border bg-card pl-10 text-foreground placeholder:text-muted-foreground"
                       placeholder="Ingresá tu contraseña"
                     />
                   </div>
@@ -471,7 +471,7 @@ export function AuthFlow({
                     autoComplete="one-time-code"
                     value={otp}
                     onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                    className="h-12 rounded-2xl border-border bg-card text-center text-lg tracking-[0.35em] text-foreground"
+                    className="h-12 rounded-xl border-border bg-card text-center text-lg tracking-[0.35em] text-foreground"
                     placeholder="000000"
                   />
                   {otpError ? <p className="text-sm text-[#FB923C]">{otpError}</p> : null}
@@ -479,7 +479,7 @@ export function AuthFlow({
               ) : null}
 
               {step !== "email" ? (
-                <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3">
+                <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
                   <Checkbox
                     id="remember-me"
                     checked={rememberMe}
@@ -496,7 +496,7 @@ export function AuthFlow({
                   type="button"
                   onClick={handleEmailContinue}
                   disabled={loadingAction !== null}
-                  className="h-12 w-full rounded-2xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
+                  className="h-12 w-full rounded-xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
                 >
                   {loadingAction === "email" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Continuar
@@ -508,7 +508,7 @@ export function AuthFlow({
                   type="button"
                   onClick={handlePasswordLogin}
                   disabled={loadingAction !== null}
-                  className="h-12 w-full rounded-2xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
+                  className="h-12 w-full rounded-xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
                 >
                   {loadingAction === "password" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Continuar
@@ -520,7 +520,7 @@ export function AuthFlow({
                   type="button"
                   onClick={handleRequestOtp}
                   disabled={loadingAction !== null}
-                  className="h-12 w-full rounded-2xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
+                  className="h-12 w-full rounded-xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
                 >
                   {loadingAction === "register" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Continuar
@@ -532,7 +532,7 @@ export function AuthFlow({
                   type="button"
                   onClick={handleVerifyOtp}
                   disabled={loadingAction !== null}
-                  className="h-12 w-full rounded-2xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
+                  className="h-12 w-full rounded-xl bg-[#D4420A] text-sm font-semibold text-black hover:bg-[#FB923C]"
                 >
                   {loadingAction === "otp" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Verificar código
@@ -546,7 +546,7 @@ export function AuthFlow({
                     variant="outline"
                     onClick={() => handleOauth("google", step === "login" ? "login" : "register")}
                     disabled={loadingAction !== null || !googleReady}
-                    className="h-12 w-full rounded-2xl border-border bg-transparent text-foreground hover:bg-muted"
+                    className="h-12 w-full rounded-xl border-border bg-transparent text-foreground hover:bg-muted"
                   >
                     {loadingAction === "google" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Continuar con Google
@@ -558,7 +558,7 @@ export function AuthFlow({
                       handleOauth("microsoft", step === "login" ? "login" : "register")
                     }
                     disabled={loadingAction !== null || !microsoftReady}
-                    className="h-12 w-full rounded-2xl border-border bg-transparent text-foreground hover:bg-muted"
+                    className="h-12 w-full rounded-xl border-border bg-transparent text-foreground hover:bg-muted"
                   >
                     {loadingAction === "microsoft" ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

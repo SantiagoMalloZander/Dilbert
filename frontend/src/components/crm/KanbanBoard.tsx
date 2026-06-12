@@ -109,6 +109,16 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
     updateSearchParam("lead", leadId);
   };
 
+  // Mover por selección (alternativa al drag, más cómoda en celular).
+  const handleMoveLead = async (leadId: string, stageId: string) => {
+    const response = await moveLeadToStage({ leadId, stageId });
+    if (response.error) {
+      emitGlobalToast({ tone: "error", text: response.error });
+      return;
+    }
+    startTransition(() => router.refresh());
+  };
+
   const handleClearFilters = () => {
     startTransition(() => {
       router.replace(pathname, { scroll: false });
@@ -193,11 +203,11 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[360px]">
-              <div className="rounded-2xl border border-border bg-background/50 px-4 py-3">
+              <div className="rounded-xl border border-border bg-background/50 px-4 py-3">
                 <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Clientes en pantalla</p>
                 <p className="mt-2 text-2xl font-semibold">{summary.leadCount}</p>
               </div>
-              <div className="rounded-2xl border border-border bg-background/50 px-4 py-3">
+              <div className="rounded-xl border border-border bg-background/50 px-4 py-3">
                 <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Valor estimado total</p>
                 <p className="mt-2 text-2xl font-semibold">{formatCurrency(summary.totalValue)}</p>
               </div>
@@ -260,6 +270,29 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
               </div>
             ) : null}
 
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Tipo de cliente</Label>
+              <Select
+                value={data.filters.role || "all"}
+                onValueChange={(value) => updateSearchParam("role", value)}
+              >
+                <SelectTrigger className="w-full border-border bg-background/50 text-foreground">
+                  <span className="flex-1 truncate text-left text-sm">
+                    {data.filters.role === "comprador"
+                      ? "Compradores"
+                      : data.filters.role === "vendedor"
+                        ? "Vendedores"
+                        : "Todos"}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="comprador">Compradores</SelectItem>
+                  <SelectItem value="vendedor">Vendedores</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
               <div className="space-y-2">
                 <Label className="text-muted-foreground">Desde</Label>
@@ -305,6 +338,8 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
                   stage={stage}
                   canDrag={canDrag}
                   onOpenLead={handleOpenLead}
+                  allStages={stages.map((s) => ({ id: s.id, name: s.name }))}
+                  onMoveLead={handleMoveLead}
                 />
               ))}
             </div>
@@ -336,21 +371,21 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
 export function KanbanBoardSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="rounded-[30px] border border-border bg-card/90 p-6">
+      <div className="rounded-xl border border-border bg-card/90 p-6">
         <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
           <div className="space-y-3">
             <div className="h-6 w-28 animate-pulse rounded-full bg-card/10" />
-            <div className="h-10 w-72 animate-pulse rounded-2xl bg-card/10" />
+            <div className="h-10 w-72 animate-pulse rounded-xl bg-card/10" />
             <div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-card/10" />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="h-24 animate-pulse rounded-2xl bg-card/10" />
-            <div className="h-24 animate-pulse rounded-2xl bg-card/10" />
+            <div className="h-24 animate-pulse rounded-xl bg-card/10" />
+            <div className="h-24 animate-pulse rounded-xl bg-card/10" />
           </div>
         </div>
         <div className="mt-6 grid gap-4 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-14 animate-pulse rounded-2xl bg-card/10" />
+            <div key={index} className="h-14 animate-pulse rounded-xl bg-card/10" />
           ))}
         </div>
       </div>
@@ -360,13 +395,13 @@ export function KanbanBoardSkeleton() {
           {Array.from({ length: 4 }).map((_, stageIndex) => (
             <div
               key={stageIndex}
-              className="flex min-h-[70vh] w-[320px] shrink-0 flex-col rounded-[28px] border border-border bg-card/90 p-4"
+              className="flex min-h-[70vh] w-[320px] shrink-0 flex-col rounded-xl border border-border bg-card/90 p-4"
             >
               <div className="h-6 w-32 animate-pulse rounded-full bg-card/10" />
               <div className="mt-2 h-4 w-20 animate-pulse rounded-full bg-card/10" />
               <div className="mt-6 space-y-3">
                 {Array.from({ length: 3 }).map((__, cardIndex) => (
-                  <div key={cardIndex} className="h-36 animate-pulse rounded-[22px] bg-card/10" />
+                  <div key={cardIndex} className="h-36 animate-pulse rounded-xl bg-card/10" />
                 ))}
               </div>
             </div>

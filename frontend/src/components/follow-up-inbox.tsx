@@ -94,7 +94,7 @@ export function FollowUpInbox({ initial }: { initial: FollowUpData }) {
               van a aparecer acá.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-[22px]">
+            <div className="overflow-x-auto rounded-xl">
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-muted text-xs uppercase tracking-[0.14em] text-muted-foreground">
                   <tr>

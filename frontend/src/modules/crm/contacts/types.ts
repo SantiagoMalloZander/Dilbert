@@ -10,10 +10,13 @@ export type ContactSource = Database["public"]["Enums"]["crm_source"];
 export type LeadStatus = Database["public"]["Enums"]["lead_status"];
 export type ActivityType = Database["public"]["Enums"]["activity_type"];
 
+export type ContactRoleFilter = "comprador" | "vendedor";
+
 export type ContactFilters = {
   query: string | null;
   source: ContactSource | null;
   contactId: string | null;
+  role: ContactRoleFilter | null;
 };
 
 export type ContactPagination = {

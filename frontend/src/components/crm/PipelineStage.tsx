@@ -18,13 +18,17 @@ export function PipelineStage({
   stage,
   onOpenLead,
   canDrag,
+  allStages,
+  onMoveLead,
 }: {
   stage: PipelineStageRecord;
   onOpenLead: (leadId: string) => void;
   canDrag: boolean;
+  allStages: { id: string; name: string }[];
+  onMoveLead: (leadId: string, stageId: string) => void;
 }) {
   return (
-    <div className="flex min-h-[72vh] w-[320px] shrink-0 flex-col rounded-[28px] border border-border bg-background">
+    <div className="flex min-h-[72vh] w-[320px] shrink-0 flex-col rounded-xl border border-border bg-background">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -41,7 +45,7 @@ export function PipelineStage({
               {stage.leadCount} leads
             </p>
           </div>
-          <div className="rounded-2xl border border-border bg-muted px-3 py-2 text-right">
+          <div className="rounded-xl border border-border bg-muted px-3 py-2 text-right">
             <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Valor</p>
             <p className="mt-1 text-sm font-semibold text-foreground">
               {formatCurrency(stage.totalValue)}
@@ -79,6 +83,27 @@ export function PipelineStage({
                       disabled={!canDrag}
                       isDragging={draggableSnapshot.isDragging}
                     />
+                    {canDrag ? (
+                      <select
+                        value=""
+                        onClick={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          if (e.target.value) onMoveLead(lead.id, e.target.value);
+                        }}
+                        className="mt-1.5 w-full rounded-md border border-input bg-card px-2 py-1 text-xs text-muted-foreground outline-none focus-visible:border-ring"
+                        aria-label="Mover a otra etapa"
+                      >
+                        <option value="">Mover a…</option>
+                        {allStages
+                          .filter((s) => s.id !== stage.id)
+                          .map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name}
+                            </option>
+                          ))}
+                      </select>
+                    ) : null}
                   </div>
                 )}
               </Draggable>
@@ -86,7 +111,7 @@ export function PipelineStage({
             {provided.placeholder}
 
             {stage.cards.length === 0 ? (
-              <div className="flex flex-1 items-center justify-center rounded-[22px] border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+              <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
                 <div>
                   <p>No hay leads en esta etapa.</p>
                   <p className="mt-1 inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.16em]">
