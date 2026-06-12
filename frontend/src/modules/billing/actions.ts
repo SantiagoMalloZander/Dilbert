@@ -70,9 +70,10 @@ export async function startStripeCheckout(seatsInput: number): Promise<{ url: st
 export async function startMercadoPagoCheckout(seatsInput: number): Promise<{ url: string }> {
   const { user, companyId } = await requireBillingOwner();
   const seats = clampSeats(seatsInput);
-  // TODO(temporal): precio de prueba a $1 ARS para validar el flujo de pago.
+  // TODO(temporal): precio de prueba al mínimo de Mercado Pago ($15 ARS; no
+  // permite cobrar menos) para validar el flujo de pago.
   // Volver a `usdToArs(seats * (PRICE_PER_SEAT_USD_CENTS / 100), await getDolarTarjeta())` para producción.
-  const amountArs = 1;
+  const amountArs = 15;
 
   const preapproval = await createPreapproval({
     companyId,
