@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { Loader2, Filter, Plus, Phone } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PipelineStage } from "@/components/crm/PipelineStage";
@@ -62,6 +61,7 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
   const [stages, setStages] = useState<PipelineStageRecord[]>(data.stages);
   const [createLeadOpen, setCreateLeadOpen] = useState(false);
   const [audioUploadOpen, setAudioUploadOpen] = useState(false);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
 
   const canDrag = data.currentUser.role === "owner" || data.currentUser.role === "vendor";
 
@@ -121,53 +121,37 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
     });
   };
 
-  const handleDragEnd = async (result: DropResult) => {
-    const { destination, source, draggableId } = result;
+  // Native HTML5 drag & drop: click a card and drag it to another column.
+  const handleDropOnStage = async (leadId: string, destStageId: string) => {
+    setDraggingId(null);
+    if (!canDrag) return;
 
-    if (!destination || destination.droppableId === source.droppableId) {
-      return;
-    }
+    const sourceColumn = stages.find((stage) => stage.cards.some((card) => card.id === leadId));
+    if (!sourceColumn || sourceColumn.id === destStageId) return;
 
     const previousStages = stages;
-    const nextStages = stages.map((stage) => ({
-      ...stage,
-      cards: [...stage.cards],
-    }));
-    const sourceColumn = nextStages.find((stage) => stage.id === source.droppableId);
-    const destinationColumn = nextStages.find((stage) => stage.id === destination.droppableId);
+    const nextStages = stages.map((stage) => ({ ...stage, cards: [...stage.cards] }));
+    const from = nextStages.find((stage) => stage.id === sourceColumn.id);
+    const to = nextStages.find((stage) => stage.id === destStageId);
+    if (!from || !to) return;
 
-    if (!sourceColumn || !destinationColumn) {
-      return;
-    }
-
-    const [movedLead] = sourceColumn.cards.splice(source.index, 1);
-    if (!movedLead) {
-      return;
-    }
-
-    destinationColumn.cards.splice(destination.index, 0, {
-      ...movedLead,
-      stageId: destination.droppableId,
-    });
+    const index = from.cards.findIndex((card) => card.id === leadId);
+    if (index === -1) return;
+    const [moved] = from.cards.splice(index, 1);
+    to.cards.push({ ...moved, stageId: destStageId });
 
     nextStages.forEach((stage) => {
       stage.leadCount = stage.cards.length;
       stage.totalValue = stage.cards.reduce((sum, card) => sum + (card.value || 0), 0);
     });
-
     setStages(nextStages);
 
-    const response = await moveLeadToStage({
-      leadId: draggableId,
-      stageId: destination.droppableId,
-    });
-
+    const response = await moveLeadToStage({ leadId, stageId: destStageId });
     if (response.error) {
       setStages(previousStages);
       emitGlobalToast({ tone: "error", text: response.error });
       return;
     }
-
     router.refresh();
   };
 
@@ -299,20 +283,22 @@ export function KanbanBoard({ data }: { data: LeadBoardData }) {
           </CardContent>
         </Card>
 
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className={cn("overflow-x-auto pb-4", isPending && "opacity-80")}>
-            <div className="flex min-w-max gap-3">
-              {stages.map((stage) => (
-                <PipelineStage
-                  key={stage.id}
-                  stage={stage}
-                  canDrag={canDrag}
-                  onOpenLead={handleOpenLead}
-                />
-              ))}
-            </div>
+        <div className={cn("overflow-x-auto pb-4", isPending && "opacity-80")}>
+          <div className="flex min-w-max gap-3">
+            {stages.map((stage) => (
+              <PipelineStage
+                key={stage.id}
+                stage={stage}
+                canDrag={canDrag}
+                onOpenLead={handleOpenLead}
+                draggingId={draggingId}
+                onDragStartLead={setDraggingId}
+                onDragEndLead={() => setDraggingId(null)}
+                onDropLead={handleDropOnStage}
+              />
+            ))}
           </div>
-        </DragDropContext>
+        </div>
       </div>
 
       <LeadDetailPanel

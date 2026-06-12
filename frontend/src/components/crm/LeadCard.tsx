@@ -106,12 +106,10 @@ function getDueState(value: string | null) {
 export function LeadCard({
   lead,
   onOpen,
-  isDragging,
   disabled,
 }: {
   lead: LeadCardRecord;
   onOpen: (leadId: string) => void;
-  isDragging?: boolean;
   disabled?: boolean;
 }) {
   const sourceMeta = getSourceMeta(lead.source);
@@ -119,14 +117,20 @@ export function LeadCard({
   const dueState = getDueState(lead.expectedCloseDate);
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onOpen(lead.id)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen(lead.id);
+        }
+      }}
       className={cn(
-        "group block w-full rounded-2xl border border-border bg-card p-4 text-left transition-all duration-200",
+        "group block w-full select-none rounded-2xl border border-border bg-card p-4 text-left transition-all duration-200",
         "shadow-[0_1px_2px_rgba(32,26,19,0.05)] hover:-translate-y-0.5 hover:border-[#D4420A]/30 hover:shadow-[0_6px_20px_rgba(32,26,19,0.08)]",
-        disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing",
-        isDragging && "rotate-[1.5deg] cursor-grabbing border-[#D4420A]/50 shadow-[0_12px_30px_rgba(32,26,19,0.16)]"
+        disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -163,6 +167,6 @@ export function LeadCard({
         <span className="text-border">·</span>
         <span className="truncate">{lead.assignedUser?.name || "Sin vendedor"}</span>
       </div>
-    </button>
+    </div>
   );
 }
