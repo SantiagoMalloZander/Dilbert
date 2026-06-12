@@ -197,6 +197,29 @@ export function AuthFlow({
       });
 
       if (error) {
+        // Email not confirmed: auto-send OTP and jump to verification.
+        if (error.message.toLowerCase().includes("email not confirmed")) {
+          setLoadingAction("register");
+          try {
+            const result = await requestRegistrationOtpAction({
+              email,
+              fullName: "",
+              password,
+              joinToken: joinToken || undefined,
+            });
+            setOtp("");
+            setOtpType(result.otpType);
+            setStep("otp");
+            setLoadingAction(null);
+            return;
+          } catch (otpErr) {
+            setGlobalMessage(
+              otpErr instanceof Error ? otpErr.message : "No pude enviar el código de verificación."
+            );
+            setLoadingAction(null);
+            return;
+          }
+        }
         setPasswordError(getLoginErrorMessage(error.message));
         return;
       }
