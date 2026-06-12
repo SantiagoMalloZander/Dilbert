@@ -211,6 +211,35 @@ async function queueQuestion(
   return true;
 }
 
+// ─── Follow-up state writer ─────────────────────────────────────────────────
+// Stamps the lead with the attention state + suggested reply for the Seguimiento
+// inbox. Only meaningful for live conversations (WhatsApp), so the caller gates
+// on source. Done directly here (not via the connector) since it's conversation
+// metadata layered on top of the lead the writer already created/updated.
+
+async function persistFollowUp(params: {
+  companyId: string;
+  leadId: string;
+  followUp: { status: "atendido" | "desatendido"; suggested_message: string };
+  occurredAt: string;
+}): Promise<void> {
+  const supabase = createAdminSupabaseClient();
+  const base = {
+    attention_status: params.followUp.status,
+    suggested_reply: params.followUp.suggested_message || null,
+  };
+  const update =
+    params.followUp.status === "desatendido"
+      ? { ...base, last_client_message_at: params.occurredAt, attended_at: null }
+      : { ...base, attended_at: params.occurredAt };
+
+  await supabase
+    .from("leads")
+    .update(update)
+    .eq("id", params.leadId)
+    .eq("company_id", params.companyId);
+}
+
 // ─── Main orchestrator ────────────────────────────────────────────────────────
 
 export async function runAgent(input: AgentInput): Promise<AgentResult> {
@@ -395,6 +424,11 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
           externalId: input.externalId,
         }, connector);
 
+        const newLeadId = writeResult.leadsUpdated[0] ?? writeResult.leadsCreated[0] ?? null;
+        if (source === "whatsapp" && quick.follow_up && newLeadId) {
+          await persistFollowUp({ companyId, leadId: newLeadId, followUp: quick.follow_up, occurredAt });
+        }
+
         return {
           status: "new_contact",
           contactId: newId,
@@ -461,6 +495,12 @@ export async function runAgent(input: AgentInput): Promise<AgentResult> {
       occurredAt,
       externalId: input.externalId,
     }, connector);
+
+    // ── Follow-up state for the Seguimiento inbox (WhatsApp conversations) ───
+    const followUpLeadId = writeResult.leadsUpdated[0] ?? writeResult.leadsCreated[0] ?? null;
+    if (source === "whatsapp" && extracted.follow_up && followUpLeadId) {
+      await persistFollowUp({ companyId, leadId: followUpLeadId, followUp: extracted.follow_up, occurredAt });
+    }
 
     // ── Step 5: Queue pending confirmations as vendor questions ──────────────
     for (const pending of writeResult.pendingConfirmations) {

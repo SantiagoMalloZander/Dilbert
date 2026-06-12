@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { requireSession } from "@/lib/workspace-auth";
 import { listZones } from "@/modules/agency/zones/queries";
 import { listProperties } from "@/modules/agency/properties/queries";
+import { getUsersCenterData, type UsersCenterData } from "@/modules/users/queries";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
 
 export default async function SettingsPage() {
@@ -15,7 +16,15 @@ export default async function SettingsPage() {
     redirect("/app/crm");
   }
 
-  const [zones, properties] = await Promise.all([listZones(), listProperties()]);
+  const [zones, properties, usersData] = await Promise.all([
+    listZones(),
+    listProperties(),
+    // User management lives inside Configuración now. Owner-only; skip for a
+    // super-admin browsing without a company.
+    session.user.companyId
+      ? getUsersCenterData(session.user.companyId).catch(() => null)
+      : Promise.resolve<UsersCenterData | null>(null),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -28,13 +37,13 @@ export default async function SettingsPage() {
             </Badge>
             <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Configuración de la agencia</h1>
             <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
-              Catálogo de propiedades, zonas que cubrís y configuración del bot de WhatsApp.
+              Catálogo de propiedades, zonas que cubrís, usuarios del equipo y configuración del bot de WhatsApp.
             </p>
           </div>
         </CardContent>
       </Card>
 
-      <SettingsTabs initialZones={zones} initialProperties={properties} />
+      <SettingsTabs initialZones={zones} initialProperties={properties} usersData={usersData} />
     </div>
   );
 }

@@ -821,6 +821,10 @@ export type Database = {
           visit_status: string | null
           financing: string | null
           listing_id: string | null
+          attention_status: string | null
+          suggested_reply: string | null
+          last_client_message_at: string | null
+          attended_at: string | null
         }
         Insert: {
           assigned_to: string
@@ -862,6 +866,10 @@ export type Database = {
           visit_status?: string | null
           financing?: string | null
           listing_id?: string | null
+          attention_status?: string | null
+          suggested_reply?: string | null
+          last_client_message_at?: string | null
+          attended_at?: string | null
         }
         Update: {
           assigned_to?: string
@@ -903,6 +911,10 @@ export type Database = {
           visit_status?: string | null
           financing?: string | null
           listing_id?: string | null
+          attention_status?: string | null
+          suggested_reply?: string | null
+          last_client_message_at?: string | null
+          attended_at?: string | null
         }
         Relationships: [
           {

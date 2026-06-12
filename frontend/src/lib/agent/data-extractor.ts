@@ -134,6 +134,16 @@ export interface RealEstateInfo {
   financing: string | null;
 }
 
+/**
+ * Conversation attention state for the Seguimiento inbox. The model decides,
+ * from who spoke last, whether the client is waiting for a reply, and drafts a
+ * copy-ready next message for the vendor.
+ */
+export interface FollowUp {
+  status: "atendido" | "desatendido";
+  suggested_message: string;
+}
+
 export interface ExtractedData {
   contact_info: ContactInfo;
   deal_info: DealInfo;
@@ -155,6 +165,8 @@ export interface ExtractedData {
   confidence_level: ConfidenceLevel;
   /** One-line CRM note summarising the interaction */
   crm_note: string;
+  /** Attention state + suggested next message for the Seguimiento inbox. */
+  follow_up: FollowUp | null;
 }
 
 // ─── Null/empty result ────────────────────────────────────────────────────────
@@ -181,6 +193,7 @@ function emptyResult(): ExtractedData {
     deal_is_new_or_existing: "unclear",
     confidence_level: "low",
     crm_note: "",
+    follow_up: null,
   };
 }
 
@@ -318,6 +331,10 @@ Reglas estrictas:
 - mark_as_lost: true SOLO si el cliente rechaza o cancela explícitamente ("no gracias", "decidimos ir con otro", "cancelamos").
 - is_relevant_for_crm: CRÍTICO. Poné false si el email es: newsletter, notificación automática, alerta de servicio, email de plataforma (Twitch, GitHub, Render, Stripe, etc.), no-reply, email interno del equipo, confirmación de pago/envío, email de proveedor de servicios técnicos, o cualquier cosa que el contexto del negocio indique ignorar. Poné true SOLO si es una persona real con interés comercial real en los productos/servicios de la empresa.${profile === "real_estate" ? REAL_ESTATE_RULES : ""}
 
+- follow_up: estado de atención de la conversación (para la bandeja de Seguimiento del vendedor).
+    status: "desatendido" si el ÚLTIMO mensaje de la conversación es del cliente y todavía no le respondió el vendedor (el cliente está esperando respuesta); "atendido" si el último mensaje es del vendedor o la conversación ya está al día.
+    suggested_message: un mensaje corto y natural en español rioplatense, listo para que el vendedor lo copie y envíe como próximo paso con este cliente (responder lo que preguntó, proponer una visita, pedir un dato que falta, retomar el tema). Completalo SIEMPRE, también cuando esté "atendido" (ahí proponé un buen seguimiento). Si no es una conversación con un cliente (ej. email automático/irrelevante), poné follow_up en null.
+
 Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
 {
   "contact_info": {
@@ -354,6 +371,7 @@ Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
   "is_relevant_for_crm": boolean,
   "deal_is_new_or_existing": "new" | "existing" | "unclear",
   "confidence_level": "high" | "medium" | "low",
+  "follow_up": { "status": "atendido" | "desatendido", "suggested_message": string } | null,
   "crm_note": string${profile === "real_estate" ? REAL_ESTATE_SCHEMA : ""}
 }`;
 
@@ -400,6 +418,16 @@ Devolvé ÚNICAMENTE el siguiente JSON sin texto adicional:
     // real_estate present only for the real-estate profile; default to null otherwise
     parsed.real_estate =
       parsed.real_estate && typeof parsed.real_estate === "object" ? parsed.real_estate : null;
+    // follow_up: keep only well-formed shapes, else null
+    parsed.follow_up =
+      parsed.follow_up &&
+      typeof parsed.follow_up === "object" &&
+      (parsed.follow_up.status === "atendido" || parsed.follow_up.status === "desatendido")
+        ? {
+            status: parsed.follow_up.status,
+            suggested_message: String(parsed.follow_up.suggested_message ?? "").trim(),
+          }
+        : null;
 
     return parsed;
   } catch (err) {
