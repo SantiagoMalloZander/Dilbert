@@ -5,7 +5,8 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { appUrl, clampSeats, PRICE_PER_SEAT_USD_CENTS } from "@/lib/billing/config";
 import { createSubscriptionCheckout, createBillingPortal } from "@/lib/billing/stripe";
 import { createPreapproval } from "@/lib/billing/mercadopago";
-import { getDolarTarjeta, usdToArs } from "@/lib/billing/fx";
+// NOTE: precio MP temporalmente fijado en $1 (ver startMercadoPagoCheckout).
+// import { getDolarTarjeta, usdToArs } from "@/lib/billing/fx";
 import { getSubscription } from "@/modules/billing/queries";
 
 async function requireBillingOwner() {
@@ -69,9 +70,9 @@ export async function startStripeCheckout(seatsInput: number): Promise<{ url: st
 export async function startMercadoPagoCheckout(seatsInput: number): Promise<{ url: string }> {
   const { user, companyId } = await requireBillingOwner();
   const seats = clampSeats(seatsInput);
-  // El precio está en USD; Mercado Pago cobra en ARS al dólar tarjeta del día.
-  const rate = await getDolarTarjeta();
-  const amountArs = usdToArs(seats * (PRICE_PER_SEAT_USD_CENTS / 100), rate);
+  // TODO(temporal): precio de prueba a $1 ARS para validar el flujo de pago.
+  // Volver a `usdToArs(seats * (PRICE_PER_SEAT_USD_CENTS / 100), await getDolarTarjeta())` para producción.
+  const amountArs = 1;
 
   const preapproval = await createPreapproval({
     companyId,
