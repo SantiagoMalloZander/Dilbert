@@ -445,8 +445,9 @@ export function AuthFlow({
 
       <div className="w-full max-w-[400px]">
         <div className="mb-8 text-center">
-          <div className="font-heading text-2xl font-bold tracking-tight text-[#D4420A]">DILBERT.</div>
-          <h1 className="mt-7 text-[26px] font-semibold tracking-tight">{heading.title}</h1>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/Logo1-1sinfondo.png" alt="Dilvert" className="mx-auto h-20 w-auto" />
+          <h1 className="mt-5 text-[26px] font-semibold tracking-tight">{heading.title}</h1>
           <p className="mx-auto mt-2 max-w-[320px] text-sm leading-relaxed text-muted-foreground">
             {heading.subtitle}
           </p>

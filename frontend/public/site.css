@@ -47,6 +47,7 @@ header {
 .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 19px; letter-spacing: -.02em; }
 .brand-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--accent); }
+.brand-ico { width: 24px; height: 24px; object-fit: contain; }
 .nav-links { display: flex; align-items: center; gap: 26px; }
 .nav-links a.muted { color: var(--muted); font-weight: 500; font-size: 15px; }
 .nav-links a.muted:hover { color: var(--ink); }

@@ -45,10 +45,11 @@ export function AppShell({
 
             {/* Brand */}
             <div>
-              <div className="flex items-center gap-2.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#D4420A] shrink-0" />
+              <div className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icon.png" alt="" className="h-6 w-6 shrink-0" />
                 <span className="text-xl font-extrabold tracking-tight text-foreground leading-none">
-                  Dilbert
+                  Dilvert
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-2 pl-[1.15rem]">

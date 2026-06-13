@@ -28,8 +28,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dilbert CRM",
+  title: "Dilvert CRM",
   description: "AI-powered CRM with automatic data entry",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
