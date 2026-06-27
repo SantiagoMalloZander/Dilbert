@@ -74,7 +74,7 @@ export function WhatsAppConnect({ initial }: { initial: WhatsAppConnection | nul
   }
 
   async function handleDisconnect() {
-    if (!window.confirm("Vas a desconectar tu WhatsApp. Dilbert deja de leer tus conversaciones.")) {
+    if (!window.confirm("Vas a desconectar tu WhatsApp. Dilvert deja de leer tus conversaciones.")) {
       return;
     }
     setBusy(true);
@@ -103,7 +103,7 @@ export function WhatsAppConnect({ initial }: { initial: WhatsAppConnection | nul
             <div>
               <h2 className="text-lg font-semibold text-foreground">Tu WhatsApp</h2>
               <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                Conectá tu WhatsApp y Dilbert lee tus conversaciones con clientes para
+                Conectá tu WhatsApp y Dilvert lee tus conversaciones con clientes para
                 armar y actualizar las fichas solo. Sirve para WhatsApp normal y Business.
               </p>
             </div>

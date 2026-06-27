@@ -67,7 +67,7 @@ export type UsersCenterData = {
 };
 
 function getLoginUrl() {
-  return process.env.DILBERT_APP_LOGIN_URL || "https://dilvert.netlify.app";
+  return process.env.DILVERT_APP_LOGIN_URL || "https://dilvert.netlify.app";
 }
 
 function buildInviteUrl(token: string) {

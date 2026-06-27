@@ -69,16 +69,16 @@ export async function POST(req: NextRequest) {
       try {
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
-        const from = process.env.RESEND_FROM_EMAIL ?? "Dilbert <onboarding@resend.dev>";
+        const from = process.env.RESEND_FROM_EMAIL ?? "Dilvert <onboarding@resend.dev>";
         const teamEmail = process.env.TEAM_NOTIFICATION_EMAIL;
 
         await resend.emails.send({
           from,
           to: email.trim(),
-          subject: `Tu demo de Dilbert: ${dateLabel} a las ${time}`,
+          subject: `Tu demo de Dilvert: ${dateLabel} a las ${time}`,
           html: `
 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#1A1A1A;color:#F5F0E8;border-radius:12px;">
-  <p style="font-family:Arial,sans-serif;font-size:26px;font-weight:900;color:#D4420A;margin:0 0 4px;letter-spacing:0.04em;">DILBERT</p>
+  <p style="font-family:Arial,sans-serif;font-size:26px;font-weight:900;color:#D4420A;margin:0 0 4px;letter-spacing:0.04em;">DILVERT</p>
   <p style="font-size:11px;color:rgba(245,240,232,0.35);text-transform:uppercase;letter-spacing:0.1em;margin:0 0 28px;">Confirmación de demo</p>
   <p style="font-size:16px;margin:0 0 24px;">Hola <strong>${name.trim()}</strong>, tu demo está confirmada.</p>
   <div style="background:rgba(245,240,232,0.06);border:1px solid rgba(245,240,232,0.1);border-radius:10px;padding:20px;margin:0 0 24px;">

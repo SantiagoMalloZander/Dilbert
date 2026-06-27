@@ -6,7 +6,7 @@ import type { WorkspaceSession } from "@/lib/workspace-auth";
 import { getRoleLabel } from "@/lib/workspace-roles";
 
 function getInitials(name?: string | null, email?: string | null) {
-  const source = name || email || "Dilbert User";
+  const source = name || email || "Dilvert User";
   return source
     .split(" ")
     .map((segment) => segment[0])
@@ -28,7 +28,7 @@ export function AppShell({
   const displayCompanyName =
     session.user.impersonation?.companyName ||
     companyName ||
-    (session.user.isSuperAdmin ? "Dilbert Admin" : "Sin empresa");
+    (session.user.isSuperAdmin ? "Dilvert Admin" : "Sin empresa");
 
   return (
     <div className="min-h-screen bg-background">

@@ -97,7 +97,7 @@ export function SubscriptionView({
           </div>
           <h1 className="text-2xl font-semibold">Tu cuenta está activa</h1>
           <p className="max-w-sm text-sm text-muted-foreground">
-            Tenés acceso completo a Dilbert sin cargo. No necesitás hacer nada.
+            Tenés acceso completo a Dilvert sin cargo. No necesitás hacer nada.
           </p>
         </div>
       </Shell>

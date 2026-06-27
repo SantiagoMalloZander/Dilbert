@@ -22,7 +22,7 @@ function mapUsersError(error: unknown) {
       return {
         status: 409,
         message:
-          "Límite de vendedores alcanzado. Contactá a Dilbert para ampliar tu plan.",
+          "Límite de vendedores alcanzado. Contactá a Dilvert para ampliar tu plan.",
       };
     default:
       return { status: 500, message: "No pude actualizar el rol." };

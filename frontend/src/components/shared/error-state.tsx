@@ -19,7 +19,7 @@ export function ErrorState({
           <AlertTriangle className="h-6 w-6" />
         </div>
         <p className="mt-5 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-          Dilbert
+          Dilvert
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">{title}</h1>
         <p className="mt-3 text-sm text-muted-foreground">{message}</p>

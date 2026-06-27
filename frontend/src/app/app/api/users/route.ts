@@ -17,12 +17,12 @@ function mapUsersError(error: unknown) {
     case "AUTHORIZED_EMAIL_ALREADY_EXISTS":
       return { status: 409, message: "Ese email ya está agregado en tu empresa." };
     case "EMAIL_BELONGS_TO_OTHER_COMPANY":
-      return { status: 409, message: "Ese email ya pertenece a otra empresa en Dilbert." };
+      return { status: 409, message: "Ese email ya pertenece a otra empresa en Dilvert." };
     case "VENDOR_LIMIT_REACHED":
       return {
         status: 409,
         message:
-          "Límite de vendedores alcanzado. Contactá a Dilbert para ampliar tu plan.",
+          "Límite de vendedores alcanzado. Contactá a Dilvert para ampliar tu plan.",
       };
     default:
       return { status: 500, message: "No pude agregar el usuario." };

@@ -173,7 +173,7 @@ export default function ReservarPage() {
       <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
       <div style={S.page}>
         <nav style={S.nav}>
-          <a href="/landing.html" style={S.logo}>DILBERT</a>
+          <a href="/landing.html" style={S.logo}>DILVERT</a>
           <a href="/landing.html" style={S.back}>← Volver al inicio</a>
         </nav>
 
@@ -182,7 +182,7 @@ export default function ReservarPage() {
           {/* ── Step 1: Form ── */}
           {step === 1 && (
             <>
-              <p style={S.tag}>PASO 1 DE 2 · DEMO DILBERT</p>
+              <p style={S.tag}>PASO 1 DE 2 · DEMO DILVERT</p>
               <h1 style={S.title}>Agendar tu demo.</h1>
               <p style={S.sub}>30 minutos. Te mostramos el producto en acción con datos reales de tu equipo.</p>
               <form onSubmit={submitForm} noValidate style={{ display: "flex", flexDirection: "column", gap: 14 }}>

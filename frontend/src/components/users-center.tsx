@@ -324,7 +324,7 @@ export function UsersCenter({
 
             {summary.vendorLimitReached ? (
               <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-700">
-                Límite de vendedores alcanzado. Contactá a Dilbert si necesitás ampliarlo.
+                Límite de vendedores alcanzado. Contactá a Dilvert si necesitás ampliarlo.
               </div>
             ) : null}
 

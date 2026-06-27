@@ -41,5 +41,5 @@ export function getFriendlyWorkspaceErrorMessage(error: unknown) {
     return "No pudimos conectarnos con Supabase en este momento. Probá de nuevo en unos segundos.";
   }
 
-  return "Ocurrió un error inesperado. Reintentá y, si sigue pasando, avisale al equipo de Dilbert.";
+  return "Ocurrió un error inesperado. Reintentá y, si sigue pasando, avisale al equipo de Dilvert.";
 }

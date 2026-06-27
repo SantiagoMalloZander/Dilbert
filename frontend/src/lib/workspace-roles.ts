@@ -8,7 +8,7 @@ export function normalizeEmail(email?: string | null) {
 
 export function getAdminEmail() {
   return normalizeEmail(
-    process.env.SUPER_ADMIN_EMAIL || process.env.DILBERT_ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL
+    process.env.SUPER_ADMIN_EMAIL || process.env.DILVERT_ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL
   );
 }
 

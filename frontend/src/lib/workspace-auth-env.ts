@@ -9,8 +9,8 @@ function deriveNextAuthUrl() {
     return normalizeUrl(process.env.NEXTAUTH_URL);
   }
 
-  if (process.env.DILBERT_APP_LOGIN_URL) {
-    const authUrl = new URL("api/auth", process.env.DILBERT_APP_LOGIN_URL);
+  if (process.env.DILVERT_APP_LOGIN_URL) {
+    const authUrl = new URL("api/auth", process.env.DILVERT_APP_LOGIN_URL);
     return normalizeUrl(authUrl.toString());
   }
 

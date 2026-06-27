@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Inter, Arial, sans-serif; color: #201A13; background: #FBFAF8; line-height: 1.5; font-size: 12px; }
+  h1 { font-size: 26px; color: #D4420A; letter-spacing: -.02em; margin: 0 0 2px; }
+  h2 { font-size: 17px; margin: 22px 0 8px; padding-bottom: 5px; border-bottom: 2px solid #D4420A; color: #201A13; }
+  h3 { font-size: 14px; margin: 16px 0 6px; color: #8B2A00; }
+  .sub { color: #6E665B; font-size: 12px; margin-bottom: 4px; }
+  .tag { display:inline-block; background:#D4420A; color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; letter-spacing:.04em; }
+  pre { background: #fff; border: 1px solid rgba(32,26,19,.12); border-left: 3px solid #D4420A; border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; font-family: "SF Mono", Menlo, monospace; font-size: 10.5px; color: #2A1A0A; margin: 6px 0; }
+  .scene { background:#fff; border:1px solid rgba(32,26,19,.10); border-radius:12px; padding:12px 14px; margin:12px 0; box-shadow:0 1px 3px rgba(32,26,19,.05); break-inside: avoid; }
+  .lbl { font-weight:700; font-size:11px; color:#1A7A6E; text-transform:uppercase; letter-spacing:.06em; }
+  .vo { background:#F5F0E8; border-radius:6px; padding:6px 9px; font-style:italic; margin:4px 0; }
+  .txt { background:rgba(212,66,10,.07); border-radius:6px; padding:6px 9px; color:#8B2A00; font-weight:600; margin:4px 0; }
+  .note { background:rgba(26,122,110,.08); border-radius:6px; padding:6px 9px; color:#155e54; font-size:11px; margin:4px 0; }
+  ul { margin:6px 0 6px 18px; padding:0; } li { margin:3px 0; }
+  .row { margin: 5px 0; }
+  hr { border:0; border-top:1px solid rgba(32,26,19,.12); margin:14px 0; }
+  .foot { color:#6E665B; font-size:10px; text-align:center; margin-top:18px; }
+  .hi { color:#D4420A; font-weight:700; }
+</style>
+</head>
+<body>
+
+<h1>🎬 Plan de Producción — Ad "Hola, soy Dilvert"</h1>
+<div class="sub">Veo 3.1 (API) + Nano Banana · Vertical 9:16 · 1080×1920 · ~45-50s · 7 clips de 8s + VO y texto en post</div>
+
+<h2>🧬 Estrategia de continuidad (el "hilo")</h2>
+<ul>
+  <li><span class="hi">Un mismo robot, un mismo mundo, un mismo lenguaje de cámara.</span> Generás UNA imagen "hero" del robot (Paso 0) y la reusás como <b>referencia</b> en Nano Banana en cada escena → el robot se ve idéntico siempre.</li>
+  <li>Cada escena tiene su <b>imagen de inicio</b> (Nano Banana, 9:16) que entra a Veo como <b>primer frame</b> (image-to-video).</li>
+  <li>Donde haya continuidad real, podés usar el <b>último frame</b> del clip anterior como inicio del siguiente.</li>
+  <li><b>Audio:</b> Veo genera solo ambiente + SFX (le pedimos "sin diálogo hablado"); la <b>voz del robot va en post</b> (ElevenLabs).</li>
+  <li><b>Texto:</b> nunca en la generación (sale garabateado) → todo el texto en <b>CapCut con tipografía Anton</b>.</li>
+</ul>
+
+<h2>📌 Bloques fijos (pegar en cada prompt)</h2>
+<h3>🎨 STYLE BIBLE (imágenes y videos)</h3>
+<pre>Clean soft-3D / 2.5D motion-graphics style, Pixar-like polish but minimal.
+Warm off-white cream studio background #F5F0E8 (never pure white), dominant warm orange #D4420A, dark charcoal #201A13, subtle teal #1A7A6E accents.
+Soft global illumination, gentle soft shadows, lots of negative space, premium and optimistic.
+NO on-screen text, NO logos with letters, NO blue, NO purple, NO harsh gradient, no clutter. Vertical 9:16 composition.</pre>
+<h3>🤖 CHARACTER BIBLE (el robot — en toda imagen del robot)</h3>
+<pre>"Dilvert", a small cute friendly assistant robot. Rounded matte white body with warm orange #D4420A panel accents.
+Big rounded head with a dark glossy screen-face showing two simple friendly glowing eyes (soft warm white) and a subtle orange smile line.
+A short antenna on top ending in a small glowing 4-point orange spark. A subtle engraved house-with-chat-bubble emblem on its chest.
+Short stubby arms, expressive and warm, big-head cute proportions. Smooth, premium, consistent design.</pre>
+
+<h2>🟠 Paso 0 — Imagen HERO del robot (referencia maestra)</h2>
+<div class="scene">
+<div class="note">Generala primero. Es la cara de la campaña y la referencia de consistencia para todo lo demás.</div>
+<div class="lbl">🖼️ Nano Banana</div>
+<pre>[STYLE BIBLE] [CHARACTER BIBLE]
+Full-body hero shot of the Dilvert robot standing centered, friendly waving pose, looking at camera, slight 3/4 angle.
+Cream studio background with one soft warm light, gentle shadow under the robot. Centered vertical 9:16 composition, lots of headroom. Crisp, adorable, brand mascot beauty shot.</pre>
+<div class="row">✅ Cuando salga linda, <b>reusá esa imagen como referencia</b> en todas las escenas (subila + el prompt).</div>
+</div>
+
+<h2>🎞️ Escena 1 — Gancho <span class="tag">0-3s</span></h2>
+<div class="scene">
+<div class="lbl">🖼️ Imagen de inicio (Nano Banana)</div>
+<pre>[STYLE BIBLE] [CHARACTER BIBLE] A floating smartphone in the center showing a WhatsApp-style chat overflowing with stacked grey unanswered message bubbles, a couple of bubbles slipping and falling off the screen. The Dilvert robot peeks in from the right edge with a worried, surprised expression (hand on face). Tense but cute. 9:16.</pre>
+<div class="lbl">🎥 Veo 3.1 (image-to-video, 8s)</div>
+<pre>[STYLE BIBLE] Animate: grey chat bubbles keep piling up fast and overflowing, one bubble falls and fades. The little Dilvert robot peeks in, tilts head with a worried "uh oh" reaction. Subtle camera push-in.
+Audio: rapid phone notification dings piling up, light tension whoosh. No spoken dialogue.</pre>
+<div class="vo">🔊 VO: "Pará… ¿otra vez se te escapó un cliente del WhatsApp?"</div>
+<div class="txt">✍️ Texto: "¿Cuántos clientes perdés por no contestar a tiempo?"</div>
+</div>
+
+<h2>🎞️ Escena 2 — Se presenta <span class="tag">3-9s</span></h2>
+<div class="scene">
+<div class="lbl">🖼️ Imagen de inicio (Nano Banana, con referencia)</div>
+<pre>[STYLE BIBLE] [CHARACTER BIBLE] The Dilvert robot centered on a clean cream background, friendly confident waving pose, soft orange rim light glowing around it. Minimal, lots of space. 9:16.</pre>
+<div class="lbl">🎥 Veo 3.1 (8s)</div>
+<pre>[STYLE BIBLE] Animate: the Dilvert robot waves hello warmly, gives a confident little nod, the orange spark on its antenna twinkles. A soft orange glow pulses behind it. Gentle slow push-in.
+Audio: warm friendly "pop", soft uplifting chime, light background music starting. No spoken dialogue.</pre>
+<div class="vo">🔊 VO: "¡Hola! Soy Dilvert, el agente de IA que hace que tu inmobiliaria funcione sola."</div>
+<div class="txt">✍️ Texto: "Hola, soy Dilvert 👋"</div>
+</div>
+
+<h2>🎞️ Escena 3 — El cómo <span class="tag">9-16s</span></h2>
+<div class="scene">
+<div class="lbl">🖼️ Imagen de inicio (Nano Banana)</div>
+<pre>[STYLE BIBLE] [CHARACTER BIBLE] The Dilvert robot on the left gesturing toward a large floating WhatsApp-style chat panel on the right with a clean green incoming bubble and a friendly reply bubble, a green check mark. Bright, organized, helpful mood. 9:16.</pre>
+<div class="lbl">🎥 Veo 3.1 (8s)</div>
+<pre>[STYLE BIBLE] Animate: a customer chat bubble pops in, the robot quickly "types", an orange reply bubble appears with a satisfying green check. The robot gives a thumbs up. Smooth, snappy, delightful micro-motion.
+Audio: soft typing, gentle "ding" and positive confirmation sound. No spoken dialogue.</pre>
+<div class="vo">🔊 VO: "¿Cómo? Re simple: armamos un WhatsApp que manejo yo. Contesto las consultas básicas al instante… y derivo cada lead según tu flujo."</div>
+<div class="txt">✍️ Texto: "Un WhatsApp que atiendo yo. 24/7."</div>
+</div>
+
+<h2>🎞️ Escena 4 — El flujo <span class="tag">16-28s</span> · el corazón</h2>
+<div class="scene">
+<div class="lbl">🖼️ Imagen de inicio (Nano Banana)</div>
+<pre>[STYLE BIBLE] [CHARACTER BIBLE] A clean animated flow diagram on cream: top-left a simple "Meta Ads" rounded icon, an arrow with small chat bubbles flowing down into a central WhatsApp panel held by the small Dilvert robot, then two diverging orange arrows pointing to two friendly simple human avatars (vendor avatar cards, no readable text). Infographic look, balanced. 9:16.</pre>
+<div class="lbl">🎥 Veo 3.1 (8s)</div>
+<pre>[STYLE BIBLE] Animate the flow building left-to-right: lead bubbles drop from the Meta Ads icon into the robot's WhatsApp panel; the robot sorts them and sends them along two glowing orange paths to the two vendor avatars, which light up happily. Smooth directional motion, each routing has a soft whoosh. Camera slowly pans following the flow.
+Audio: light whoosh per routing, soft mechanical sorting clicks, upbeat music bed. No spoken dialogue.</pre>
+<div class="vo">🔊 VO: "Mirá: entran los leads de tus anuncios de Meta, caen en el WhatsApp que manejo yo, y según lo que buscan se los paso al vendedor que corresponde."</div>
+<div class="txt">✍️ Texto: "Tus anuncios → yo los atiendo → al vendedor correcto."</div>
+</div>
+
+<h2>🎞️ Escena 5 — Carga en el CRM <span class="tag">28-38s</span></h2>
+<div class="scene">
+<div class="lbl">🖼️ Imagen de inicio (Nano Banana)</div>
+<pre>[STYLE BIBLE] [CHARACTER BIBLE] The Dilvert robot on the left holding a glowing white info card; on the right a laptop showing a clean kanban pipeline board with colored columns (orange and teal dots), one empty highlighted slot ready. The card is mid-air starting to fly toward the laptop. 9:16.</pre>
+<div class="lbl">🎥 Veo 3.1 (8s)</div>
+<pre>[STYLE BIBLE] Animate: the robot tosses the glowing info card; it flies in a smooth arc and lands/snaps into the laptop's kanban board as a new client card, which pulses with a soft orange glow as if auto-added. Very satisfying "it appeared by itself" motion. Camera eases toward the laptop screen.
+Audio: gentle "whoosh" then a satisfying soft "snap/pop" and positive sparkle. No spoken dialogue.</pre>
+<div class="vo">🔊 VO: "Y dejo todos los datos cargados en tu CRM. ¿No tenés? Usá el nuestro: también carga solo las conversaciones de tus vendedores."</div>
+<div class="txt">✍️ Texto: "Y deja todo cargado solo. Sin planillas."</div>
+<div class="note">💡 Opción pro: reemplazá este clip por una grabación real de Dilvert (chat → ficha en el pipeline). Más creíble y gratis.</div>
+</div>
+
+<h2>🎞️ Escena 6 — El mensaje <span class="tag">38-43s</span></h2>
+<div class="scene">
+<div class="lbl">🖼️ Imagen de inicio (Nano Banana)</div>
+<pre>[STYLE BIBLE] [CHARACTER BIBLE] The Dilvert robot in the center, calm and friendly, standing between two happy human vendor avatars working relaxed at small desks. Harmonious, warm, everything tidy and in balance. 9:16.</pre>
+<div class="lbl">🎥 Veo 3.1 (8s)</div>
+<pre>[STYLE BIBLE] Animate: the robot gives a gentle reassuring gesture, the two vendors smile and give a relaxed thumbs up, soft warm glow fills the scene. Calm, heartwarming, slow gentle push-in.
+Audio: warm music swell then soften, soft positive ambience. No spoken dialogue.</pre>
+<div class="vo">🔊 VO: "No reemplazo a nadie… solo hago que todo funcione mejor."</div>
+<div class="txt">✍️ Texto: "No reemplazo a nadie."</div>
+</div>
+
+<h2>🎞️ Escena 7 — Cierre / CTA <span class="tag">43-48s</span></h2>
+<div class="scene">
+<div class="lbl">🖼️ Imagen de inicio (Nano Banana)</div>
+<pre>[STYLE BIBLE] [CHARACTER BIBLE] The Dilvert robot small at the bottom looking up happily at empty space above (reserved for a logo added in post). Clean cream background, a soft teal blob accent, a rounded orange pill button shape (empty, no text). Centered, minimal, inviting. 9:16.</pre>
+<div class="lbl">🎥 Veo 3.1 (8s)</div>
+<pre>[STYLE BIBLE] Animate: the orange spark from the robot's antenna flies up and bursts into a soft sparkle where the logo will go; the robot looks up cheerfully and points to the pill button; gentle bounce. Hold steady at the end for logo/text overlay.
+Audio: bright "pop" and a final friendly chime, music resolves. No spoken dialogue.</pre>
+<div class="vo">🔊 VO: "Probá Dilvert gratis en tu inmobiliaria. Te va a cambiar la semana."</div>
+<div class="txt">✍️ Texto (post): logo Dilvert + "El CRM que se llena solo" + botón "Probalo gratis · dilvert.netlify.app"</div>
+</div>
+
+<h2>⚙️ Parámetros API (Veo 3.1) — cada clip</h2>
+<ul>
+  <li><b>aspect_ratio:</b> "9:16" · <b>resolution:</b> "1080p" · <b>duration:</b> 8s</li>
+  <li><b>Imagen de inicio:</b> pasás la imagen de Nano Banana como first frame / image input.</li>
+  <li>Generá <b>2-3 variantes por escena</b> y te quedás con la mejor.</li>
+</ul>
+<div class="lbl">Negative prompt (pegá en todos)</div>
+<pre>on-screen text, captions, letters, watermark, logo with text, blurry, low quality, extra limbs, deformed robot, inconsistent character, blue, purple, harsh gradient, photorealistic humans, creepy faces</pre>
+
+<h2>🎚️ Post-producción (CapCut)</h2>
+<ul>
+  <li>1) Ordenás los 7 clips → 2) VO en ElevenLabs (voz cálida español, guion corrido) → 3) Música optimista (–18 dB bajo la voz) → 4) Texto en Anton por escena → 5) Logo Dilvert en cierre → 6) Subtítulos quemados → 7) Export 1080×1920.</li>
+</ul>
+
+<h2>🎤 VO corrida (ElevenLabs)</h2>
+<pre>Pará… ¿otra vez se te escapó un cliente del WhatsApp? ¡Hola! Soy Dilvert, el agente de IA que hace que tu inmobiliaria funcione sola. ¿Cómo? Re simple: armamos un WhatsApp que manejo yo. Contesto las consultas básicas al instante y derivo cada lead según tu flujo. Mirá: entran los leads de tus anuncios de Meta, caen en el WhatsApp que manejo yo, y según lo que buscan se los paso al vendedor que corresponde. Y dejo todos los datos cargados en tu CRM. ¿No tenés? Usá el nuestro: también carga solo las conversaciones de tus vendedores. No reemplazo a nadie… solo hago que todo funcione mejor. Probá Dilvert gratis en tu inmobiliaria.</pre>
+
+<hr>
+<div class="foot">DILVERT — El CRM que se llena solo · Plan de ad generado para Veo 3.1 + Nano Banana</div>
+
+</body>
+</html>

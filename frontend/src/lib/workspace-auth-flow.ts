@@ -344,13 +344,13 @@ async function sendOtpEmail(params: {
   await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: params.email,
-    subject: "Tu código de acceso a Dilbert",
+    subject: "Tu código de acceso a Dilvert",
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;background:#08111f;color:#f7f9fb;padding:32px">
         <div style="max-width:520px;margin:0 auto;background:#101a2e;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:32px">
-          <p style="margin:0 0 12px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#69e6c5">Dilbert</p>
+          <p style="margin:0 0 12px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#69e6c5">Dilvert</p>
           <h1 style="margin:0 0 12px;font-size:28px;line-height:1.1">Verificación de email</h1>
-          <p style="margin:0 0 24px;color:#b5c0d5">Hola ${friendlyName}, usá este código para continuar tu alta en Dilbert. Vence en ${OTP_EXPIRY_MINUTES} minutos.</p>
+          <p style="margin:0 0 24px;color:#b5c0d5">Hola ${friendlyName}, usá este código para continuar tu alta en Dilvert. Vence en ${OTP_EXPIRY_MINUTES} minutos.</p>
           <div style="font-size:36px;font-weight:700;letter-spacing:.4em;background:#08111f;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:18px 24px;text-align:center">${params.code}</div>
         </div>
       </div>
@@ -514,7 +514,7 @@ function deriveCompanyName(email: string) {
 /**
  * Self-service signup: a brand-new email with no invite becomes the OWNER of a
  * brand-new company. This is what lets public traffic register and start using
- * Dilbert on their own (they pick a plan right after). Invited teammates never
+ * Dilvert on their own (they pick a plan right after). Invited teammates never
  * hit this path — they already have an authorized_emails record.
  */
 async function provisionSelfServiceCompany(params: { email: string }) {

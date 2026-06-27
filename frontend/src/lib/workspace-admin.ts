@@ -57,11 +57,11 @@ function getResendClient() {
 }
 
 function getLoginUrl() {
-  return process.env.DILBERT_APP_LOGIN_URL || "https://dilvert.netlify.app/app/";
+  return process.env.DILVERT_APP_LOGIN_URL || "https://dilvert.netlify.app/app/";
 }
 
 function generateTemporaryPassword() {
-  return `Dilbert!${randomBytes(5).toString("hex")}9`;
+  return `Dilvert!${randomBytes(5).toString("hex")}9`;
 }
 
 async function findAuthUserByEmail(email: string) {
@@ -106,14 +106,14 @@ async function sendOwnerProvisioningEmail(params: {
   await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: params.ownerEmail,
-    subject: "Tu acceso a Dilbert está listo",
+    subject: "Tu acceso a Dilvert está listo",
     html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#F5F0E8;color:#1A1A1A;padding:32px">
         <div style="max-width:560px;margin:0 auto;background:white;border:3px solid #2A1A0A;border-radius:12px;padding:32px;box-shadow:4px 4px 0px #2A1A0A">
-          <p style="margin:0 0 16px;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:#D4420A;font-weight:600">DILBERT.</p>
+          <p style="margin:0 0 16px;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:#D4420A;font-weight:600">DILVERT.</p>
           <h1 style="margin:0 0 12px;font-size:28px;line-height:1.2;color:#1A1A1A;font-weight:700">Tu acceso está listo</h1>
           <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#1A1A1A">Hola ${params.ownerName},</p>
-          <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#1A1A1A">Ya podés administrar <strong>${params.companyName}</strong> en Dilbert. Entrá con tu email y contraseña:</p>
+          <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#1A1A1A">Ya podés administrar <strong>${params.companyName}</strong> en Dilvert. Entrá con tu email y contraseña:</p>
 
           <p style="margin:0 0 8px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#1A1A1A;font-weight:600">Email</p>
           <p style="margin:0 0 20px;font-size:15px;color:#1A1A1A;font-weight:500">${params.ownerEmail}</p>
@@ -124,7 +124,7 @@ async function sendOwnerProvisioningEmail(params: {
           </div>
 
           <p style="margin:0 0 8px;font-size:12px;color:#1A1A1A/70;letter-spacing:.05em">🔗 ENLACE DE ACCESO</p>
-          <p style="margin:0 0 24px"><a href="${loginUrl}" style="display:inline-block;background:#D4420A;color:#F5F0E8;padding:12px 24px;text-decoration:none;border-radius:24px;font-weight:600;font-size:14px">Abrir Dilbert</a></p>
+          <p style="margin:0 0 24px"><a href="${loginUrl}" style="display:inline-block;background:#D4420A;color:#F5F0E8;padding:12px 24px;text-decoration:none;border-radius:24px;font-weight:600;font-size:14px">Abrir Dilvert</a></p>
 
           <div style="margin:24px 0 0;padding:16px;background:#F5F0E8;border-left:3px solid #D4420A;border-radius:4px">
             <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#1A1A1A">⚙️ Lo que sigue</p>

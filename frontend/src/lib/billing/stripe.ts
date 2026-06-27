@@ -74,7 +74,7 @@ export async function createSubscriptionCheckout(params: {
           currency: "usd",
           unit_amount: params.unitAmountCents,
           recurring: { interval: "month" },
-          product_data: { name: "Dilbert — CRM (por vendedor)" },
+          product_data: { name: "Dilvert — CRM (por vendedor)" },
         },
       },
     ],

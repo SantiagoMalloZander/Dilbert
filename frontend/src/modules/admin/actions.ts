@@ -26,7 +26,7 @@ function getResendClient() {
 }
 
 function getLoginUrl() {
-  return process.env.DILBERT_APP_LOGIN_URL || "https://dilvert.netlify.app";
+  return process.env.DILVERT_APP_LOGIN_URL || "https://dilvert.netlify.app";
 }
 
 function buildOwnerInviteEmail(params: {
@@ -38,13 +38,13 @@ function buildOwnerInviteEmail(params: {
   return `
     <div style="font-family: Inter, Arial, sans-serif; background: #0b0f14; color: #f5f7fa; padding: 32px;">
       <div style="max-width: 560px; margin: 0 auto; border: 1px solid rgba(255,255,255,.08); border-radius: 20px; background: #111827; padding: 32px;">
-        <div style="font-size: 12px; letter-spacing: .24em; text-transform: uppercase; color: #f97316; margin-bottom: 12px;">Dilbert</div>
-        <h1 style="font-size: 28px; margin: 0 0 12px;">Tu cuenta de Dilbert fue creada</h1>
-        <p style="margin: 0 0 16px; color: #cbd5e1;">Hola ${params.ownerName}, ya podés activar <strong>${params.companyName}</strong> en Dilbert.</p>
+        <div style="font-size: 12px; letter-spacing: .24em; text-transform: uppercase; color: #f97316; margin-bottom: 12px;">Dilvert</div>
+        <h1 style="font-size: 28px; margin: 0 0 12px;">Tu cuenta de Dilvert fue creada</h1>
+        <p style="margin: 0 0 16px; color: #cbd5e1;">Hola ${params.ownerName}, ya podés activar <strong>${params.companyName}</strong> en Dilvert.</p>
         <p style="margin: 0 0 24px; color: #cbd5e1;">Entrá con tu email y completá tu registro desde este link:</p>
         <p style="margin: 0;">
           <a href="${appUrl}" style="display: inline-block; border-radius: 999px; background: #f97316; color: #0b0f14; font-weight: 700; padding: 12px 20px; text-decoration: none;">
-            Abrir Dilbert
+            Abrir Dilvert
           </a>
         </p>
       </div>
@@ -134,7 +134,7 @@ async function sendOwnerInviteEmail(params: {
   await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: params.ownerEmail,
-    subject: "Tu cuenta de Dilbert fue creada",
+    subject: "Tu cuenta de Dilvert fue creada",
     html: buildOwnerInviteEmail(params),
   });
 }

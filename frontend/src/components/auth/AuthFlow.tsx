@@ -141,7 +141,7 @@ export function AuthFlow({
       case "otp":
         return { title: "Revisá tu email", subtitle: `Te enviamos un código a ${email}.` };
       default:
-        return { title: "Entrá a Dilbert", subtitle: "Tu CRM inmobiliario con IA. Ingresá tu email para continuar." };
+        return { title: "Entrá a Dilvert", subtitle: "Tu CRM inmobiliario con IA. Ingresá tu email para continuar." };
     }
   }, [email, step]);
 

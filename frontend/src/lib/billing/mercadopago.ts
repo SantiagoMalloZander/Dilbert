@@ -63,7 +63,7 @@ export async function createPreapprovalPlan(params: {
   return mpFetch<MpPreapprovalPlan>("/preapproval_plan", {
     method: "POST",
     json: {
-      reason: `Dilbert — CRM (${params.seats} ${params.seats === 1 ? "vendedor" : "vendedores"})`,
+      reason: `Dilvert — CRM (${params.seats} ${params.seats === 1 ? "vendedor" : "vendedores"})`,
       external_reference: params.companyId,
       back_url: params.backUrl,
       auto_recurring: {
@@ -87,7 +87,7 @@ export async function createPreapproval(params: {
   return mpFetch<MpPreapproval>("/preapproval", {
     method: "POST",
     json: {
-      reason: `Dilbert — CRM (${params.seats} ${params.seats === 1 ? "vendedor" : "vendedores"})`,
+      reason: `Dilvert — CRM (${params.seats} ${params.seats === 1 ? "vendedor" : "vendedores"})`,
       external_reference: params.companyId,
       payer_email: params.email,
       back_url: params.backUrl,

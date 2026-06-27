@@ -160,7 +160,7 @@ export default function WaitlistPage() {
           fontFamily: "'Anton', sans-serif",
           fontSize: 22, letterSpacing: "0.06em",
           color: BRAND.orange,
-        }}>DILBERT.</span>
+        }}>DILVERT.</span>
       </Link>
 
       {/* tag */}
@@ -202,7 +202,7 @@ export default function WaitlistPage() {
         marginBottom: 40,
         animation: "fadeUp 0.5s ease 0.2s both",
       }}>
-        Dilbert lee las conversaciones de tu equipo en Telegram y extrae leads, montos y próximos pasos automáticamente. Sin planillas. Sin fricción.
+        Dilvert lee las conversaciones de tu equipo en Telegram y extrae leads, montos y próximos pasos automáticamente. Sin planillas. Sin fricción.
       </p>
 
       {/* form / success */}

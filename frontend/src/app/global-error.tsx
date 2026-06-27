@@ -14,7 +14,7 @@ export default function GlobalError({
     <html lang="es">
       <body className="min-h-screen bg-background text-foreground">
         <ErrorState
-          title="No pudimos cargar Dilbert"
+          title="No pudimos cargar Dilvert"
           message={getFriendlyWorkspaceErrorMessage(error)}
           onRetry={reset}
         />

@@ -34,7 +34,7 @@ function buildOtpEmailHtml(code: string, recipientName?: string | null) {
   return `
     <div style="font-family: Inter, Arial, sans-serif; background: #0b0f14; color: #f5f7fa; padding: 32px;">
       <div style="max-width: 520px; margin: 0 auto; border: 1px solid rgba(255,255,255,.08); border-radius: 20px; background: #111827; padding: 32px;">
-        <div style="font-size: 12px; letter-spacing: .24em; text-transform: uppercase; color: #f97316; margin-bottom: 12px;">Dilbert</div>
+        <div style="font-size: 12px; letter-spacing: .24em; text-transform: uppercase; color: #f97316; margin-bottom: 12px;">Dilvert</div>
         <h1 style="font-size: 28px; margin: 0 0 12px;">Tu código de acceso</h1>
         <p style="margin: 0 0 24px; color: #cbd5e1;">
           ${recipientName ? `Hola ${recipientName},` : "Hola,"} usá este código para continuar con tu registro.
@@ -65,7 +65,7 @@ async function sendOauthOtp(email: string, fullName?: string | null) {
   await getResendClient().emails.send({
     from: getFromEmail(),
     to: email,
-    subject: "Tu código de acceso a Dilbert",
+    subject: "Tu código de acceso a Dilvert",
     html: buildOtpEmailHtml(data.properties.email_otp, fullName),
   });
 }

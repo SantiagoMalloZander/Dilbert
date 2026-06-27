@@ -81,7 +81,7 @@ export default function QRPage() {
         <p className="text-[9px] font-mono uppercase tracking-[0.22em] text-muted-foreground mb-1">
           hackITBA 2026
         </p>
-        <h1 className="font-heading text-4xl tracking-wide text-[#D4420A] leading-none">DILBERT.</h1>
+        <h1 className="font-heading text-4xl tracking-wide text-[#D4420A] leading-none">DILVERT.</h1>
         <p className="text-sm text-muted-foreground mt-2">
           Escaneá el QR para conectarte al bot de Telegram
         </p>
@@ -97,7 +97,7 @@ export default function QRPage() {
             "Escaneá el QR con la cámara",
             "Se abre Telegram — tocá START",
             "El bot te registra como vendedor",
-            "Mandá conversaciones y Dilbert extrae los leads",
+            "Mandá conversaciones y Dilvert extrae los leads",
           ]}
         />
         <QRCard

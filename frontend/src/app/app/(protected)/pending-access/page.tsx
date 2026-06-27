@@ -63,7 +63,7 @@ export default function PendingAccessPage() {
           <div className="rounded-xl border border-border bg-background/60 p-5">
             <p className="text-sm font-medium text-foreground">Qué tenés que hacer ahora</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Compartile este email a tu empresa y pediles que te agreguen desde el panel de Dilbert.
+              Compartile este email a tu empresa y pediles que te agreguen desde el panel de Dilvert.
             </p>
           </div>
 

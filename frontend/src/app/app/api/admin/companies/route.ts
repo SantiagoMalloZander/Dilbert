@@ -28,7 +28,7 @@ function mapAdminError(error: unknown) {
     case "INVALID_VENDOR_LIMIT":
       return { status: 400, message: "El límite de vendedores debe ser al menos 1." };
     case "OWNER_EMAIL_ALREADY_EXISTS":
-      return { status: 409, message: "Ese email ya está vinculado a otra empresa en Dilbert." };
+      return { status: 409, message: "Ese email ya está vinculado a otra empresa en Dilvert." };
     case "RESEND_NOT_CONFIGURED":
       return { status: 500, message: "Resend no está configurado en este entorno." };
     default:

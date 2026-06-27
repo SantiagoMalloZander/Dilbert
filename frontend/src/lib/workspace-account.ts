@@ -191,7 +191,7 @@ export async function getAccountPageData(params: {
       userRow?.name ||
       (authUser ? String(authUser.user_metadata?.full_name || "").trim() : "") ||
       params.email ||
-      "Usuario Dilbert",
+      "Usuario Dilvert",
     email: userRow?.email || (authUser?.email) || params.email || "",
     avatarUrl:
       userRow?.avatar_url || (authUser ? String(authUser.user_metadata?.avatar_url || "") : "") || null,

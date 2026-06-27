@@ -27,7 +27,7 @@ export function BillingPaywall({ active, isOwner }: { active: boolean; isOwner: 
         <h2 className="text-[22px] font-semibold tracking-tight">Elegí tu plan</h2>
         <p className="mx-auto mt-2.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
           {isOwner
-            ? "Para empezar a usar Dilbert elegí un plan. Tenés una opción gratis para probar y una Pro con todo incluido."
+            ? "Para empezar a usar Dilvert elegí un plan. Tenés una opción gratis para probar y una Pro con todo incluido."
             : "Tu inmobiliaria todavía no eligió un plan. Avisale al dueño de la cuenta para empezar."}
         </p>
         {isOwner ? (
