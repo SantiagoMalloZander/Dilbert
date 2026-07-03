@@ -33,8 +33,7 @@ export function GlobalToast() {
       theme="light"
       toastOptions={{
         classNames: {
-          toast:
-            "border-2 border-border shadow-[4px_4px_0px_rgba(42,26,10,0.15)] rounded-xl",
+          toast: "border border-border shadow-panel rounded-xl",
           title: "font-semibold",
           description: "text-foreground",
           actionButton: "bg-[#D4420A] text-white",

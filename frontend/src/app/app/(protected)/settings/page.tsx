@@ -64,7 +64,7 @@ export default async function SettingsPage() {
               <Settings className="mr-1.5 h-3.5 w-3.5" />
               Configuración
             </Badge>
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Configuración de la agencia</h1>
+            <h1 className="text-2xl font-semibold tracking-tight md:text-4xl">Configuración de la agencia</h1>
             <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
               Catálogo de propiedades, zonas que cubrís, usuarios del equipo y configuración del bot de WhatsApp.
             </p>

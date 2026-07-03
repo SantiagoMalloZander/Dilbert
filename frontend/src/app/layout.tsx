@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Anton, DM_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { GlobalToast } from "@/components/global-toast";
@@ -34,6 +34,15 @@ export const metadata: Metadata = {
     icon: "/icon.png",
     apple: "/icon.png",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // viewportFit cover lets the mobile tab bar extend into the iPhone home-bar
+  // area (we pad it back with env(safe-area-inset-bottom)).
+  viewportFit: "cover",
+  themeColor: "#FBFAF8",
 };
 
 export default function RootLayout({

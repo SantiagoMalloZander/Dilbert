@@ -45,7 +45,7 @@ export default async function CrmPage() {
         <CardContent className="pt-7">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-2">
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              <h1 className="text-2xl font-semibold tracking-tight md:text-4xl">
                 Hola, {firstName}.
               </h1>
               <p className="max-w-2xl text-sm text-muted-foreground md:text-base">

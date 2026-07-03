@@ -726,7 +726,7 @@ export function ContactTable({ data }: { data: ContactPageData }) {
                 Contactos CRM
               </div>
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight">Base de contactos</h1>
+                <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Base de contactos</h1>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                   Buscá, filtrá y abrí el detalle de cada contacto sin salir del flujo comercial.
                 </p>

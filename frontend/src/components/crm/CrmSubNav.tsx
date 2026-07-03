@@ -16,7 +16,7 @@ const ITEMS = [
 export function CrmSubNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex flex-wrap items-center gap-1 rounded-xl border border-border bg-muted p-1">
+    <nav className="flex items-center gap-1 overflow-x-auto rounded-xl border border-border bg-muted p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {ITEMS.map((item) => {
         const isActive = item.exact
           ? pathname === item.href
@@ -27,7 +27,7 @@ export function CrmSubNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               isActive
                 ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground hover:bg-card/70"
