@@ -453,7 +453,20 @@ export function ProspectingPanel() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">1. Elegí dónde buscar</CardTitle>
-              <CardDescription>{selectedTowns.size} localidades seleccionadas</CardDescription>
+              <CardDescription className="flex flex-wrap items-center gap-3">
+                {selectedTowns.size} de {PROSPECT_TOWNS.length} localidades seleccionadas
+                <Button
+                  size="xs"
+                  variant="secondary"
+                  onClick={() =>
+                    setSelectedTowns(
+                      selectedTowns.size === PROSPECT_TOWNS.length ? new Set() : new Set(PROSPECT_TOWNS.map((t) => t.name))
+                    )
+                  }
+                >
+                  {selectedTowns.size === PROSPECT_TOWNS.length ? "Quitar todas" : "Seleccionar todas"}
+                </Button>
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               {PROSPECT_REGIONS.map((region) => {

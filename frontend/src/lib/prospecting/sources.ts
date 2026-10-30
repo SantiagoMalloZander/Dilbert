@@ -40,10 +40,19 @@ type GooglePlace = {
   businessStatus?: string;
 };
 
-async function searchGoogle(town: ProspectTown, query: string): Promise<FoundProspect[]> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey) return [];
+// Google corta en 60 resultados por búsqueda: con la búsqueda default probamos
+// varias frases (la primera filtrada por tipo "inmobiliaria") y deduplicamos.
+const DEFAULT_GOOGLE_QUERIES = [
+  { text: "inmobiliaria", includedType: "real_estate_agency" },
+  { text: "inmobiliarias propiedades venta alquiler" },
+  { text: "martillero corredor inmobiliario" },
+];
 
+async function searchGoogleQuery(
+  town: ProspectTown,
+  query: { text: string; includedType?: string },
+  apiKey: string
+): Promise<FoundProspect[]> {
   const results: FoundProspect[] = [];
   let pageToken: string | undefined;
 
@@ -57,7 +66,8 @@ async function searchGoogle(town: ProspectTown, query: string): Promise<FoundPro
           "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.businessStatus,nextPageToken",
       },
       body: JSON.stringify({
-        textQuery: `${query} en ${town.name}, Provincia de Buenos Aires`,
+        textQuery: `${query.text} en ${town.searchAs ?? town.name}, Provincia de Buenos Aires`,
+        includedType: query.includedType,
         languageCode: "es",
         regionCode: "AR",
         pageSize: 20,
@@ -102,6 +112,18 @@ async function searchGoogle(town: ProspectTown, query: string): Promise<FoundPro
   }
 
   return results;
+}
+
+async function searchGoogle(town: ProspectTown, query: string): Promise<FoundProspect[]> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) return [];
+
+  const queries = query === "inmobiliaria" ? DEFAULT_GOOGLE_QUERIES : [{ text: query }];
+  const batches = await Promise.all(queries.map((q) => searchGoogleQuery(town, q, apiKey)));
+
+  const byId = new Map<string, FoundProspect>();
+  for (const prospect of batches.flat()) byId.set(prospect.externalId, prospect);
+  return [...byId.values()];
 }
 
 type OsmElement = {

@@ -8,6 +8,8 @@ export type ProspectTown = {
   region: ProspectRegion;
   lat: number;
   lng: number;
+  /** Texto para la búsqueda si difiere del nombre (barrios de ciudades grandes). */
+  searchAs?: string;
   /** Radio de búsqueda en km (ciudades grandes usan más). */
   radiusKm?: number;
 };
@@ -56,7 +58,14 @@ export const PROSPECT_TOWNS: ProspectTown[] = [
   { name: "Magdalena", region: "Corredor Norte y Periurbano", lat: -35.081, lng: -57.517 },
 
   // Costa Atlántica
-  { name: "Mar del Plata", region: "Costa Atlántica", lat: -38.0055, lng: -57.5426, radiusKm: 12 },
+  // Mar del Plata tiene cientos de inmobiliarias: se parte en barrios.
+  { name: "Mar del Plata · Centro", searchAs: "Centro, Mar del Plata", region: "Costa Atlántica", lat: -38.0009, lng: -57.552, radiusKm: 2 },
+  { name: "Mar del Plata · La Perla", searchAs: "La Perla, Mar del Plata", region: "Costa Atlántica", lat: -37.9905, lng: -57.553, radiusKm: 2 },
+  { name: "Mar del Plata · Güemes", searchAs: "Güemes, Mar del Plata", region: "Costa Atlántica", lat: -38.018, lng: -57.544, radiusKm: 2 },
+  { name: "Mar del Plata · Playa Grande", searchAs: "Playa Grande, Mar del Plata", region: "Costa Atlántica", lat: -38.028, lng: -57.533, radiusKm: 2 },
+  { name: "Mar del Plata · Chauvín", searchAs: "Chauvín, Mar del Plata", region: "Costa Atlántica", lat: -38.012, lng: -57.56, radiusKm: 2 },
+  { name: "Mar del Plata · Constitución", searchAs: "Constitución, Mar del Plata", region: "Costa Atlántica", lat: -37.97, lng: -57.565, radiusKm: 3 },
+  { name: "Mar del Plata · Punta Mogotes", searchAs: "Punta Mogotes, Mar del Plata", region: "Costa Atlántica", lat: -38.075, lng: -57.545, radiusKm: 3 },
   { name: "Pinamar", region: "Costa Atlántica", lat: -37.108, lng: -56.861 },
   { name: "Cariló", region: "Costa Atlántica", lat: -37.163, lng: -56.9, radiusKm: 4 },
   { name: "Villa Gesell", region: "Costa Atlántica", lat: -37.263, lng: -56.973 },
@@ -106,7 +115,10 @@ export const PROSPECT_TOWNS: ProspectTown[] = [
   { name: "Benito Juárez", region: "Interior Centro", lat: -37.677, lng: -59.806 },
 
   // Interior sur
-  { name: "Bahía Blanca", region: "Interior Sur", lat: -38.719, lng: -62.272, radiusKm: 10 },
+  { name: "Bahía Blanca · Centro", searchAs: "Centro, Bahía Blanca", region: "Interior Sur", lat: -38.7183, lng: -62.2663, radiusKm: 2 },
+  { name: "Bahía Blanca · Universitario", searchAs: "Barrio Universitario, Bahía Blanca", region: "Interior Sur", lat: -38.702, lng: -62.27, radiusKm: 2 },
+  { name: "Bahía Blanca · Palihue", searchAs: "Palihue, Bahía Blanca", region: "Interior Sur", lat: -38.696, lng: -62.238, radiusKm: 2 },
+  { name: "Bahía Blanca · Villa Mitre", searchAs: "Villa Mitre, Bahía Blanca", region: "Interior Sur", lat: -38.732, lng: -62.285, radiusKm: 2 },
   { name: "Tres Arroyos", region: "Interior Sur", lat: -38.375, lng: -60.275 },
   { name: "Lobería", region: "Interior Sur", lat: -38.163, lng: -58.782 },
   { name: "Coronel Suárez", region: "Interior Sur", lat: -37.455, lng: -61.933 },
