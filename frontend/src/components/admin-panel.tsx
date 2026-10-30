@@ -390,9 +390,14 @@ export function AdminPanel({
           </p>
         </div>
 
-        <Button size="lg" onClick={() => setIsCreateOpen(true)}>
-          Crear empresa
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="lg" variant="outline" onClick={() => router.push("/app/admin/prospeccion")}>
+            Prospección de inmobiliarias
+          </Button>
+          <Button size="lg" onClick={() => setIsCreateOpen(true)}>
+            Crear empresa
+          </Button>
+        </div>
       </div>
 
       {flashMessage ? (

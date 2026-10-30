@@ -36,6 +36,7 @@ const PUBLIC = [
   "/api/waitlist",
   "/api/availability",
   "/api/book",
+  "/api/baja",
   "/api/webhooks",
   "/landing.html",
   "/_next",
