@@ -15,3 +15,6 @@ playwright-report/
 
 # macOS
 .DS_Store
+
+# Salida del scraper de Google Maps (datos de prospección)
+frontend/scraper-output/

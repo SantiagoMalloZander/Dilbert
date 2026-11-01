@@ -140,6 +140,30 @@ export function isExcludedAddress(address?: string | null) {
   return EXCLUDED_ADDRESS_PATTERNS.some((pattern) => pattern.test(address));
 }
 
+/** Zonas excluidas por coordenadas (para resultados que no traen la ciudad en la dirección). */
+const EXCLUDED_ZONES = [
+  { name: "Campana", lat: -34.163, lng: -58.959, radiusKm: 6 },
+];
+
+function inCaba(lat: number, lng: number) {
+  return lat > -34.706 && lat < -34.526 && lng > -58.532 && lng < -58.334;
+}
+
+export function distanceKm(aLat: number, aLng: number, bLat: number, bLng: number) {
+  const rad = Math.PI / 180;
+  const dLat = (bLat - aLat) * rad;
+  const dLng = (bLng - aLng) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(aLat * rad) * Math.cos(bLat * rad) * Math.sin(dLng / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
+
+export function isInExcludedZone(lat: number, lng: number) {
+  return (
+    inCaba(lat, lng) ||
+    EXCLUDED_ZONES.some((zone) => distanceKm(lat, lng, zone.lat, zone.lng) <= zone.radiusKm)
+  );
+}
+
 export function findTown(name: string) {
   return PROSPECT_TOWNS.find((town) => town.name === name) ?? null;
 }
