@@ -77,7 +77,11 @@ function extractEmails(html: string) {
 
   const found = new Set<string>();
   for (const match of decoded.matchAll(EMAIL_REGEX)) {
-    const email = match[0].toLowerCase().replace(/^mailto:/, "").replace(/\.+$/, "");
+    const email = match[0]
+      .toLowerCase()
+      .replace(/^mailto:/, "")
+      .replace(/\.+$/, "")
+      .replace(/\.com\.ar\.com$/, ".com.ar"); // typo frecuente en las webs
     if (!isJunkEmail(email)) found.add(email);
   }
   return [...found];
@@ -96,14 +100,32 @@ function extractContactLinks(html: string, base: URL) {
   return [...links].slice(0, 2);
 }
 
-/** Ordena para que el primero sea el mejor candidato a "email principal". */
-function rankEmails(emails: string[], host: string) {
+const WEBMAIL = /@(gmail|hotmail|yahoo|outlook|live|icloud|telpin|fibertel|speedy|arnet|uolsinectis|ciudad)\./;
+
+/** True si comparten un pedazo de 5+ letras (ej. "andaresinmobiliaria" y "andarespinamar"). */
+function sharesChunk(a: string, b: string) {
+  for (let i = 0; i + 5 <= a.length; i += 1) {
+    if (b.includes(a.slice(i, i + 5))) return true;
+  }
+  return false;
+}
+
+/**
+ * Ordena para que el primero sea el mejor candidato a "email principal".
+ * Ojo con los emails de otras empresas que aparecen en la web (el diseñador
+ * del sitio, la inmobiliaria de al lado): esos van al final.
+ */
+export function rankEmails(emails: string[], host: string) {
   const domain = host.replace(/^www\./, "");
+  const siteLabel = domain.split(".")[0].replace(/[^a-z0-9]/g, "");
   const score = (email: string) => {
+    const [local, emailDomain] = email.split("@");
     let value = 0;
-    if (email.endsWith(`@${domain}`)) value += 10;
-    if (/^(info|contacto|ventas|consultas|administracion|hola)@/.test(email)) value += 5;
-    if (/@(gmail|hotmail|yahoo|outlook|live)\./.test(email)) value += 2;
+    if (emailDomain === domain || domain.endsWith(`.${emailDomain}`)) value += 10;
+    else if (WEBMAIL.test(email)) value += 2;
+    else value -= 6; // dominio de otra empresa
+    if (sharesChunk(local.replace(/[^a-z0-9]/g, ""), siteLabel)) value += 8;
+    if (/^(info|contacto|ventas|consultas|administracion|hola)@/.test(email)) value += 3;
     return value;
   };
   return [...emails].sort((a, b) => score(b) - score(a));
