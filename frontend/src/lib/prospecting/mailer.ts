@@ -66,6 +66,8 @@ export async function sendOutreachEmail(input: {
   subject: string;
   body: string;
   unsubscribeToken: string | null;
+  /** Mail con diseño: si viene, se usa tal cual (ya trae el link de baja). */
+  designHtml?: string;
 }) {
   const sender = getOutreachSender();
   const unsubscribeUrl = input.unsubscribeToken ? buildUnsubscribeUrl(input.unsubscribeToken) : null;
@@ -74,7 +76,7 @@ export async function sendOutreachEmail(input: {
     : "";
 
   // Texto plano + HTML mínimo: parece un mail escrito a mano (mejor entregabilidad).
-  const html = `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#222">${escapeHtml(
+  const html = input.designHtml ?? `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#222">${escapeHtml(
     input.body
   ).replace(/\n/g, "<br>")}${
     unsubscribeUrl
@@ -87,6 +89,7 @@ export async function sendOutreachEmail(input: {
     to: input.to,
     subject: input.subject,
     text: `${input.body}${footerText}`,
+    replyTo: sender.email ?? undefined,
     html,
     headers: unsubscribeUrl
       ? {

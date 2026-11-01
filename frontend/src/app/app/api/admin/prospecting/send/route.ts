@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthSession } from "@/lib/workspace-auth";
+import { renderDesignEmail } from "@/lib/prospecting/email-design";
 import {
+  buildUnsubscribeUrl,
   getDailyLimit,
   getOutreachSender,
   isOutreachMailerConfigured,
@@ -23,7 +25,22 @@ const sendSchema = z.object({
   test: z.boolean().optional(),
   subject: z.string().min(3, "Falta el asunto.").max(200),
   body: z.string().min(20, "El mail es demasiado corto.").max(10000),
+  design: z.boolean().optional(),
 });
+
+/** Arma el contenido: diseño Dilvert (HTML) o texto plano de la plantilla. */
+function buildContent(
+  payload: { body: string; design?: boolean },
+  vars: { nombre: string; ciudad: string },
+  unsubscribeToken: string | null
+) {
+  if (!payload.design) return { body: renderTemplate(payload.body, vars), designHtml: undefined };
+  const { html, text } = renderDesignEmail({
+    ...vars,
+    unsubscribeUrl: unsubscribeToken ? buildUnsubscribeUrl(unsubscribeToken) : null,
+  });
+  return { body: text, designHtml: html };
+}
 
 const BLOCKED_STATUSES = new Set(["unsubscribed", "discarded", "bounced", "replied"]);
 
@@ -56,7 +73,7 @@ export async function POST(request: Request) {
       await sendOutreachEmail({
         to: session.user.email ?? sender.email ?? "",
         subject: `[PRUEBA] ${renderTemplate(payload.subject, vars)}`,
-        body: renderTemplate(payload.body, vars),
+        ...buildContent(payload, vars, null),
         unsubscribeToken: null,
       });
       return NextResponse.json({ ok: true, status: "sent" });
@@ -104,7 +121,7 @@ export async function POST(request: Request) {
     await sendOutreachEmail({
       to: prospect.email,
       subject,
-      body: renderTemplate(payload.body, vars),
+      ...buildContent(payload, vars, prospect.unsubscribe_token),
       unsubscribeToken: prospect.unsubscribe_token,
     });
   } catch (error) {

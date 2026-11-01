@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { emitGlobalToast } from "@/lib/global-toast";
 import { DEFAULT_BODY, DEFAULT_SUBJECT, renderTemplate } from "@/lib/prospecting/template";
+import { renderDesignEmail } from "@/lib/prospecting/email-design";
 import { PROSPECT_REGIONS, PROSPECT_TOWNS } from "@/lib/prospecting/towns";
 import type { ProspectRecord, ProspectStatus } from "@/modules/prospecting/queries";
 
@@ -116,6 +117,7 @@ export function ProspectingPanel() {
   // Campaña
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
   const [body, setBody] = useState(DEFAULT_BODY);
+  const [useDesign, setUseDesign] = useState(true);
   const [delaySeconds, setDelaySeconds] = useState("45");
   const [campaignTowns, setCampaignTowns] = useState<string>("all");
   const [isSending, setIsSending] = useState(false);
@@ -334,12 +336,16 @@ export function ProspectingPanel() {
   const preview = useMemo(() => {
     const sample = recipients[0];
     const vars = { nombre: sample?.name ?? "Inmobiliaria Ejemplo", ciudad: sample?.town ?? "Pinamar" };
-    return { subject: renderTemplate(subject, vars), body: renderTemplate(body, vars) };
+    return {
+      subject: renderTemplate(subject, vars),
+      body: renderTemplate(body, vars),
+      html: renderDesignEmail({ ...vars, unsubscribeUrl: "#" }).html,
+    };
   }, [recipients, subject, body]);
 
   async function sendTest() {
     try {
-      await api("/send", { method: "POST", body: JSON.stringify({ test: true, subject, body }) });
+      await api("/send", { method: "POST", body: JSON.stringify({ test: true, subject, body, design: useDesign }) });
       emitGlobalToast({ tone: "success", text: "Mandé la prueba a tu casilla." });
     } catch (error) {
       emitGlobalToast({ tone: "error", text: error instanceof Error ? error.message : "Falló la prueba." });
@@ -362,7 +368,7 @@ export function ProspectingPanel() {
       try {
         const result = await api<{ status: string; reason?: string; prospect?: ProspectRecord }>("/send", {
           method: "POST",
-          body: JSON.stringify({ id: prospect.id, subject, body }),
+          body: JSON.stringify({ id: prospect.id, subject, body, design: useDesign }),
         });
         if (result.prospect) upsertLocal([result.prospect]);
         if (result.status === "sent") {
@@ -764,10 +770,20 @@ export function ProspectingPanel() {
                   <Label htmlFor="subject">Asunto</Label>
                   <Input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="body">Cuerpo</Label>
-                  <Textarea id="body" rows={16} value={body} onChange={(e) => setBody(e.target.value)} />
-                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={useDesign} onCheckedChange={setUseDesign} />
+                  Usar el diseño Dilvert (con imágenes del panel y del informe)
+                </label>
+                {useDesign ? (
+                  <p className="text-sm text-muted-foreground">
+                    El cuerpo del mail con diseño se edita en el código (<code>email-design.ts</code>). Pedile los cambios a Claude.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="body">Cuerpo</Label>
+                    <Textarea id="body" rows={16} value={body} onChange={(e) => setBody(e.target.value)} />
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm" onClick={sendTest} disabled={!config?.mailerEnabled}>
                     <Mail className="size-4" /> Mandarme una prueba
@@ -794,7 +810,16 @@ export function ProspectingPanel() {
               <CardContent>
                 <div className="rounded-lg border bg-muted/30 p-4 text-sm">
                   <p className="mb-3 font-semibold">{preview.subject}</p>
-                  <p className="whitespace-pre-wrap">{preview.body}</p>
+                  {useDesign ? (
+                    <iframe
+                      title="Vista previa del mail"
+                      srcDoc={preview.html}
+                      sandbox=""
+                      className="h-[720px] w-full rounded-md border bg-white"
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{preview.body}</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
