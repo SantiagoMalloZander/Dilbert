@@ -10,13 +10,14 @@
 // 4. Descarta emails cuyo dominio no recibe correo (sin MX) para evitar rebotes.
 // 5. Exporta scraper-output/lista-envio-AAAA-MM-DD.csv con lo que se va a mandar.
 // Se puede correr las veces que haga falta: no pisa estados ni ediciones.
+// --reintentar-emails: vuelve a rastrear las webs de las que quedaron sin email.
 
 import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolveMx } from "node:dns/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { rankEmails } from "../src/lib/prospecting/enrich.ts";
+import { findEmailsOnWebsite, rankEmails } from "../src/lib/prospecting/enrich.ts";
 
 const PROD_PROJECT_REF = "jyvadsrxbtomeyaidwuz"; // Supabase "Dilbert SP"
 const OUTPUT_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "scraper-output");
@@ -101,7 +102,15 @@ function getSupabase() {
   }
 
   return {
-    listProspects: () => call("prospects?select=*&order=created_at.asc&limit=10000"),
+    // PostgREST devuelve como máximo 1000 filas por pedido: paginamos
+    async listProspects() {
+      const all = [];
+      for (let offset = 0; ; offset += 1000) {
+        const page = await call(`prospects?select=*&order=created_at.asc,id.asc&offset=${offset}&limit=1000`);
+        all.push(...page);
+        if (page.length < 1000) return all;
+      }
+    },
     insert: (rows) =>
       call("prospects?on_conflict=external_id", {
         method: "POST",
@@ -202,6 +211,31 @@ async function main() {
     }
   }
   console.log(`Base: ${inserted} cargadas nuevas, ${completed} completadas con datos que faltaban`);
+
+  // 2b) reintentar emails de las que tienen web pero quedaron sin email
+  if (process.argv.includes("--reintentar-emails")) {
+    const pending = (await db.listProspects()).filter((p) => p.status === "new" && p.website && !p.email);
+    const total = pending.length;
+    let done = 0;
+    let foundCount = 0;
+    const worker = async () => {
+      while (pending.length) {
+        const prospect = pending.shift();
+        const emails = await findEmailsOnWebsite(prospect.website).catch(() => []);
+        done += 1;
+        const patch = { enriched_at: new Date().toISOString() };
+        if (emails.length) {
+          foundCount += 1;
+          patch.email = emails[0];
+          patch.emails = [...new Set([...(prospect.emails ?? []), ...emails])];
+        }
+        await db.update(prospect.id, patch).catch(() => {});
+        if (done % 25 === 0 || done === total) console.log(`  Webs: ${done}/${total} (${foundCount} con email)`);
+      }
+    };
+    console.log(`Reintentando ${total} webs sin email...`);
+    await Promise.all(Array.from({ length: 8 }, worker));
+  }
 
   // 3) dedup por email y por empresa, y 4) validar dominio del email
   existing = await db.listProspects();

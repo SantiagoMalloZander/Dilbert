@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "scraper": "node --no-warnings scripts/maps-scraper.mjs",
-    "prospects:preparar": "node --no-warnings scripts/prospects-prepare.mjs"
+    "prospects:preparar": "node --no-warnings scripts/prospects-prepare.mjs",
+    "campaign": "node --no-warnings scripts/send-campaign.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

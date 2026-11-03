@@ -21,7 +21,7 @@ const NON_CRAWLABLE_HOSTS = [
 
 const JUNK_EMAIL_PATTERNS = [
   /\.(png|jpe?g|gif|webp|svg|css|js)$/i,
-  /@(example|sentry|wixpress|sentry-next|domain|email|tudominio|yourdomain)\./i,
+  /@(example|ejemplo|sentry|wixpress|sentry-next|domain|email|tudominio|yourdomain|dominio)\./i,
   /^(no-?reply|noreply|donotreply|postmaster|webmaster|abuse)@/i,
   /@\d+x\./i,
   /@(correo|mail|email)\.com(\.ar)?$/i, // placeholders tipo mi@correo.com.ar

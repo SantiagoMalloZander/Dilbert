@@ -40,13 +40,19 @@ export type ProspectRecord = {
 };
 
 export async function listProspects() {
-  const { data, error } = await db()
-    .from("prospects")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(5000);
-  if (error) throw error;
-  return (data ?? []) as ProspectRecord[];
+  // PostgREST corta en 1000 filas por pedido: traemos de a páginas
+  const all: ProspectRecord[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db()
+      .from("prospects")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(from, from + 999);
+    if (error) throw error;
+    all.push(...((data ?? []) as ProspectRecord[]));
+    if (!data || data.length < 1000) return all;
+  }
 }
 
 /** Inserta los nuevos e ignora los que ya existían (por external_id). */
